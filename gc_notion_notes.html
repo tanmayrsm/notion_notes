@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java GC — Complete Interview Notes</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #ffffff;
+    --bg2: #f7f7f5;
+    --bg3: #f1f1ef;
+    --text: #37352f;
+    --text2: #6b6b68;
+    --text3: #9b9b98;
+    --border: #e8e8e5;
+    --accent: #2383e2;
+    --green: #0f7b6c;
+    --green-bg: #edfaf7;
+    --red: #c0392b;
+    --red-bg: #fef2f1;
+    --amber: #9c5a00;
+    --amber-bg: #fef8ee;
+    --purple: #6e50a2;
+    --purple-bg: #f4f0fc;
+    --blue-bg: #ebf3fc;
+    --font: 'Inter', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 60px 80px 120px;
+  }
+
+  /* ── Typography ── */
+  h1 {
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 48px 0 16px;
+    padding-bottom: 6px;
+    border-bottom: 1.5px solid var(--border);
+    color: var(--text);
+  }
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 28px 0 10px;
+    color: var(--text);
+  }
+  h4 {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text3);
+    margin: 20px 0 8px;
+  }
+  p { margin-bottom: 12px; color: var(--text); }
+  ul, ol { padding-left: 22px; margin-bottom: 12px; }
+  li { margin-bottom: 5px; }
+  strong { font-weight: 600; }
+
+  /* ── Meta row ── */
+  .meta {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+  }
+  .tag {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 4px;
+    background: var(--bg3);
+    color: var(--text2);
+  }
+  .tag.green { background: var(--green-bg); color: var(--green); }
+  .tag.purple { background: var(--purple-bg); color: var(--purple); }
+  .tag.amber { background: var(--amber-bg); color: var(--amber); }
+  .tag.red { background: var(--red-bg); color: var(--red); }
+  .tag.blue { background: var(--blue-bg); color: var(--accent); }
+
+  /* ── Callout boxes ── */
+  .callout {
+    display: flex;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 6px;
+    margin: 16px 0;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: var(--blue-bg); }
+  .callout.green { background: var(--green-bg); }
+  .callout.amber { background: var(--amber-bg); }
+  .callout.red { background: var(--red-bg); }
+  .callout.purple { background: var(--purple-bg); }
+  .callout p { margin: 0; color: var(--text); }
+  .callout strong { color: var(--text); }
+
+  /* ── Code blocks ── */
+  pre {
+    background: #1e1e2e;
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin: 12px 0;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.8;
+  }
+  code {
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--bg3);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: #c0392b;
+  }
+  pre code { background: none; color: #cdd6f4; padding: 0; font-size: 12.5px; }
+  .cm { color: #6c7086; } /* comment */
+  .cf { color: #89b4fa; } /* flag */
+  .cv { color: #a6e3a1; } /* value */
+  .cc { color: #f38ba8; } /* command */
+  .ck { color: #fab387; } /* keyword */
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x: auto; margin: 16px 0; border-radius: 8px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th {
+    background: var(--bg2);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text2);
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--text);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg2); }
+  .good-cell { color: var(--green); font-weight: 500; }
+  .bad-cell { color: var(--red); font-weight: 500; }
+  .mid-cell { color: var(--amber); font-weight: 500; }
+  .mono-cell { font-family: var(--mono); font-size: 12px; }
+
+  /* ── Diagrams ── */
+  .diagram { margin: 20px 0; }
+  svg text { font-family: var(--font); }
+
+  /* ── Bar charts ── */
+  .chart-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+  .chart-label { width: 160px; flex-shrink: 0; color: var(--text2); font-size: 12.5px; }
+  .chart-bar-wrap { flex: 1; background: var(--bg3); border-radius: 4px; height: 22px; overflow: hidden; }
+  .chart-bar { height: 22px; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 600; color: white; transition: width 0.6s; }
+  .chart-val { font-size: 12px; font-weight: 600; color: var(--text); width: 80px; flex-shrink: 0; }
+
+  /* ── Flow steps ── */
+  .flow {
+    display: flex;
+    gap: 0;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+  .flow-step {
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+    padding: 14px 10px;
+    position: relative;
+  }
+  .flow-step:not(:last-child)::after {
+    content: '→';
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: var(--text3);
+  }
+  .flow-icon {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    margin: 0 auto 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .flow-title { font-size: 12px; font-weight: 600; color: var(--text); }
+  .flow-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* ── Quote / interview answer ── */
+  .quote {
+    border-left: 3px solid var(--accent);
+    padding: 12px 16px;
+    margin: 16px 0;
+    background: var(--blue-bg);
+    border-radius: 0 6px 6px 0;
+    font-size: 14px;
+    font-style: italic;
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .quote-label {
+    font-style: normal;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  /* ── Two column ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  .mini-card {
+    background: var(--bg2);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 13px;
+  }
+  .mini-card h4 { margin-top: 0; }
+
+  /* ── Section divider ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+
+  /* ── Inline badge ── */
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .badge.green { background: var(--green-bg); color: var(--green); }
+  .badge.red { background: var(--red-bg); color: var(--red); }
+  .badge.amber { background: var(--amber-bg); color: var(--amber); }
+  .badge.blue { background: var(--blue-bg); color: var(--accent); }
+
+  /* ── TOC ── */
+  .toc {
+    background: var(--bg2);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 24px 0 40px;
+    font-size: 13.5px;
+  }
+  .toc-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); margin-bottom: 10px; }
+  .toc ol { margin: 0; padding-left: 18px; }
+  .toc li { margin-bottom: 4px; }
+  .toc a { color: var(--text2); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+
+  /* ── Heap visual ── */
+  .heap-visual { display: flex; gap: 0; height: 60px; border-radius: 8px; overflow: hidden; margin: 14px 0; font-size: 12px; font-weight: 600; }
+  .heap-seg { display: flex; align-items: center; justify-content: center; color: white; transition: flex 0.5s; }
+
+  /* print / download styles */
+  @media print {
+    .page { padding: 30px 40px; }
+    h2 { page-break-before: always; }
+    h2:first-of-type { page-break-before: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── HEADER ── -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+    <span style="font-size:36px">☕</span>
+    <div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:4px">Engineering Interview Prep</div>
+      <h1>Java Garbage Collection</h1>
+    </div>
+  </div>
+  <div class="meta">
+    <span class="tag purple">Senior SDE</span>
+    <span class="tag blue">Apple level</span>
+    <span class="tag green">1B rpm context</span>
+    <span class="tag amber">JVM Internals</span>
+    <span class="tag">Last updated: 2025</span>
+  </div>
+
+  <div class="callout info">
+    <span class="callout-icon">💡</span>
+    <p><strong>The one-sentence mental model:</strong> GC finds objects your code no longer references and frees their memory — so new objects have space. The whole challenge is doing this without freezing your app for too long.</p>
+  </div>
+
+  <!-- ── TOC ── -->
+  <div class="toc">
+    <div class="toc-title">Table of contents</div>
+    <ol>
+      <li><a href="#s1">What GC does & why it's hard</a></li>
+      <li><a href="#s2">How mark & sweep works</a></li>
+      <li><a href="#s3">Generational GC</a></li>
+      <li><a href="#s4">G1 GC — heap regions & remembered sets</a></li>
+      <li><a href="#s5">Advanced internals (tri-color, TLAB, write barrier, safepoints)</a></li>
+      <li><a href="#s6">ZGC vs G1 vs ParallelGC</a></li>
+      <li><a href="#s7">Failure modes</a></li>
+      <li><a href="#s8">Commands: build-time, runtime, emergency</a></li>
+      <li><a href="#s9">What to say in the interview (1B rpm)</a></li>
+    </ol>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="s1">1. What GC does & why it's hard</h2>
+
+  <p>Every time your Java code runs <code>new SomeObject()</code>, the JVM puts that object in a region of memory called the <strong>heap</strong>. When nothing in your program holds a reference to an object anymore, it's dead weight — but it still sits in memory until GC removes it.</p>
+
+  <div class="callout amber">
+    <span class="callout-icon">⚠️</span>
+    <p><strong>The core challenge:</strong> GC needs to inspect the entire heap to find garbage — but your app is simultaneously creating and discarding objects. Stopping the app to inspect is safe but slow. Running concurrently is fast but requires careful synchronization. Every GC design is a different trade-off on this dial.</p>
+  </div>
+
+  <h3>The heap at a glance</h3>
+  <div style="margin:16px 0">
+    <div style="font-size:12px;color:var(--text3);margin-bottom:6px">Typical heap layout — traditional generational design</div>
+    <div class="heap-visual">
+      <div class="heap-seg" style="flex:3;background:#0f7b6c">Eden (new objects)</div>
+      <div class="heap-seg" style="flex:1;background:#2d6a4f">S0</div>
+      <div class="heap-seg" style="flex:1;background:#2d6a4f">S1</div>
+      <div class="heap-seg" style="flex:5;background:#6e50a2">Old generation</div>
+      <div class="heap-seg" style="flex:1;background:#9c5a00">Meta</div>
+    </div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px">
+      <span style="font-size:11px;color:var(--text3)"><span style="display:inline-block;width:10px;height:10px;background:#0f7b6c;border-radius:2px;margin-right:4px"></span>Young gen — collected often, very fast</span>
+      <span style="font-size:11px;color:var(--text3)"><span style="display:inline-block;width:10px;height:10px;background:#6e50a2;border-radius:2px;margin-right:4px"></span>Old gen — collected rarely, expensive</span>
+      <span style="font-size:11px;color:var(--text3)"><span style="display:inline-block;width:10px;height:10px;background:#9c5a00;border-radius:2px;margin-right:4px"></span>Metaspace — class metadata, not objects</span>
+    </div>
+  </div>
+
+  <h3>Key vocabulary</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Term</th><th>Plain English</th><th>Impact</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Stop-the-world (STW)</strong></td><td>All app threads freeze while GC works</td><td class="bad-cell">Causes latency spikes</td></tr>
+        <tr><td><strong>Minor GC</strong></td><td>Cleans only the young generation</td><td class="good-cell">Fast — typically 1–20ms</td></tr>
+        <tr><td><strong>Full GC</strong></td><td>Cleans the entire heap</td><td class="bad-cell">Can take seconds. Avoid in prod.</td></tr>
+        <tr><td><strong>GC pause</strong></td><td>Time your app is frozen</td><td class="mid-cell">p99 latency often spikes here</td></tr>
+        <tr><td><strong>Promotion</strong></td><td>Object moves from young → old gen</td><td class="mid-cell">Too much = old gen fills = Full GC</td></tr>
+        <tr><td><strong>Evacuation</strong></td><td>G1 copies live objects out of a region</td><td class="mid-cell">Core of G1's pause time</td></tr>
+        <tr><td><strong>Allocation rate</strong></td><td>How many bytes/sec your app creates</td><td class="mid-cell">Main driver of GC frequency</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="s2">2. How mark & sweep works</h2>
+
+  <p>This is the foundation algorithm under every modern GC. Two phases:</p>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-icon" style="background:var(--blue-bg);color:var(--accent)">🌱</div>
+      <div class="flow-title">Start from roots</div>
+      <div class="flow-sub">Stack vars, static fields</div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-icon" style="background:var(--amber-bg);color:var(--amber)">🔗</div>
+      <div class="flow-title">Follow references</div>
+      <div class="flow-sub">Graph traversal</div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-icon" style="background:var(--purple-bg);color:var(--purple)">✓</div>
+      <div class="flow-title">Mark reachable</div>
+      <div class="flow-sub">Everything reached = live</div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-icon" style="background:var(--red-bg);color:var(--red)">🗑</div>
+      <div class="flow-title">Sweep unreachable</div>
+      <div class="flow-sub">Unmarked = deleted</div>
+    </div>
+  </div>
+
+  <h3>Tri-color marking (how concurrent GC stays safe)</h3>
+  <p>When GC marks while your app runs, it uses three colors to track progress:</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Color</th><th>Meaning</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="badge" style="background:#e8e8e5;color:#666">White</span></td>
+          <td>Not yet visited — possibly garbage</td>
+          <td>Candidates for deletion at sweep time</td>
+        </tr>
+        <tr>
+          <td><span class="badge" style="background:#d3d1c7;color:#444">Gray</span></td>
+          <td>Found, but references not yet fully scanned</td>
+          <td>In the work queue — GC will process next</td>
+        </tr>
+        <tr>
+          <td><span class="badge blue">Black</span></td>
+          <td>Fully scanned — definitely alive</td>
+          <td>Safe — all its references are accounted for</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout purple">
+    <span class="callout-icon">🧠</span>
+    <p><strong>The invariant that must never break:</strong> A black object must never directly point to a white object. If it does, GC would delete the white object even though it's reachable. The write barrier (section 5) is what enforces this invariant during concurrent marking.</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="s3">3. Generational GC</h2>
+
+  <p>The key empirical observation: <strong>most objects die young.</strong> A String built to format a log line, a request wrapper, a DTO — all created and discarded in milliseconds. GC exploits this by separating the heap into generations:</p>
+
+  <div class="two-col">
+    <div class="mini-card">
+      <h4 style="color:var(--green)">Young generation</h4>
+      <ul style="font-size:13px">
+        <li>New objects land here in <strong>Eden</strong></li>
+        <li>Two small <strong>Survivor spaces</strong> (S0, S1)</li>
+        <li>Collected frequently — <strong>Minor GC</strong></li>
+        <li>Most objects never leave — they die here</li>
+        <li>Fast to scan because it's small</li>
+      </ul>
+    </div>
+    <div class="mini-card">
+      <h4 style="color:var(--purple)">Old generation</h4>
+      <ul style="font-size:13px">
+        <li>Objects that survive ~15 minor GCs get <strong>promoted</strong> here</li>
+        <li>Collected infrequently — <strong>Major / Full GC</strong></li>
+        <li>Expensive to scan — it's large</li>
+        <li>Filling this up is the main path to Full GC</li>
+        <li>Target: keep old-gen occupancy low</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout green">
+    <span class="callout-icon">✅</span>
+    <p><strong>The generational hypothesis in one line:</strong> Minor GC is cheap because almost everything in Eden is already dead by the time GC runs. You're scanning a tiny space and finding very few survivors.</p>
+  </div>
+
+  <h3>Object lifecycle</h3>
+  <div class="diagram">
+    <svg width="100%" viewBox="0 0 700 120" style="max-width:700px">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#9b9b98" stroke-width="1.5"/>
+        </marker>
+      </defs>
+      <!-- Eden -->
+      <rect x="20" y="30" width="130" height="60" rx="8" fill="#edfaf7" stroke="#0f7b6c" stroke-width="1.5"/>
+      <text x="85" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="#0f7b6c">Eden</text>
+      <text x="85" y="75" text-anchor="middle" font-size="11" fill="#6b6b68">new objects land here</text>
+      <!-- arrow -->
+      <line x1="152" y1="60" x2="188" y2="60" stroke="#9b9b98" stroke-width="1.2" marker-end="url(#arr)"/>
+      <text x="170" y="52" text-anchor="middle" font-size="10" fill="#9b9b98">survive</text>
+      <!-- Survivor -->
+      <rect x="190" y="30" width="120" height="60" rx="8" fill="#f4f0fc" stroke="#6e50a2" stroke-width="1.5"/>
+      <text x="250" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="#6e50a2">Survivor</text>
+      <text x="250" y="75" text-anchor="middle" font-size="11" fill="#6b6b68">bounce S0 ↔ S1</text>
+      <!-- arrow -->
+      <line x1="312" y1="60" x2="348" y2="60" stroke="#9b9b98" stroke-width="1.2" marker-end="url(#arr)"/>
+      <text x="330" y="52" text-anchor="middle" font-size="10" fill="#9b9b98">age &gt; 15</text>
+      <!-- Old gen -->
+      <rect x="350" y="30" width="130" height="60" rx="8" fill="#f4f0fc" stroke="#6e50a2" stroke-width="1.5"/>
+      <text x="415" y="56" text-anchor="middle" font-size="13" font-weight="600" fill="#6e50a2">Old gen</text>
+      <text x="415" y="75" text-anchor="middle" font-size="11" fill="#6b6b68">long-lived objects</text>
+      <!-- Dead arrow from eden -->
+      <line x1="85" y1="92" x2="85" y2="110" stroke="#c0392b" stroke-width="1.2" marker-end="url(#arr)"/>
+      <text x="85" y="120" text-anchor="middle" font-size="10" fill="#c0392b">~95% die here</text>
+      <!-- Dead arrow from survivor -->
+      <line x1="250" y1="92" x2="250" y2="110" stroke="#c0392b" stroke-width="1.2" marker-end="url(#arr)"/>
+      <text x="250" y="120" text-anchor="middle" font-size="10" fill="#c0392b">die in survivor</text>
+      <!-- Full GC -->
+      <rect x="530" y="30" width="140" height="60" rx="8" fill="#fef2f1" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <text x="600" y="52" text-anchor="middle" font-size="12" font-weight="600" fill="#c0392b">Full GC fires</text>
+      <text x="600" y="70" text-anchor="middle" font-size="11" fill="#6b6b68">when old gen fills</text>
+      <line x1="482" y1="60" x2="528" y2="60" stroke="#c0392b" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+    </svg>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="s4">4. G1 GC — heap regions & remembered sets</h2>
+
+  <h3>Why G1 exists</h3>
+  <p>Traditional GC had to collect entire regions at once — pause time was proportional to heap size. G1 breaks the heap into small equal-sized <strong>regions</strong> (1–32 MB each) so it can collect any subset and keep pauses bounded.</p>
+
+  <div class="callout info">
+    <span class="callout-icon">📦</span>
+    <p><strong>G1 = "Garbage First"</strong> — it ranks regions by how much garbage they contain and collects the most garbage-dense ones first. That's the name, that's the whole strategy.</p>
+  </div>
+
+  <h3>The heap as a region grid</h3>
+  <div class="diagram">
+    <svg width="100%" viewBox="0 0 660 200" style="max-width:660px">
+      <!-- Grid of 16 regions 4x4 -->
+      <text x="330" y="18" text-anchor="middle" font-size="12" fill="#9b9b98" font-weight="500">G1 heap — 16 equal regions, each independently assigned a role</text>
+      <!-- Row 1 -->
+      <rect x="30" y="28" width="120" height="70" rx="6" fill="#edfaf7" stroke="#0f7b6c" stroke-width="1.5"/>
+      <text x="90" y="60" text-anchor="middle" font-size="13" font-weight="600" fill="#0f7b6c">Eden</text>
+      <text x="90" y="78" text-anchor="middle" font-size="10" fill="#6b6b68">new objects</text>
+
+      <rect x="165" y="28" width="120" height="70" rx="6" fill="#edfaf7" stroke="#0f7b6c" stroke-width="1.5"/>
+      <text x="225" y="60" text-anchor="middle" font-size="13" font-weight="600" fill="#0f7b6c">Eden</text>
+      <text x="225" y="78" text-anchor="middle" font-size="10" fill="#6b6b68">new objects</text>
+
+      <rect x="300" y="28" width="120" height="70" rx="6" fill="#f4f0fc" stroke="#6e50a2" stroke-width="1.5"/>
+      <text x="360" y="60" text-anchor="middle" font-size="13" font-weight="600" fill="#6e50a2">Old</text>
+      <text x="360" y="78" text-anchor="middle" font-size="10" fill="#6b6b68">long-lived</text>
+
+      <rect x="435" y="28" width="120" height="70" rx="6" fill="#f1f1ef" stroke="#9b9b98" stroke-width="1.5"/>
+      <text x="495" y="60" text-anchor="middle" font-size="13" font-weight="600" fill="#6b6b68">Free</text>
+      <text x="495" y="78" text-anchor="middle" font-size="10" fill="#9b9b98">available</text>
+
+      <!-- Row 2 -->
+      <rect x="30" y="112" width="120" height="70" rx="6" fill="#f4f0fc" stroke="#6e50a2" stroke-width="1.5"/>
+      <text x="90" y="144" text-anchor="middle" font-size="13" font-weight="600" fill="#6e50a2">Old</text>
+
+      <rect x="165" y="112" width="120" height="70" rx="6" fill="#edfaf7" stroke="#0f7b6c" stroke-width="1.5"/>
+      <text x="225" y="144" text-anchor="middle" font-size="13" font-weight="600" fill="#0f7b6c">Surv</text>
+      <text x="225" y="162" text-anchor="middle" font-size="10" fill="#6b6b68">survivors</text>
+
+      <rect x="300" y="112" width="120" height="70" rx="6" fill="#f4f0fc" stroke="#6e50a2" stroke-width="1.5"/>
+      <text x="360" y="144" text-anchor="middle" font-size="13" font-weight="600" fill="#6e50a2">Old</text>
+
+      <!-- CSet highlight on two regions -->
+      <rect x="435" y="112" width="120" height="70" rx="6" fill="#f4f0fc" stroke="#6e50a2" stroke-width="1.5"/>
+      <text x="495" y="144" text-anchor="middle" font-size="13" font-weight="600" fill="#6e50a2">Old</text>
+      <!-- CSet outline -->
+      <rect x="427" y="104" width="136" height="86" rx="10" fill="none" stroke="#2383e2" stroke-width="2.5" stroke-dasharray="5 3"/>
+      <text x="495" y="200" text-anchor="middle" font-size="11" fill="#2383e2" font-weight="600">← selected into CSet (highest garbage %)</text>
+    </svg>
+  </div>
+
+  <h3>Remembered Sets (RSets) — the key data structure</h3>
+  <p>If G1 only collects some regions, how does it know <em>all</em> the objects pointing into those regions? Without that, it could miss live objects and corrupt the heap.</p>
+  <p><strong>Each region has its own RSet</strong> — a list of (other-region, card) pairs that point INTO it. During GC, instead of scanning the whole heap, G1 only needs to scan roots + the RSets of collected regions.</p>
+
+  <div class="callout amber">
+    <span class="callout-icon">💸</span>
+    <p><strong>RSet cost:</strong> RSets consume real memory — typically 1–5% of heap. In write-heavy workloads (updating many references), maintaining RSets costs CPU too. This is the hidden price of G1's flexibility.</p>
+  </div>
+
+  <h3>How the pause budget works</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Step</th><th>What happens</th></tr></thead>
+      <tbody>
+        <tr><td>1. Set pause target</td><td><code>-XX:MaxGCPauseMillis=200</code> — G1 will try to stay under 200ms</td></tr>
+        <tr><td>2. Rank regions</td><td>Sort old-gen regions by <em>reclaimable bytes ÷ estimated scan time</em></td></tr>
+        <tr><td>3. Fill the budget</td><td>Greedily pick top regions until estimated pause time is consumed</td></tr>
+        <tr><td>4. Evacuate</td><td>STW: copy live objects from selected regions into free regions</td></tr>
+        <tr><td>5. Release</td><td>Old CSet regions are now entirely free — recycled for future use</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="s5">5. Advanced internals</h2>
+
+  <h3>TLAB — why object creation is nearly free</h3>
+  <p>Each thread has a private chunk of Eden called a <strong>Thread-Local Allocation Buffer</strong>. Allocating inside a TLAB is just moving a pointer one step — no locks, no synchronization with other threads.</p>
+
+  <div class="two-col">
+    <div class="mini-card">
+      <h4>TLAB full — what happens</h4>
+      <ol style="font-size:13px">
+        <li>Current TLAB is retired (waste filled with dummy object)</li>
+        <li>Thread gets a fresh TLAB from Eden</li>
+        <li>If Eden itself is full → Minor GC fires</li>
+        <li>Very large objects skip TLAB → go directly to old gen (danger!)</li>
+      </ol>
+    </div>
+    <div class="mini-card">
+      <h4>TLAB tuning flags</h4>
+      <ul style="font-size:13px">
+        <li><code>-XX:TLABSize</code> — override default TLAB size</li>
+        <li><code>-XX:TLABWasteTargetPercent</code> — max % waste before retirement</li>
+        <li>Usually let JVM auto-size — it learns from refill patterns</li>
+        <li>High refill rate in JFR → mixed small + large allocations</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Write barrier — keeping concurrent marking correct</h3>
+  <p>Problem: your app mutates references while GC is mid-marking. A black object could get a new reference to a white (unscanned) object — violating the tri-color invariant and causing GC to delete a live object.</p>
+
+  <div class="diagram">
+    <svg width="100%" viewBox="0 0 640 130" style="max-width:640px">
+      <defs>
+        <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#9b9b98" stroke-width="1.5"/>
+        </marker>
+        <marker id="arr-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#c0392b" stroke-width="1.5"/>
+        </marker>
+        <marker id="arr-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#0f7b6c" stroke-width="1.5"/>
+        </marker>
+      </defs>
+      <!-- Black obj -->
+      <rect x="30" y="35" width="110" height="50" rx="8" fill="#E6F1FB" stroke="#2383e2" stroke-width="1.5"/>
+      <text x="85" y="57" text-anchor="middle" font-size="12" font-weight="600" fill="#2383e2">Black obj</text>
+      <text x="85" y="74" text-anchor="middle" font-size="10" fill="#6b6b68">already scanned</text>
+      <!-- Arrow app write -->
+      <line x1="142" y1="60" x2="188" y2="60" stroke="#c0392b" stroke-width="1.5" marker-end="url(#arr-red)"/>
+      <text x="165" y="50" text-anchor="middle" font-size="10" fill="#c0392b" font-weight="600">app writes ref</text>
+      <!-- White obj danger -->
+      <rect x="190" y="35" width="110" height="50" rx="8" fill="#fef2f1" stroke="#c0392b" stroke-width="1.5"/>
+      <text x="245" y="57" text-anchor="middle" font-size="12" font-weight="600" fill="#c0392b">White obj</text>
+      <text x="245" y="74" text-anchor="middle" font-size="10" fill="#6b6b68">unseen = DANGER</text>
+      <!-- barrier fires -->
+      <line x1="302" y1="60" x2="338" y2="60" stroke="#0f7b6c" stroke-width="1.5" marker-end="url(#arr-green)"/>
+      <text x="320" y="50" text-anchor="middle" font-size="10" fill="#0f7b6c" font-weight="600">write barrier fires</text>
+      <!-- Saved as gray -->
+      <rect x="340" y="35" width="130" height="50" rx="8" fill="#edfaf7" stroke="#0f7b6c" stroke-width="1.5"/>
+      <text x="405" y="57" text-anchor="middle" font-size="12" font-weight="600" fill="#0f7b6c">Rescued → Gray</text>
+      <text x="405" y="74" text-anchor="middle" font-size="10" fill="#6b6b68">added to SATB queue</text>
+      <!-- queue -->
+      <line x1="472" y1="60" x2="508" y2="60" stroke="#9b9b98" stroke-width="1.2" marker-end="url(#arr2)"/>
+      <rect x="510" y="30" width="110" height="60" rx="8" fill="#f4f0fc" stroke="#6e50a2" stroke-width="1.5"/>
+      <text x="565" y="55" text-anchor="middle" font-size="11" font-weight="600" fill="#6e50a2">GC re-scans</text>
+      <text x="565" y="72" text-anchor="middle" font-size="10" fill="#6b6b68">object is safe</text>
+    </svg>
+  </div>
+
+  <p><strong>SATB (Snapshot-At-The-Beginning)</strong> — G1's solution. When you overwrite a reference, the old value is saved and treated as gray. GC might retain some garbage until next cycle (floating garbage), but it never deletes live objects.</p>
+
+  <h3>Safepoints — the hidden latency source</h3>
+  <p>Before GC can run, <em>every app thread</em> must reach a safepoint — a specific safe pause location in its execution. GC can't pause threads mid-instruction. This means:</p>
+
+  <div class="callout red">
+    <span class="callout-icon">🚨</span>
+    <p><strong>Time-to-safepoint latency:</strong> If Thread A has a long loop with no safepoint poll inside, GC must wait for that loop to finish before starting. Your total pause = <em>GC work time + time waiting for the slowest thread.</em> This is invisible in most GC logs and is a common source of mysterious long pauses.</p>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Cause</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td>Long counted loops (no safepoint poll)</td><td class="mono-cell">-XX:+UseCountedLoopSafepoints (JDK 14+)</td></tr>
+        <tr><td>Biased lock revocation (pre JDK 15)</td><td>Upgrade to JDK 15+ (biased locking removed)</td></tr>
+        <tr><td>jmap -dump called on live process</td><td>Use <code>jcmd GC.heap_dump</code> instead; drain traffic first</td></tr>
+        <tr><td>Class redefinition (hot-reload)</td><td>Avoid in production; only in dev environments</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="s6">6. ZGC vs G1 vs ParallelGC</h2>
+
+  <h3>Side-by-side comparison</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Property</th><th>ParallelGC</th><th>G1 GC</th><th>ZGC (JDK 17+)</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Pause time</strong></td>
+          <td class="bad-cell">Seconds possible</td>
+          <td class="mid-cell">10–200ms</td>
+          <td class="good-cell">&lt; 1ms</td>
+        </tr>
+        <tr>
+          <td><strong>Throughput</strong></td>
+          <td class="good-cell">Highest</td>
+          <td class="good-cell">High</td>
+          <td class="mid-cell">Slightly lower</td>
+        </tr>
+        <tr>
+          <td><strong>Max heap</strong></td>
+          <td>Any</td>
+          <td class="mid-cell">Best ≤ 32GB</td>
+          <td class="good-cell">Up to terabytes</td>
+        </tr>
+        <tr>
+          <td><strong>Object relocation</strong></td>
+          <td>STW only</td>
+          <td>STW evacuation</td>
+          <td class="good-cell">Concurrent (app keeps running)</td>
+        </tr>
+        <tr>
+          <td><strong>Memory overhead</strong></td>
+          <td class="good-cell">Lowest</td>
+          <td class="good-cell">Low (~RSets)</td>
+          <td class="mid-cell">Higher (load barriers)</td>
+        </tr>
+        <tr>
+          <td><strong>Tuning needed</strong></td>
+          <td class="mid-cell">Medium</td>
+          <td class="mid-cell">Medium</td>
+          <td class="good-cell">Mostly self-tuning</td>
+        </tr>
+        <tr>
+          <td><strong>Best for</strong></td>
+          <td>Batch jobs, pipelines</td>
+          <td>APIs, mixed workloads</td>
+          <td>Latency-critical services</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Pause time comparison — visual</h3>
+  <div style="margin:16px 0">
+    <div class="chart-row">
+      <div class="chart-label">ParallelGC</div>
+      <div class="chart-bar-wrap"><div class="chart-bar" style="width:95%;background:#c0392b">2–5 seconds possible</div></div>
+      <div class="chart-val">seconds</div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-label">G1 GC</div>
+      <div class="chart-bar-wrap"><div class="chart-bar" style="width:40%;background:#e67e22">50–200ms typical</div></div>
+      <div class="chart-val">~200ms</div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-label">ZGC</div>
+      <div class="chart-bar-wrap"><div class="chart-bar" style="width:3%;background:#0f7b6c"></div></div>
+      <div class="chart-val">&lt; 1ms</div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-label">Shenandoah</div>
+      <div class="chart-bar-wrap"><div class="chart-bar" style="width:4%;background:#2980b9"></div></div>
+      <div class="chart-val">&lt; 5ms</div>
+    </div>
+  </div>
+
+  <h3>Why ZGC achieves sub-millisecond pauses</h3>
+  <p>G1 must stop your app to move (evacuate) objects. ZGC moves them <em>while your app runs</em> using two tricks:</p>
+  <ol>
+    <li><strong>Load barriers:</strong> Every time your code reads an object reference, a tiny piece of JIT-inserted code checks if that object has been moved. If yes, it transparently updates the pointer before returning it. Your app never sees stale addresses.</li>
+    <li><strong>Colored pointers:</strong> ZGC stores GC metadata (marked, remapped) directly in spare bits of the 64-bit pointer. This lets it check object state with a single pointer read, with no separate metadata lookup.</li>
+  </ol>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="s7">7. Failure modes</h2>
+
+  <div class="callout red">
+    <span class="callout-icon">🔥</span>
+    <p><strong>Interview signal:</strong> Naming the specific failure mode and its root cause separates senior engineers from mid-level. Don't just say "GC is slow" — say <em>which</em> failure and <em>why</em> it happened.</p>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Failure</th><th>What happens</th><th>Root cause</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Evacuation failure</strong> <span class="badge red">worst</span></td>
+          <td>G1 can't find free regions to copy into → falls back to full STW mark-compact</td>
+          <td>Heap too small, allocation rate too high, humongous objects</td>
+          <td>Increase -Xmx, lower IHOP, fix allocation hotspots</td>
+        </tr>
+        <tr>
+          <td><strong>Humongous allocation</strong></td>
+          <td>Object ≥ half a region → goes directly to old gen, triggers extra GC cycles</td>
+          <td>Large byte arrays, deserializing big payloads</td>
+          <td>Stream data, use off-heap (DirectByteBuffer), chunk large objects</td>
+        </tr>
+        <tr>
+          <td><strong>Reference processing lag</strong></td>
+          <td>SoftRef / WeakRef caches delay GC sweep by hundreds of ms</td>
+          <td>Guava Cache, image caches using SoftReference</td>
+          <td>Use Caffeine (size-limited), add -Xlog:gc+ref for visibility</td>
+        </tr>
+        <tr>
+          <td><strong>Metaspace exhaustion</strong></td>
+          <td>Full GC fires to unload classes — rare but causes long pause</td>
+          <td>Dynamic class generation, hot-reload frameworks, Groovy</td>
+          <td>Set -XX:MaxMetaspaceSize, profile class loading with JFR</td>
+        </tr>
+        <tr>
+          <td><strong>Promotion failure</strong></td>
+          <td>Survivor space full → premature promotion → old gen fills fast</td>
+          <td>Survivor space too small, TenuringThreshold too high</td>
+          <td>Tune -XX:SurvivorRatio, -XX:MaxTenuringThreshold</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="s8">8. Commands reference</h2>
+
+  <h3>Build-time flags — paste into your service config</h3>
+  <pre><code><span class="cm"># Recommended baseline for a latency-sensitive 1B rpm service</span>
+
+<span class="cf">-XX:+UseZGC</span>                              <span class="cm"># ZGC for sub-ms pauses (JDK 17+)</span>
+<span class="cf">-Xms</span><span class="cv">16g</span> <span class="cf">-Xmx</span><span class="cv">16g</span>                        <span class="cm"># Lock heap — prevent resize pauses</span>
+<span class="cf">-XX:+AlwaysPreTouch</span>                      <span class="cm"># Pre-fault pages at startup, not mid-traffic</span>
+<span class="cf">-Xlog:gc*:file=gc.log:time:filecount=5,filesize=20m</span>
+<span class="cf">-XX:+HeapDumpOnOutOfMemoryError</span>          <span class="cm"># Auto-dump on OOM for post-mortem</span>
+<span class="cf">-XX:HeapDumpPath</span>=<span class="cv">/tmp/oom.hprof</span>
+<span class="cf">-XX:+ExitOnOutOfMemoryError</span>              <span class="cm"># Fail fast — let Kubernetes restart cleanly</span>
+<span class="cf">-XX:+UseCountedLoopSafepoints</span>            <span class="cm"># Reduce time-to-safepoint latency</span>
+<span class="cf">-XX:+FlightRecorder</span>                      <span class="cm"># JFR always available for on-demand profiling</span>
+
+<span class="cm"># G1-specific additions (if using G1 instead of ZGC):</span>
+<span class="cf">-XX:MaxGCPauseMillis</span>=<span class="cv">200</span>
+<span class="cf">-XX:InitiatingHeapOccupancyPercent</span>=<span class="cv">35</span>   <span class="cm"># Start concurrent marking earlier</span>
+<span class="cf">-XX:G1HeapRegionSize</span>=<span class="cv">16m</span>               <span class="cm"># Tune for your object size distribution</span></code></pre>
+
+  <h3>Runtime detection — diagnosing a live problem</h3>
+
+  <h4>See GC happening right now</h4>
+  <pre><code><span class="cm"># Real-time GC stats, refresh every 1 second</span>
+<span class="cm"># Replace 12345 with your PID (find it: jps -l)</span>
+<span class="cc">jstat</span> <span class="cf">-gcutil</span> <span class="cv">12345</span> <span class="cv">1000</span>
+
+<span class="cm"># Key columns:</span>
+<span class="cm">#  E  = Eden usage %        → rising fast = high alloc rate</span>
+<span class="cm">#  O  = Old gen usage %     → &gt;80% = danger zone</span>
+<span class="cm">#  YGC/YGCT = minor GC count/time</span>
+<span class="cm">#  FGC = Full GC count      → should be 0 or near 0 in prod</span></code></pre>
+
+  <h4>Find what's allocating the most memory</h4>
+  <pre><code><span class="cm"># async-profiler — flame graph of allocation hotspots</span>
+<span class="cm"># Download: github.com/async-profiler/async-profiler</span>
+<span class="cc">./asprof</span> <span class="cf">-e alloc</span> <span class="cf">-d 30</span> <span class="cf">-f alloc.html</span> <span class="cv">12345</span>
+
+<span class="cm"># Opens as a flame graph in browser</span>
+<span class="cm"># Widest boxes = most allocations. Start there.</span>
+<span class="cm"># 30-second sample is enough to see patterns.</span></code></pre>
+
+  <h4>Deep profiling with JFR</h4>
+  <pre><code><span class="cm"># Start a JFR recording on a running process (no restart)</span>
+<span class="cc">jcmd</span> <span class="cv">12345</span> <span class="cf">JFR.start</span> name=prod_rec duration=120s filename=prod.jfr
+
+<span class="cm"># Check it's running</span>
+<span class="cc">jcmd</span> <span class="cv">12345</span> <span class="cf">JFR.check</span>
+
+<span class="cm"># Open prod.jfr in JDK Mission Control (jmc)</span>
+<span class="cm"># Shows: GC pauses, allocation hotspots, safepoint times, lock contention</span></code></pre>
+
+  <h4>Heap state at a glance</h4>
+  <pre><code><span class="cc">jcmd</span> <span class="cv">12345</span> <span class="cf">GC.heap_info</span>        <span class="cm"># current heap summary</span>
+<span class="cc">jcmd</span> <span class="cv">12345</span> <span class="cf">VM.flags</span>             <span class="cm"># all active JVM flags</span>
+<span class="cc">jcmd</span> <span class="cv">12345</span> <span class="cf">VM.native_memory</span>     <span class="cm"># total native memory usage</span></code></pre>
+
+  <h3>Emergency — free memory on production</h3>
+
+  <div class="callout amber">
+    <span class="callout-icon">⚠️</span>
+    <p><strong>Honest warning:</strong> There is no free-memory-instantly command without trade-offs. Every option below causes a pause or risks instability. The real answer is to drain the pod and restart it.</p>
+  </div>
+
+  <h4>Option 1 — trigger GC manually (fast, temporary)</h4>
+  <pre><code><span class="cm"># Via jcmd — request a full GC on a running process</span>
+<span class="cc">jcmd</span> <span class="cv">12345</span> <span class="cf">GC.run</span>
+
+<span class="cm"># This WILL cause a pause. At 1B rpm, drain traffic off this pod first.</span></code></pre>
+
+  <h4>Option 2 — take heap dump then restart (safest)</h4>
+  <pre><code><span class="cm"># 1. Remove pod from load balancer rotation</span>
+<span class="cm"># 2. Capture heap for post-mortem</span>
+<span class="cc">jcmd</span> <span class="cv">12345</span> <span class="cf">GC.heap_dump</span> /tmp/emergency.hprof
+
+<span class="cm"># 3. Restart the pod (Kubernetes handles this cleanly)</span>
+<span class="cm"># 4. Analyze dump offline with Eclipse MAT or VisualVM</span></code></pre>
+
+  <h4>Option 3 — clear a cache that's hoarding memory</h4>
+  <pre><code><span class="cm"># Via an admin/actuator endpoint — evict all entries</span>
+<span class="ck">cache</span>.invalidateAll();
+
+<span class="cm"># Or reduce max size temporarily then restore</span>
+<span class="ck">cache</span>.policy().eviction().ifPresent(<span class="cv">e</span> -> e.setMaximum(<span class="cv">0</span>));</code></pre>
+
+  <h3>The 3-step incident response</h3>
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-icon" style="background:var(--red-bg);color:var(--red)">1</div>
+      <div class="flow-title">Triage (30s)</div>
+      <div class="flow-sub">jstat — is FGC rising? Old gen &gt;90%? Confirm it's GC.</div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-icon" style="background:var(--amber-bg);color:var(--amber)">2</div>
+      <div class="flow-title">Contain (2 min)</div>
+      <div class="flow-sub">Drain pod. jcmd GC.run to buy time. Heap dump before restart.</div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-icon" style="background:var(--green-bg);color:var(--green)">3</div>
+      <div class="flow-title">Fix (post-incident)</div>
+      <div class="flow-sub">async-profiler → find root cause → fix code, not just flags.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <h2 id="s9">9. What to say in the interview — 1B rpm</h2>
+
+  <div class="callout purple">
+    <span class="callout-icon">🎯</span>
+    <p><strong>The test:</strong> At 1B requests per minute, the interviewer is not asking "what flags do you set." They're asking: can you reason about GC at system scale and connect low-level JVM behavior to user-facing impact?</p>
+  </div>
+
+  <h3>Opening — set the stakes</h3>
+  <div class="quote">
+    <div class="quote-label">Say this first</div>
+    "At 1 billion requests per minute, we're allocating 50–200 GB of objects per second. GC isn't background noise — it's on the critical path of every request. A 200ms GC pause at that scale means millions of requests either queue up or time out. So the design decision isn't just which collector to use, it's how to architect the service so GC pressure is minimal in the first place."
+  </div>
+
+  <h3>Collector choice</h3>
+  <div class="quote">
+    <div class="quote-label">When asked G1 vs ZGC</div>
+    "I'd default to ZGC on JDK 17+. G1 is excellent up to ~32GB heaps but at 1B rpm the pressure is extreme. The key difference: ZGC moves objects concurrently while requests are being served — pauses stay under a millisecond. G1 has to stop the world to evacuate objects, so pause time scales with how much it needs to move."
+  </div>
+
+  <h3>Code-level design</h3>
+  <div class="quote">
+    <div class="quote-label">When asked what you'd actually change</div>
+    "I'd go after allocation rate before touching JVM flags. Profile with async-profiler in allocation mode — usually 2–3 hotspots account for 80% of allocations. Common culprits: boxing primitives in maps, building intermediate strings in hot paths, stream chains creating wrapper objects. For network payloads I'd use DirectByteBuffer to keep large buffers off-heap entirely. The goal is to make GC boring — infrequent minor collections, almost zero old-gen pressure."
+  </div>
+
+  <h3>Failure scenario — if they push harder</h3>
+  <div class="quote">
+    <div class="quote-label">When asked about worst-case failure</div>
+    "The failure mode I'd watch for is evacuation failure — when G1 can't find free regions to copy live objects into. That triggers a full stop-the-world collection that can last seconds. I'd prevent it by sizing the heap with 40–50% headroom, setting InitiatingHeapOccupancyPercent to 35 so concurrent marking starts well before old gen fills, and watching FGC count in jstat as a real-time signal."
+  </div>
+
+  <h3>Instant questions — what to say without hesitation</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Interviewer asks</th><th>Your answer (one line)</th></tr></thead>
+      <tbody>
+        <tr><td>"What's a safepoint?"</td><td>A pause checkpoint every thread must reach before GC can start. Slow threads increase time-to-safepoint, adding hidden latency beyond the GC itself.</td></tr>
+        <tr><td>"What's a write barrier?"</td><td>JIT-injected code on every reference write that keeps concurrent marking correct — it logs overwritten references so GC can re-scan them.</td></tr>
+        <tr><td>"How does TLAB help?"</td><td>Each thread allocates in its own private Eden chunk — no locks, just pointer bump. Makes object creation nearly free.</td></tr>
+        <tr><td>"What's SATB?"</td><td>G1's technique: snapshot all live references at marking start, log overwrites, re-scan them. May retain some floating garbage but never deletes live objects.</td></tr>
+        <tr><td>"How would you free memory in prod?"</td><td>Drain the pod, run jcmd GC.run to buy seconds, take a heap dump, restart. Analyze dump offline. Fix root cause in code.</td></tr>
+        <tr><td>"What command shows live GC?"</td><td>jstat -gcutil [PID] 1000 — updates every second, shows Eden %, Old gen %, full GC count.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout red">
+    <span class="callout-icon">❌</span>
+    <p><strong>Never say:</strong> "I'd just increase heap size and use ZGC." That signals you treat GC as a black box. Always connect flags to root causes and system behavior.</p>
+  </div>
+
+  <div class="callout green">
+    <span class="callout-icon">✅</span>
+    <p><strong>The answer that wins the room:</strong> "I'd fix the allocation hotspot in code. Flags buy you time. Code changes save you permanently. GC tuning should be the last resort, not the first."</p>
+  </div>
+
+  <hr class="divider">
+  <div style="text-align:center;color:var(--text3);font-size:13px;padding-bottom:20px">
+    Java GC Interview Notes · Built for Apple-level Senior SDE prep · 2025
+  </div>
+
+</div>
+</body>
+</html>
