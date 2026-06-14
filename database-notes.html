@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Database Notes — Postgres, Cassandra, Dynamo, RocksDB, Druid</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #ffffff;
+    --bg2: #f7f6f3;
+    --bg3: #efeeeb;
+    --border: rgba(55,53,47,0.09);
+    --border2: rgba(55,53,47,0.16);
+    --text: #37352f;
+    --text2: #787774;
+    --text3: #9b9a97;
+    --blue: #2383e2;
+    --blue-bg: #e8f3fd;
+    --green: #0f7b6c;
+    --green-bg: #e8f5f2;
+    --amber: #cb6c00;
+    --amber-bg: #fdf4e7;
+    --red: #c4302b;
+    --red-bg: #fdecea;
+    --purple: #6940a5;
+    --purple-bg: #f4f0fa;
+    --pg-color: #2383e2;
+    --pg-bg: #e8f3fd;
+    --cas-color: #6940a5;
+    --cas-bg: #f4f0fa;
+    --dyn-color: #cb6c00;
+    --dyn-bg: #fdf4e7;
+    --rock-color: #0f7b6c;
+    --rock-bg: #e8f5f2;
+    --druid-color: #c4302b;
+    --druid-bg: #fdecea;
+    --serif: 'Georgia', serif;
+    --sans: 'Inter', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.65;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 240px; height: 100vh;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    transition: transform .25s ease;
+  }
+  .sidebar-header {
+    padding: 20px 16px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    font-size: 14px;
+    color: var(--text2);
+    cursor: pointer;
+    border-radius: 4px;
+    margin: 2px 6px;
+    text-decoration: none;
+    transition: background .12s;
+  }
+  .sidebar-item:hover, .sidebar-item.active { background: var(--bg3); color: var(--text); }
+  .sidebar-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .sidebar-section {
+    padding: 14px 16px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+
+  /* ── Main content ── */
+  .main {
+    margin-left: 240px;
+    min-height: 100vh;
+  }
+  @media(max-width:720px){
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; }
+    .menu-btn { display: flex !important; }
+  }
+
+  .menu-btn {
+    display: none;
+    position: fixed;
+    top: 14px; left: 14px;
+    z-index: 200;
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text2);
+  }
+
+  /* ── Page header ── */
+  .page-header {
+    padding: 60px 96px 32px;
+    max-width: 900px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--border);
+  }
+  @media(max-width:900px){ .page-header { padding: 48px 32px 24px; } }
+  @media(max-width:600px){ .page-header { padding: 48px 20px 20px; } }
+
+  .page-icon { font-size: 52px; margin-bottom: 12px; }
+  .page-title {
+    font-size: 40px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.15;
+    margin-bottom: 8px;
+    letter-spacing: -.02em;
+  }
+  .page-subtitle { font-size: 15px; color: var(--text2); margin-bottom: 20px; }
+  .page-meta {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--text3);
+  }
+  .page-meta span { display: flex; align-items: center; gap: 5px; }
+
+  /* ── Content ── */
+  .content {
+    padding: 40px 96px 80px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  @media(max-width:900px){ .content { padding: 32px 32px 60px; } }
+  @media(max-width:600px){ .content { padding: 24px 20px 60px; } }
+
+  /* ── Section headings ── */
+  .section-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 48px 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+    scroll-margin-top: 80px;
+  }
+  .section-heading .icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+  .h2 { font-size: 17px; font-weight: 600; margin: 28px 0 10px; color: var(--text); }
+  .h3 { font-size: 14px; font-weight: 600; margin: 20px 0 8px; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; }
+
+  p { margin-bottom: 14px; font-size: 15px; color: var(--text); line-height: 1.7; }
+
+  /* ── Callouts ── */
+  .callout {
+    display: flex;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 6px;
+    margin: 16px 0;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .callout .ico { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout.blue  { background: var(--blue-bg);   color: #1a6db5; }
+  .callout.green { background: var(--green-bg);  color: #0a6055; }
+  .callout.amber { background: var(--amber-bg);  color: #a05800; }
+  .callout.red   { background: var(--red-bg);    color: #9e2521; }
+  .callout.gray  { background: var(--bg2);       color: var(--text2); }
+
+  /* ── Code blocks ── */
+  pre {
+    background: #1e1e2e;
+    border-radius: 8px;
+    padding: 18px 20px;
+    overflow-x: auto;
+    margin: 14px 0;
+    font-size: 13px;
+    line-height: 1.75;
+    color: #cdd6f4;
+    font-family: var(--mono);
+  }
+  code { font-family: var(--mono); font-size: 13px; }
+  .kw  { color: #89b4fa; }
+  .fn  { color: #a6e3a1; }
+  .str { color: #a6e3a1; }
+  .cm  { color: #6c7086; font-style: italic; }
+  .num { color: #fab387; }
+  .hl  { background: rgba(137,180,250,.12); display: block; margin: 0 -20px; padding: 0 20px; }
+
+  code.inline {
+    background: var(--bg3);
+    color: var(--red);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  /* ── DB cards grid ── */
+  .db-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .db-card {
+    border-radius: 10px;
+    border: 1px solid var(--border2);
+    padding: 16px;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .db-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.08); }
+  .db-card .stripe {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 10px 10px 0 0;
+  }
+  .db-card .db-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .db-card .db-type { font-size: 12px; color: var(--text3); margin-bottom: 10px; }
+  .db-card .db-desc { font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .db-card .db-tag {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-top: 10px;
+    font-weight: 500;
+  }
+
+  /* ── Comparison table ── */
+  .compare-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
+  .compare-table th {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--bg2);
+    font-weight: 600;
+    font-size: 13px;
+    border-bottom: 2px solid var(--border2);
+    white-space: nowrap;
+  }
+  .compare-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.5; }
+  .compare-table tr:hover td { background: var(--bg2); }
+  .compare-table .row-label { font-weight: 600; font-size: 13px; white-space: nowrap; }
+
+  /* ── Images ── */
+  .img-block {
+    margin: 20px 0;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .img-block img { width: 100%; display: block; max-height: 340px; object-fit: cover; }
+  .img-caption {
+    padding: 8px 14px;
+    font-size: 12px;
+    color: var(--text3);
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Toggle / accordion ── */
+  .toggle {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 10px 0;
+    overflow: hidden;
+  }
+  .toggle-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    background: var(--bg);
+    user-select: none;
+    transition: background .12s;
+  }
+  .toggle-header:hover { background: var(--bg2); }
+  .toggle-arrow { font-size: 12px; color: var(--text3); transition: transform .2s; }
+  .toggle-arrow.open { transform: rotate(90deg); }
+  .toggle-body { padding: 0 16px 14px; display: none; font-size: 14px; color: var(--text2); line-height: 1.65; }
+  .toggle-body.open { display: block; }
+
+  /* ── Tabs ── */
+  .tabs { margin: 20px 0; }
+  .tab-bar { display: flex; gap: 2px; border-bottom: 2px solid var(--border2); margin-bottom: 0; flex-wrap: wrap; }
+  .tab-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text2);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    border-radius: 4px 4px 0 0;
+    transition: all .15s;
+  }
+  .tab-btn.active { color: var(--text); border-bottom-color: var(--text); background: var(--bg2); }
+  .tab-btn:hover:not(.active) { background: var(--bg2); }
+  .tab-panel { display: none; padding: 20px 0 0; }
+  .tab-panel.active { display: block; }
+
+  /* ── Visual: row vs column ── */
+  .storage-visual {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+  }
+  @media(max-width:600px){ .storage-visual { grid-template-columns: 1fr; } }
+  .storage-box {
+    border-radius: 8px;
+    border: 1px solid var(--border2);
+    overflow: hidden;
+  }
+  .storage-box-header {
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+  }
+  .storage-row-vis {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 12px;
+  }
+  .row-block {
+    display: flex;
+    border-radius: 4px;
+    overflow: hidden;
+    height: 32px;
+    font-size: 11px;
+    font-family: var(--mono);
+  }
+  .row-block .cell {
+    display: flex; align-items: center; justify-content: center;
+    flex: 1; height: 100%;
+    border-right: 1px solid rgba(255,255,255,.3);
+    font-size: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 4px;
+  }
+  .row-block .cell:last-child { border-right: none; }
+
+  .col-vis {
+    display: flex;
+    gap: 6px;
+    padding: 12px;
+  }
+  .col-strip {
+    flex: 1;
+    border-radius: 4px;
+    overflow: hidden;
+    font-size: 10px;
+    font-family: var(--mono);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .col-strip .col-header {
+    padding: 5px 4px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 10px;
+    border-radius: 3px 3px 0 0;
+  }
+  .col-strip .col-val {
+    padding: 5px 4px;
+    text-align: center;
+    font-size: 10px;
+  }
+
+  /* ── Quiz ── */
+  .quiz-card {
+    background: var(--bg2);
+    border-radius: 10px;
+    border: 1px solid var(--border2);
+    padding: 20px;
+    margin: 20px 0;
+  }
+  .quiz-q { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-opt {
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--bg);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all .15s;
+    text-align: left;
+  }
+  .quiz-opt:hover { background: var(--blue-bg); border-color: var(--blue); }
+  .quiz-opt.correct { background: var(--green-bg); border-color: var(--green); color: var(--green); font-weight: 500; }
+  .quiz-opt.wrong { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+  .quiz-feedback { margin-top: 12px; font-size: 14px; display: none; padding: 10px 14px; border-radius: 6px; }
+  .quiz-feedback.show { display: block; }
+
+  /* ── Progress / checklist ── */
+  .checklist { list-style: none; margin: 12px 0; }
+  .checklist li {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 6px 0;
+    font-size: 14px;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist li.done { text-decoration: line-through; opacity: .5; }
+  .check-box {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+    border: 1.5px solid var(--border2);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    margin-top: 1px;
+    transition: all .15s;
+  }
+  .checklist li.done .check-box { background: var(--green); border-color: var(--green); color: white; }
+
+  /* ── Key concept pill ── */
+  .pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    margin: 2px 3px 2px 0;
+  }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+
+  /* ── Breadcrumb ── */
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text3);
+    padding: 16px 96px 0;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  @media(max-width:900px){ .breadcrumb { padding: 14px 32px 0; } }
+  @media(max-width:600px){ .breadcrumb { padding: 14px 20px 0; } }
+  .breadcrumb a { color: var(--text3); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--text); }
+
+  /* ── TOC progress bar ── */
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--blue);
+    transform-origin: left;
+    transform: scaleX(0);
+    transition: transform .1s;
+    z-index: 999;
+  }
+
+  /* ── Segment diagram ── */
+  .segment-row {
+    display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0;
+  }
+  .segment-block {
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    flex: 1; min-width: 80px;
+    border: 1px solid var(--border2);
+    cursor: default;
+    transition: transform .15s;
+  }
+  .segment-block:hover { transform: scale(1.04); }
+  .segment-block.active { transform: scale(1.04); }
+
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<button class="menu-btn" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">📚 Study Notes</div>
+  <div class="sidebar-section">Databases</div>
+  <a class="sidebar-item active" href="#overview">
+    <span class="sidebar-dot" style="background:#2383e2"></span> Overview
+  </a>
+  <a class="sidebar-item" href="#postgres">
+    <span class="sidebar-dot" style="background:#2383e2"></span> PostgreSQL
+  </a>
+  <a class="sidebar-item" href="#cassandra">
+    <span class="sidebar-dot" style="background:#6940a5"></span> Cassandra
+  </a>
+  <a class="sidebar-item" href="#dynamodb">
+    <span class="sidebar-dot" style="background:#cb6c00"></span> DynamoDB
+  </a>
+  <a class="sidebar-item" href="#rocksdb">
+    <span class="sidebar-dot" style="background:#0f7b6c"></span> RocksDB
+  </a>
+  <div class="sidebar-section">Analytics</div>
+  <a class="sidebar-item" href="#druid">
+    <span class="sidebar-dot" style="background:#c4302b"></span> Apache Druid
+  </a>
+  <a class="sidebar-item" href="#columnar">
+    <span class="sidebar-dot" style="background:#c4302b"></span> Columnar Storage
+  </a>
+  <div class="sidebar-section">Practice</div>
+  <a class="sidebar-item" href="#joins">
+    <span class="sidebar-dot" style="background:#888"></span> JOINs & VIEWs
+  </a>
+  <a class="sidebar-item" href="#quiz">
+    <span class="sidebar-dot" style="background:#888"></span> Quiz
+  </a>
+  <a class="sidebar-item" href="#checklist">
+    <span class="sidebar-dot" style="background:#888"></span> Study checklist
+  </a>
+</nav>
+
+<div class="main">
+  <div class="breadcrumb">
+    <a href="#">Home</a> / <a href="#">Engineering</a> / Database Systems
+  </div>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="page-icon">🗄️</div>
+    <h1 class="page-title">Database Systems</h1>
+    <div class="page-subtitle">Postgres · Cassandra · DynamoDB · RocksDB · Apache Druid — from zero to working knowledge</div>
+    <div class="page-meta">
+      <span>📅 June 2026</span>
+      <span>⏱ ~15 min read</span>
+      <span>🏷 databases, flink, analytics, backend</span>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div class="section-heading" id="overview">
+      <div class="icon" style="background:#e8f3fd">🗺️</div>
+      The big picture
+    </div>
+
+    <p>Every database on this list solves a different problem. The key question to ask before picking one: <strong>what access patterns does my app need?</strong></p>
+
+    <div class="db-grid">
+      <div class="db-card" onclick="scrollTo('postgres')">
+        <div class="stripe" style="background:var(--pg-color)"></div>
+        <div class="db-name" style="color:var(--pg-color)">PostgreSQL</div>
+        <div class="db-type">Relational · SQL</div>
+        <div class="db-desc">General purpose. Tables, joins, ACID. The workhorse.</div>
+        <div class="db-tag" style="background:var(--pg-bg);color:var(--pg-color)">Start here</div>
+      </div>
+      <div class="db-card" onclick="scrollTo('cassandra')">
+        <div class="stripe" style="background:var(--cas-color)"></div>
+        <div class="db-name" style="color:var(--cas-color)">Cassandra</div>
+        <div class="db-type">Wide-column · NoSQL</div>
+        <div class="db-desc">Massive distributed writes. No joins. Built by Facebook.</div>
+        <div class="db-tag" style="background:var(--cas-bg);color:var(--cas-color)">High ingest</div>
+      </div>
+      <div class="db-card" onclick="scrollTo('dynamodb')">
+        <div class="stripe" style="background:var(--dyn-color)"></div>
+        <div class="db-name" style="color:var(--dyn-color)">DynamoDB</div>
+        <div class="db-type">Key-value · AWS managed</div>
+        <div class="db-desc">Like Cassandra but fully managed. Pay per request.</div>
+        <div class="db-tag" style="background:var(--dyn-bg);color:var(--dyn-color)">Serverless</div>
+      </div>
+      <div class="db-card" onclick="scrollTo('rocksdb')">
+        <div class="stripe" style="background:var(--rock-color)"></div>
+        <div class="db-name" style="color:var(--rock-color)">RocksDB</div>
+        <div class="db-type">Embedded · LSM tree</div>
+        <div class="db-desc">Not a server — a library. Flink's built-in state backend.</div>
+        <div class="db-tag" style="background:var(--rock-bg);color:var(--rock-color)">Inside Flink</div>
+      </div>
+      <div class="db-card" onclick="scrollTo('druid')">
+        <div class="stripe" style="background:var(--druid-color)"></div>
+        <div class="db-name" style="color:var(--druid-color)">Apache Druid</div>
+        <div class="db-type">Columnar · Analytical</div>
+        <div class="db-desc">Sub-second queries on billions of time-series rows.</div>
+        <div class="db-tag" style="background:var(--druid-bg);color:var(--druid-color)">Analytics</div>
+      </div>
+    </div>
+
+    <div class="callout blue">
+      <span class="ico">💡</span>
+      <div><strong>Golden rule:</strong> Postgres is the right default. Only move to the others when Postgres genuinely can't do the job — not because they sound cool.</div>
+    </div>
+
+    <!-- COMPARISON TABLE -->
+    <div class="h2">Quick comparison</div>
+    <div style="overflow-x:auto">
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Dimension</th>
+          <th style="color:var(--pg-color)">PostgreSQL</th>
+          <th style="color:var(--cas-color)">Cassandra</th>
+          <th style="color:var(--dyn-color)">DynamoDB</th>
+          <th style="color:var(--rock-color)">RocksDB</th>
+          <th style="color:var(--druid-color)">Druid</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="row-label">Type</td><td>Relational</td><td>Wide-column</td><td>Key-value</td><td>Embedded KV</td><td>Columnar OLAP</td></tr>
+        <tr><td class="row-label">Joins</td><td>✅ Full SQL</td><td>❌ None</td><td>❌ None</td><td>❌ None</td><td>⚠️ Small tables only</td></tr>
+        <tr><td class="row-label">Views</td><td>✅ + materialized</td><td>⚠️ MV only</td><td>🔀 GSI only</td><td>✅ Flink SQL</td><td>✅ Query alias</td></tr>
+        <tr><td class="row-label">Scale-out</td><td>Vertical</td><td>Linear horizontal</td><td>Auto (AWS)</td><td>Local disk</td><td>Horizontal</td></tr>
+        <tr><td class="row-label">Sweet spot</td><td>App data</td><td>IoT / feeds</td><td>Sessions / KV</td><td>Flink state</td><td>Dashboards</td></tr>
+        <tr><td class="row-label">Write speed</td><td>★★★☆☆</td><td>★★★★★</td><td>★★★★☆</td><td>★★★★★</td><td>★★★★☆</td></tr>
+        <tr><td class="row-label">Query power</td><td>★★★★★</td><td>★★☆☆☆</td><td>★★☆☆☆</td><td>★☆☆☆☆</td><td>★★★★☆ (analytics)</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <hr class="divider">
+
+    <!-- POSTGRES -->
+    <div class="section-heading" id="postgres">
+      <div class="icon" style="background:var(--pg-bg)">🐘</div>
+      PostgreSQL
+    </div>
+
+    <p>The one you already know. Stores data in <strong>rows</strong>, each row containing all column values together. The query planner handles everything — you describe <em>what</em> you want, Postgres figures out <em>how</em> to get it.</p>
+
+    <div class="tabs">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="showTab('pg', 'schema')">Schema</button>
+        <button class="tab-btn" onclick="showTab('pg', 'join')">JOIN</button>
+        <button class="tab-btn" onclick="showTab('pg', 'view')">VIEW</button>
+        <button class="tab-btn" onclick="showTab('pg', 'matview')">Materialized view</button>
+      </div>
+      <div id="pg-schema" class="tab-panel active">
+        <pre><span class="kw">CREATE TABLE</span> colleges (
+  college_id   <span class="fn">SERIAL PRIMARY KEY</span>,
+  college_name <span class="fn">VARCHAR</span>(<span class="num">200</span>),
+  city         <span class="fn">VARCHAR</span>(<span class="num">100</span>)
+);
+
+<span class="kw">CREATE TABLE</span> users (
+  user_id    <span class="fn">SERIAL PRIMARY KEY</span>,
+  name       <span class="fn">VARCHAR</span>(<span class="num">100</span>),
+  email      <span class="fn">VARCHAR</span>(<span class="num">200</span>),
+  college_id <span class="fn">INT REFERENCES</span> colleges(college_id) <span class="cm">-- FK enforced</span>
+);</pre>
+      </div>
+      <div id="pg-join" class="tab-panel">
+        <pre><span class="kw">SELECT</span> u.name, u.email, c.college_name, c.city
+<span class="kw">FROM</span>   users    u
+<span class="kw">JOIN</span>   colleges c <span class="kw">ON</span> u.college_id = c.college_id;
+<span class="cm">
+-- Postgres does the matching internally.
+-- You can JOIN any tables, any columns, any time.</span></pre>
+      </div>
+      <div id="pg-view" class="tab-panel">
+        <pre><span class="kw">CREATE VIEW</span> user_with_college <span class="kw">AS</span>
+  <span class="kw">SELECT</span> u.user_id, u.name, u.email, c.college_name, c.city
+  <span class="kw">FROM</span>  users u <span class="kw">JOIN</span> colleges c <span class="kw">ON</span> u.college_id = c.college_id;
+
+<span class="cm">-- Query it exactly like a table:</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> user_with_college <span class="kw">WHERE</span> city = <span class="str">'Hyderabad'</span>;</pre>
+        <div class="callout green" style="margin-top:12px">
+          <span class="ico">✅</span>
+          <div>A VIEW is just a saved query — no extra storage, always reflects live data.</div>
+        </div>
+      </div>
+      <div id="pg-matview" class="tab-panel">
+        <pre><span class="kw">CREATE MATERIALIZED VIEW</span> user_college_fast <span class="kw">AS</span>
+  <span class="kw">SELECT</span> u.name, u.email, c.college_name
+  <span class="kw">FROM</span>  users u <span class="kw">JOIN</span> colleges c <span class="kw">ON</span> u.college_id = c.college_id;
+
+<span class="cm">-- Result is stored on disk → very fast to query.
+-- Must refresh manually when data changes:</span>
+<span class="kw">REFRESH MATERIALIZED VIEW</span> user_college_fast;</pre>
+        <div class="callout amber" style="margin-top:12px">
+          <span class="ico">⚠️</span>
+          <div>Use materialized views when joins are slow and data doesn't change every second (e.g. end-of-day reports).</div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- CASSANDRA -->
+    <div class="section-heading" id="cassandra">
+      <div class="icon" style="background:var(--cas-bg)">💠</div>
+      Apache Cassandra
+    </div>
+
+    <div class="img-block">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Cassandra_logo.svg/800px-Cassandra_logo.svg.png"
+           style="object-fit:contain;background:#fff;padding:20px;max-height:140px"
+           alt="Apache Cassandra logo" onerror="this.parentElement.style.display='none'">
+      <div class="img-caption">Apache Cassandra — originally built at Facebook, now an Apache project</div>
+    </div>
+
+    <p>Built for massive write workloads across many machines. The radical tradeoff: <strong>no joins, ever.</strong> Instead, you design your tables around your queries.</p>
+
+    <div class="callout red">
+      <span class="ico">🔑</span>
+      <div><strong>The Cassandra mindset flip:</strong> In Postgres you normalize first, query however you want. In Cassandra you decide your queries first, then design your table around them.</div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="showTab('cas', 'schema')">Schema (denormalized)</button>
+        <button class="tab-btn" onclick="showTab('cas', 'query')">Query</button>
+        <button class="tab-btn" onclick="showTab('cas', 'mv')">Materialized view</button>
+      </div>
+      <div id="cas-schema" class="tab-panel active">
+        <pre><span class="cm">-- One table shaped for "get all users by college"</span>
+<span class="kw">CREATE TABLE</span> users_by_college (
+  college_name  <span class="fn">TEXT</span>,
+  user_id       <span class="fn">UUID</span>,
+  user_name     <span class="fn">TEXT</span>,
+  email         <span class="fn">TEXT</span>,
+  city          <span class="fn">TEXT</span>,       <span class="cm">-- college info embedded here</span>
+  <span class="kw">PRIMARY KEY</span> (college_name, user_id)
+  <span class="cm">--          ↑ partition    ↑ clustering</span>
+);</pre>
+      </div>
+      <div id="cas-query" class="tab-panel">
+        <pre><span class="cm">-- FAST — queries by partition key</span>
+<span class="kw">SELECT</span> user_name, email <span class="kw">FROM</span> users_by_college
+<span class="kw">WHERE</span> college_name = <span class="str">'IIT Hyderabad'</span>;
+
+<span class="cm">-- SLOW / BAD — no partition key</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users_by_college <span class="kw">WHERE</span> city = <span class="str">'Hyderabad'</span>; <span class="cm">-- ❌ full scan</span></pre>
+      </div>
+      <div id="cas-mv" class="tab-panel">
+        <pre><span class="cm">-- Same data, different primary key = second access pattern</span>
+<span class="kw">CREATE MATERIALIZED VIEW</span> users_by_id <span class="kw">AS</span>
+  <span class="kw">SELECT</span> * <span class="kw">FROM</span> users_by_college
+  <span class="kw">WHERE</span> college_name <span class="kw">IS NOT NULL</span> <span class="kw">AND</span> user_id <span class="kw">IS NOT NULL</span>
+  <span class="kw">PRIMARY KEY</span> (user_id, college_name);</pre>
+        <div class="callout amber" style="margin-top:12px">
+          <span class="ico">⚠️</span>
+          <div>Cassandra MVs are a second physical copy auto-synced on writes. Many teams skip them and maintain two tables manually — MVs have reliability issues in production.</div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- DYNAMODB -->
+    <div class="section-heading" id="dynamodb">
+      <div class="icon" style="background:var(--dyn-bg)">☁️</div>
+      DynamoDB
+    </div>
+
+    <p>Same philosophy as Cassandra (design for your queries, no joins) but fully managed by AWS. You never run a server — just define your table, set capacity, and pay per read/write.</p>
+
+    <div class="toggle">
+      <div class="toggle-header" onclick="toggleSection(this)">
+        <span class="toggle-arrow">▶</span>
+        Single-table design — what it looks like
+      </div>
+      <div class="toggle-body">
+        <pre><span class="cm">// Users and colleges in ONE table, prefixed keys</span>
+{ <span class="str">"PK"</span>: <span class="str">"COLLEGE#iit-hyd"</span>, <span class="str">"SK"</span>: <span class="str">"METADATA"</span>, <span class="str">"college_name"</span>: <span class="str">"IIT Hyderabad"</span> }
+{ <span class="str">"PK"</span>: <span class="str">"USER#arjun"</span>,      <span class="str">"SK"</span>: <span class="str">"PROFILE"</span>,  <span class="str">"name"</span>: <span class="str">"Arjun"</span>, <span class="str">"college_id"</span>: <span class="str">"iit-hyd"</span> }</pre>
+      </div>
+    </div>
+
+    <div class="toggle">
+      <div class="toggle-header" onclick="toggleSection(this)">
+        <span class="toggle-arrow">▶</span>
+        GSI — Global Secondary Index (DynamoDB's answer to views)
+      </div>
+      <div class="toggle-body">
+        <p>A GSI is a separate automatically-maintained copy of your table with a different key. It's how you support a second access pattern without duplicating data manually.</p>
+        <pre><span class="cm">// "ByCollege" GSI lets you query all users for a college</span>
+<span class="kw">const</span> result = <span class="kw">await</span> client.<span class="fn">send</span>(<span class="kw">new</span> <span class="fn">QueryCommand</span>({
+  <span class="str">TableName</span>: <span class="str">"AppTable"</span>,
+  <span class="str">IndexName</span>: <span class="str">"ByCollege"</span>,
+  <span class="str">KeyConditionExpression</span>: <span class="str">"college_id = :cid"</span>,
+  <span class="str">ExpressionAttributeValues</span>: { <span class="str">":cid"</span>: { <span class="str">S</span>: <span class="str">"iit-hyd"</span> } }
+}));</pre>
+      </div>
+    </div>
+
+    <div class="toggle">
+      <div class="toggle-header" onclick="toggleSection(this)">
+        <span class="toggle-arrow">▶</span>
+        The update problem — denormalization's catch
+      </div>
+      <div class="toggle-body">
+        <div class="callout amber">
+          <span class="ico">⚠️</span>
+          <div>When a college renames itself: Postgres = 1 UPDATE. DynamoDB = update every user row that has the college name embedded. At 10,000 users, that's 10,000 writes.</div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- ROCKSDB -->
+    <div class="section-heading" id="rocksdb">
+      <div class="icon" style="background:var(--rock-bg)">🪨</div>
+      RocksDB (in Apache Flink)
+    </div>
+
+    <div class="img-block">
+      <img src="https://user-images.githubusercontent.com/1744885/88893058-01660700-d218-11ea-8a2a-1c5a55e3da95.png"
+           style="object-fit:contain;background:#1e1e2e;padding:24px;max-height:200px"
+           alt="RocksDB LSM tree structure" onerror="this.style.display='none';this.nextElementSibling.style.borderTop='none'">
+      <div class="img-caption">RocksDB uses an LSM-tree (Log Structured Merge tree) — optimised for write-heavy workloads by batching and merging writes</div>
+    </div>
+
+    <p>RocksDB is not a server you connect to. It's a <strong>library</strong> your application links against. There's no port, no protocol — it just reads and writes to local disk extremely fast.</p>
+
+    <p>In Flink, you set it as the state backend and then forget about it. Flink reads/writes RocksDB automatically whenever your job uses keyed state.</p>
+
+    <div class="callout green">
+      <span class="ico">✅</span>
+      <div>With the default HashMapStateBackend, your Flink state is limited by JVM heap (RAM). Switching to EmbeddedRocksDBStateBackend lets state spill to local SSD — enabling terabytes of state per task manager.</div>
+    </div>
+
+    <pre><span class="cm">// All you do in your Flink job:</span>
+StreamExecutionEnvironment env = StreamExecutionEnvironment.<span class="fn">getExecutionEnvironment</span>();
+env.<span class="fn">setStateBackend</span>(<span class="kw">new</span> <span class="fn">EmbeddedRocksDBStateBackend</span>());
+
+<span class="cm">// Now all ValueState / MapState / ListState lives on disk:</span>
+<span class="fn">ValueState</span>&lt;Long&gt; count = <span class="fn">getRuntimeContext</span>().<span class="fn">getState</span>(
+  <span class="kw">new</span> <span class="fn">ValueStateDescriptor</span>&lt;&gt;(<span class="str">"click-count"</span>, Long.<span class="kw">class</span>));</pre>
+
+    <div class="tabs">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="showTab('flink', 'join')">Simulating a JOIN in Flink</button>
+        <button class="tab-btn" onclick="showTab('flink', 'sql')">Flink SQL (easier)</button>
+      </div>
+      <div id="flink-join" class="tab-panel active">
+        <pre><span class="kw">public class</span> <span class="fn">UserCollegeJoin</span> <span class="kw">extends</span> <span class="fn">RichCoFlatMapFunction</span>&lt;User, College, String&gt; {
+  <span class="kw">private</span> <span class="fn">ValueState</span>&lt;User&gt;    userState;    <span class="cm">// stored in RocksDB</span>
+  <span class="kw">private</span> <span class="fn">ValueState</span>&lt;College&gt; collegeState; <span class="cm">// stored in RocksDB</span>
+
+  <span class="kw">public void</span> <span class="fn">flatMap1</span>(User u, Collector out) {
+    userState.<span class="fn">update</span>(u);
+    <span class="kw">if</span> (collegeState.<span class="fn">value</span>() != <span class="kw">null</span>)
+      out.<span class="fn">collect</span>(u.name + <span class="str">" | "</span> + collegeState.<span class="fn">value</span>().name);
+  }
+}</pre>
+      </div>
+      <div id="flink-sql" class="tab-panel">
+        <pre><span class="cm">-- Flink SQL temporal join — looks just like Postgres!</span>
+<span class="kw">SELECT</span> u.name, u.email, c.college_name
+<span class="kw">FROM</span>   users u
+<span class="kw">JOIN</span>   colleges c <span class="kw">FOR SYSTEM_TIME AS OF</span> u.proc_time
+  <span class="kw">ON</span>   u.college_id = c.college_id;
+
+<span class="cm">-- And views work too:</span>
+<span class="kw">CREATE VIEW</span> user_with_college <span class="kw">AS</span>
+  <span class="kw">SELECT</span> u.name, c.college_name
+  <span class="kw">FROM</span>  users u
+  <span class="kw">JOIN</span>  colleges c <span class="kw">FOR SYSTEM_TIME AS OF</span> u.proc_time
+    <span class="kw">ON</span>  u.college_id = c.college_id;</pre>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- DRUID -->
+    <div class="section-heading" id="druid">
+      <div class="icon" style="background:var(--druid-bg)">🔴</div>
+      Apache Druid
+    </div>
+
+    <div class="img-block">
+      <img src="https://druid.apache.org/img/druid_nav.png"
+           style="object-fit:contain;background:#fff;padding:20px;max-height:120px"
+           alt="Apache Druid logo" onerror="this.style.display='none';this.nextElementSibling.style.borderTop='none'">
+      <div class="img-caption">Apache Druid — sub-second OLAP queries on billions of rows. Used by Netflix, Airbnb, Flipkart.</div>
+    </div>
+
+    <p>Druid is an <strong>analytical database</strong> — built for dashboards, not app data. Three things make it different from everything else:</p>
+
+    <div class="db-grid" style="grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0">
+      <div style="border:1px solid var(--border2);border-radius:8px;padding:14px;border-top:3px solid var(--druid-color)">
+        <div style="font-size:13px;font-weight:600;color:var(--druid-color);margin-bottom:6px">1. Time is mandatory</div>
+        <div style="font-size:13px;color:var(--text2)">Every table needs a <code class="inline">__time</code> column. Data is physically partitioned by time on disk.</div>
+      </div>
+      <div style="border:1px solid var(--border2);border-radius:8px;padding:14px;border-top:3px solid var(--druid-color)">
+        <div style="font-size:13px;font-weight:600;color:var(--druid-color);margin-bottom:6px">2. Columnar storage</div>
+        <div style="font-size:13px;color:var(--text2)">Each column stored separately on disk. <code class="inline">SELECT SUM(x)</code> only reads the x file — all other columns skipped.</div>
+      </div>
+      <div style="border:1px solid var(--border2);border-radius:8px;padding:14px;border-top:3px solid var(--druid-color)">
+        <div style="font-size:13px;font-weight:600;color:var(--druid-color);margin-bottom:6px">3. Rollup at ingest</div>
+        <div style="font-size:13px;color:var(--text2)">1 billion raw events → pre-aggregated to 500 rows at ingest time. Queries hit the tiny pre-cooked result.</div>
+      </div>
+    </div>
+
+    <div class="callout blue">
+      <span class="ico">📌</span>
+      <div>Druid is not a replacement for Postgres. It cannot do the things Postgres does (complex joins, app writes, ACID). It does one thing: analytics on time-series data, blazing fast.</div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="showTab('druid', 'ingest')">Ingestion</button>
+        <button class="tab-btn" onclick="showTab('druid', 'rollup')">Rollup</button>
+        <button class="tab-btn" onclick="showTab('druid', 'query')">Queries</button>
+      </div>
+      <div id="druid-ingest" class="tab-panel active">
+        <pre><span class="kw">REPLACE INTO</span> <span class="str">"enrollments"</span> <span class="kw">USING</span> <span class="fn">TABLE</span>(<span class="fn">EXTERN</span>(...))
+<span class="kw">SELECT</span>
+  <span class="fn">TIME_PARSE</span>(<span class="str">"timestamp"</span>) <span class="kw">AS</span> <span class="str">"__time"</span>,  <span class="cm">-- always required</span>
+  <span class="str">"user_id"</span>,
+  <span class="str">"college_name"</span>,
+  <span class="str">"city"</span>,
+  <span class="str">"enrollments"</span>
+<span class="kw">FROM</span> <span class="fn">SOURCE</span>
+<span class="kw">PARTITIONED BY</span> <span class="fn">MONTH</span>; <span class="cm">-- Jan data separate from Feb data on disk</span></pre>
+      </div>
+      <div id="druid-rollup" class="tab-panel">
+        <pre><span class="cm">-- Instead of storing 1B raw events, pre-aggregate:</span>
+<span class="kw">SELECT</span>
+  <span class="fn">FLOOR</span>(__time <span class="kw">TO</span> <span class="fn">MONTH</span>) <span class="kw">AS</span> <span class="str">"__time"</span>,
+  <span class="str">"college_name"</span>,
+  <span class="str">"city"</span>,
+  <span class="fn">COUNT</span>(*)                <span class="kw">AS</span> <span class="str">"enrollments"</span>,
+  <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> user_id) <span class="kw">AS</span> <span class="str">"unique_users"</span>
+<span class="kw">FROM</span> <span class="fn">SOURCE</span>
+<span class="kw">GROUP BY</span> <span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>
+<span class="kw">PARTITIONED BY</span> <span class="fn">MONTH</span>;</pre>
+        <div class="callout green" style="margin-top:12px">
+          <span class="ico">🗜️</span>
+          <div>1 billion events + 500 college×month combos → stored as 500 rows. Dashboard queries become instant.</div>
+        </div>
+      </div>
+      <div id="druid-query" class="tab-panel">
+        <pre><span class="cm">-- Enrollments per college per month</span>
+<span class="kw">SELECT</span> <span class="fn">TIME_FLOOR</span>(__time, <span class="str">'P1M'</span>) <span class="kw">AS</span> month,
+       college_name,
+       <span class="fn">SUM</span>(enrollments) <span class="kw">AS</span> total
+<span class="kw">FROM</span>   enrollments
+<span class="kw">WHERE</span>  __time <span class="kw">BETWEEN</span> <span class="str">'2024-01-01'</span> <span class="kw">AND</span> <span class="str">'2024-12-31'</span>
+<span class="kw">GROUP BY</span> <span class="num">1</span>, <span class="num">2</span>
+<span class="kw">ORDER BY</span> month;
+
+<span class="cm">-- Druid-specific: approximate distinct count (much faster)</span>
+<span class="kw">SELECT</span> college_name,
+       <span class="fn">APPROX_COUNT_DISTINCT</span>(user_id) <span class="kw">AS</span> approx_users
+<span class="kw">FROM</span>   enrollments
+<span class="kw">GROUP BY</span> college_name;</pre>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- COLUMNAR STORAGE -->
+    <div class="section-heading" id="columnar">
+      <div class="icon" style="background:#f4f0fa">📊</div>
+      Columnar storage — visualised
+    </div>
+
+    <p>The single biggest reason Druid beats Postgres on analytics. Here's the same 4 rows stored both ways:</p>
+
+    <div class="storage-visual">
+      <div class="storage-box">
+        <div class="storage-box-header" style="background:var(--pg-bg);color:var(--pg-color)">
+          Postgres — row storage
+        </div>
+        <div class="storage-row-vis">
+          <div class="row-block" style="background:#2383e2">
+            <div class="cell" style="color:#fff">Jan</div>
+            <div class="cell" style="color:#fff">IIT Hyd</div>
+            <div class="cell" style="color:#fff">Hyd</div>
+            <div class="cell" style="color:#fff">2</div>
+          </div>
+          <div class="row-block" style="background:#378add">
+            <div class="cell" style="color:#fff">Jan</div>
+            <div class="cell" style="color:#fff">BITS</div>
+            <div class="cell" style="color:#fff">Pilani</div>
+            <div class="cell" style="color:#fff">1</div>
+          </div>
+          <div class="row-block" style="background:#2383e2">
+            <div class="cell" style="color:#fff">Feb</div>
+            <div class="cell" style="color:#fff">IIT Hyd</div>
+            <div class="cell" style="color:#fff">Hyd</div>
+            <div class="cell" style="color:#fff">1</div>
+          </div>
+          <div class="row-block" style="background:#378add">
+            <div class="cell" style="color:#fff">Feb</div>
+            <div class="cell" style="color:#fff">BITS</div>
+            <div class="cell" style="color:#fff">Pilani</div>
+            <div class="cell" style="color:#fff">1</div>
+          </div>
+        </div>
+        <div style="padding:0 12px 12px;font-size:12px;color:var(--red)">
+          SELECT SUM(enrollments) reads all 16 values
+        </div>
+      </div>
+
+      <div class="storage-box">
+        <div class="storage-box-header" style="background:var(--druid-bg);color:var(--druid-color)">
+          Druid — columnar storage
+        </div>
+        <div class="col-vis">
+          <div class="col-strip">
+            <div class="col-header" style="background:#f0f0ee;color:var(--text2)">__time</div>
+            <div class="col-val" style="background:var(--bg2)">Jan</div>
+            <div class="col-val" style="background:var(--bg2)">Jan</div>
+            <div class="col-val" style="background:var(--bg2)">Feb</div>
+            <div class="col-val" style="background:var(--bg2)">Feb</div>
+          </div>
+          <div class="col-strip">
+            <div class="col-header" style="background:#f0f0ee;color:var(--text2)">college</div>
+            <div class="col-val" style="background:var(--bg2)">IIT Hyd</div>
+            <div class="col-val" style="background:var(--bg2)">BITS</div>
+            <div class="col-val" style="background:var(--bg2)">IIT Hyd</div>
+            <div class="col-val" style="background:var(--bg2)">BITS</div>
+          </div>
+          <div class="col-strip" id="enroll-col">
+            <div class="col-header" style="background:var(--green-bg);color:var(--green)">enrollments ✓</div>
+            <div class="col-val" style="background:#d4f0ea;font-weight:600;color:var(--green)">2</div>
+            <div class="col-val" style="background:#d4f0ea;font-weight:600;color:var(--green)">1</div>
+            <div class="col-val" style="background:#d4f0ea;font-weight:600;color:var(--green)">1</div>
+            <div class="col-val" style="background:#d4f0ea;font-weight:600;color:var(--green)">1</div>
+          </div>
+        </div>
+        <div style="padding:0 12px 12px;font-size:12px;color:var(--green)">
+          SELECT SUM(enrollments) reads only 4 values
+        </div>
+      </div>
+    </div>
+
+    <div class="h2">Segments — how Druid partitions by time</div>
+    <p>Druid splits data into <strong>segments</strong>. Each segment is one time chunk (e.g. one month). A query with <code class="inline">WHERE __time &gt;= '2024-01-01'</code> only opens relevant segments.</p>
+
+    <div class="segment-row" id="segment-row">
+      <div class="segment-block" style="background:#fdecea;color:#c4302b;border-color:#f5b7b4" data-month="Jan 2024">Jan 2024</div>
+      <div class="segment-block" style="background:#fdecea;color:#c4302b;border-color:#f5b7b4" data-month="Feb 2024">Feb 2024</div>
+      <div class="segment-block" style="background:#efeeeb;color:#9b9a97;border-color:#d3d1c7" data-month="Mar 2024">Mar 2024</div>
+      <div class="segment-block" style="background:#efeeeb;color:#9b9a97;border-color:#d3d1c7" data-month="Apr 2024">Apr 2024</div>
+      <div class="segment-block" style="background:#efeeeb;color:#9b9a97;border-color:#d3d1c7" data-month="May 2024">May 2024</div>
+      <div class="segment-block" style="background:#efeeeb;color:#9b9a97;border-color:#d3d1c7" data-month="Jun 2024">Jun 2024</div>
+    </div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:8px" id="segment-label">
+      Query: <code class="inline">WHERE __time BETWEEN '2024-01-01' AND '2024-02-28'</code> → only red segments opened
+    </div>
+
+    <hr class="divider">
+
+    <!-- JOINS & VIEWS SUMMARY -->
+    <div class="section-heading" id="joins">
+      <div class="icon" style="background:#e8f3fd">🔗</div>
+      JOINs &amp; VIEWs — what each database can do
+    </div>
+
+    <div style="overflow-x:auto">
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Database</th>
+          <th>JOIN</th>
+          <th>VIEW</th>
+          <th>How to "join" instead</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="row-label" style="color:var(--pg-color)">PostgreSQL</td>
+          <td>✅ Any JOIN, any table</td>
+          <td>✅ Regular + materialized</td>
+          <td>Just use a JOIN</td>
+        </tr>
+        <tr>
+          <td class="row-label" style="color:var(--cas-color)">Cassandra</td>
+          <td>❌ Never</td>
+          <td>⚠️ Materialized view (risky)</td>
+          <td>Denormalize — embed related data in the row at write time</td>
+        </tr>
+        <tr>
+          <td class="row-label" style="color:var(--dyn-color)">DynamoDB</td>
+          <td>❌ Never</td>
+          <td>🔀 GSI (different key copy)</td>
+          <td>Embed in item, or fetch separately + join in app code</td>
+        </tr>
+        <tr>
+          <td class="row-label" style="color:var(--rock-color)">RocksDB/Flink</td>
+          <td>✅ Via Flink stream join</td>
+          <td>✅ Flink SQL CREATE VIEW</td>
+          <td>CoFlatMapFunction — store both sides in state, emit when both arrive</td>
+        </tr>
+        <tr>
+          <td class="row-label" style="color:var(--druid-color)">Druid</td>
+          <td>⚠️ Small lookup table only</td>
+          <td>✅ Query alias (no storage)</td>
+          <td>Embed at ingestion time, or use a Druid lookup</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <hr class="divider">
+
+    <!-- QUIZ -->
+    <div class="section-heading" id="quiz">
+      <div class="icon" style="background:#fdf4e7">🎯</div>
+      Quick quiz
+    </div>
+
+    <div class="quiz-card">
+      <div class="quiz-q" id="qtext">Q1 / 4 — You need to store IoT sensor data — 2 million writes per second from 50,000 devices. Which database?</div>
+      <div class="quiz-options" id="qopts"></div>
+      <div class="quiz-feedback" id="qfeedback"></div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- CHECKLIST -->
+    <div class="section-heading" id="checklist">
+      <div class="icon" style="background:#e8f5f2">✅</div>
+      Study checklist
+    </div>
+    <p style="color:var(--text2);font-size:14px">Click to mark topics as done.</p>
+
+    <ul class="checklist" id="checklist">
+      <li onclick="toggleCheck(this)"><div class="check-box"></div>Understand row vs columnar storage</li>
+      <li onclick="toggleCheck(this)"><div class="check-box"></div>Know when to use Postgres vs Cassandra</li>
+      <li onclick="toggleCheck(this)"><div class="check-box"></div>Understand Cassandra partition keys &amp; clustering columns</li>
+      <li onclick="toggleCheck(this)"><div class="check-box"></div>Understand DynamoDB single-table design &amp; GSIs</li>
+      <li onclick="toggleCheck(this)"><div class="check-box"></div>Set up EmbeddedRocksDBStateBackend in a Flink job</li>
+      <li onclick="toggleCheck(this)"><div class="check-box"></div>Write a Flink SQL temporal join</li>
+      <li onclick="toggleCheck(this)"><div class="check-box"></div>Ingest data into Druid with PARTITIONED BY MONTH</li>
+      <li onclick="toggleCheck(this)"><div class="check-box"></div>Explain what rollup does and why it speeds up queries</li>
+      <li onclick="toggleCheck(this)"><div class="check-box"></div>Explain why Druid columnar beats Postgres for SELECT SUM(...)</li>
+    </ul>
+
+    <div style="margin-top:16px;font-size:14px;color:var(--text3)" id="progress-label">0 / 9 done</div>
+
+  </div>
+</div>
+
+<script>
+  // Progress bar
+  window.addEventListener('scroll', () => {
+    const el = document.documentElement;
+    const pct = el.scrollTop / (el.scrollHeight - el.clientHeight);
+    document.getElementById('progressBar').style.transform = `scaleX(${pct})`;
+  });
+
+  // Sidebar toggle
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+  }
+  document.addEventListener('click', e => {
+    const sb = document.getElementById('sidebar');
+    if (!sb.contains(e.target) && !e.target.classList.contains('menu-btn')) {
+      sb.classList.remove('open');
+    }
+  });
+
+  // Scroll to section
+  function scrollTo(id) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // Active sidebar item
+  const sidebarLinks = document.querySelectorAll('.sidebar-item');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        sidebarLinks.forEach(l => l.classList.remove('active'));
+        const match = document.querySelector(`.sidebar-item[href="#${e.target.id}"]`);
+        if (match) match.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  document.querySelectorAll('.section-heading[id]').forEach(el => observer.observe(el));
+
+  // Tabs
+  function showTab(prefix, name) {
+    document.querySelectorAll(`[id^="${prefix}-"]`).forEach(el => {
+      el.classList.remove('active');
+    });
+    document.querySelectorAll(`.tab-btn`).forEach(btn => {
+      if (btn.closest('.tabs') === document.getElementById(`${prefix}-${name}`)?.closest('.tabs')) {
+        btn.classList.remove('active');
+      }
+    });
+    const panel = document.getElementById(`${prefix}-${name}`);
+    if (panel) {
+      panel.classList.add('active');
+      const btn = [...panel.closest('.tabs').querySelectorAll('.tab-btn')]
+        .find(b => b.getAttribute('onclick')?.includes(`'${name}'`));
+      if (btn) btn.classList.add('active');
+    }
+  }
+
+  // Toggles
+  function toggleSection(header) {
+    const body = header.nextElementSibling;
+    const arrow = header.querySelector('.toggle-arrow');
+    body.classList.toggle('open');
+    arrow.classList.toggle('open');
+  }
+
+  // Toggle check
+  function toggleCheck(li) {
+    li.classList.toggle('done');
+    if (li.classList.contains('done')) {
+      li.querySelector('.check-box').textContent = '✓';
+    } else {
+      li.querySelector('.check-box').textContent = '';
+    }
+    const total = document.querySelectorAll('#checklist li').length;
+    const done = document.querySelectorAll('#checklist li.done').length;
+    document.getElementById('progress-label').textContent = `${done} / ${total} done`;
+  }
+
+  // Quiz
+  const questions = [
+    {
+      q: "Q1 / 4 — You need to store IoT sensor data: 2 million writes per second from 50,000 devices. Which database?",
+      options: ["PostgreSQL", "Apache Cassandra", "DynamoDB", "Apache Druid"],
+      answer: 1,
+      feedback: "Cassandra is built exactly for this — massive distributed writes with no single master. It scales horizontally and handles millions of writes/sec."
+    },
+    {
+      q: "Q2 / 4 — You need to build a dashboard showing enrollment trends over the last 2 years with sub-second query times. 50 billion rows. Which database?",
+      options: ["PostgreSQL", "Apache Cassandra", "RocksDB", "Apache Druid"],
+      answer: 3,
+      feedback: "Druid — columnar storage, time-based partitioning, and rollup make billion-row analytics sub-second. Postgres would timeout on this query."
+    },
+    {
+      q: "Q3 / 4 — In Flink, your job needs to store user click counts across 10TB of state. The default state backend runs out of memory. What do you do?",
+      options: ["Move to Cassandra", "Switch to EmbeddedRocksDBStateBackend", "Add more RAM", "Use DynamoDB as state"],
+      answer: 1,
+      feedback: "EmbeddedRocksDBStateBackend spills state to local SSD, enabling terabytes of state per task manager. It's built into Flink — just one line to configure."
+    },
+    {
+      q: "Q4 / 4 — A college renames itself. In PostgreSQL this is one UPDATE. In DynamoDB (with college_name denormalized into user items), what happens?",
+      options: [
+        "One update — DynamoDB handles it automatically",
+        "You must update every user item that has the college_name",
+        "The view refreshes automatically",
+        "Use a transaction — it updates all at once"
+      ],
+      answer: 1,
+      feedback: "This is the update problem. Because DynamoDB has no joins, you embedded college_name into every user item. Now 10,000 users = 10,000 writes to update the name."
+    }
+  ];
+
+  let currentQ = 0;
+  let answered = false;
+
+  function renderQ() {
+    const q = questions[currentQ];
+    document.getElementById('qtext').textContent = q.q;
+    const opts = document.getElementById('qopts');
+    opts.innerHTML = '';
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-opt';
+      btn.textContent = opt;
+      btn.onclick = () => answerQ(i);
+      opts.appendChild(btn);
+    });
+    document.getElementById('qfeedback').classList.remove('show');
+    document.getElementById('qfeedback').textContent = '';
+    answered = false;
+  }
+
+  function answerQ(idx) {
+    if (answered) return;
+    answered = true;
+    const q = questions[currentQ];
+    const btns = document.querySelectorAll('.quiz-opt');
+    btns[idx].classList.add(idx === q.answer ? 'correct' : 'wrong');
+    btns[q.answer].classList.add('correct');
+
+    const fb = document.getElementById('qfeedback');
+    fb.textContent = (idx === q.answer ? '✅ Correct! ' : '❌ Not quite. ') + q.feedback;
+    fb.style.background = idx === q.answer ? 'var(--green-bg)' : 'var(--red-bg)';
+    fb.style.color = idx === q.answer ? 'var(--green)' : 'var(--red)';
+    fb.classList.add('show');
+
+    if (currentQ < questions.length - 1) {
+      setTimeout(() => {
+        currentQ++;
+        renderQ();
+      }, 2200);
+    } else {
+      setTimeout(() => {
+        fb.textContent = '🎉 All done! You know your databases.';
+        fb.style.background = 'var(--green-bg)';
+        fb.style.color = 'var(--green)';
+      }, 2200);
+    }
+  }
+
+  renderQ();
+</script>
+</body>
+</html>
