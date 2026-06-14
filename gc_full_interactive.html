@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java GC — Complete Interactive Notes</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#ffffff;--bg2:#f7f7f5;--bg3:#f1f1ef;
+  --text:#37352f;--text2:#6b6b68;--text3:#9b9b98;
+  --border:#e8e8e5;
+  --green:#0f7b6c;--green-bg:#edfaf7;
+  --red:#c0392b;--red-bg:#fef2f1;
+  --amber:#9c5a00;--amber-bg:#fef8ee;
+  --purple:#6e50a2;--purple-bg:#f4f0fc;
+  --blue:#2383e2;--blue-bg:#ebf3fc;
+  --font:'Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:15px;line-height:1.7}
+.page{max-width:900px;margin:0 auto;padding:60px 80px 120px}
+h1{font-size:40px;font-weight:700;letter-spacing:-0.5px;margin-bottom:8px}
+h2{font-size:24px;font-weight:600;margin:52px 0 16px;padding-bottom:8px;border-bottom:1.5px solid var(--border)}
+h3{font-size:18px;font-weight:600;margin:28px 0 10px}
+h4{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:20px 0 8px}
+p{margin-bottom:12px}
+ul,ol{padding-left:22px;margin-bottom:12px}
+li{margin-bottom:5px}
+strong{font-weight:600}
+.meta{display:flex;gap:10px;margin-bottom:36px;flex-wrap:wrap}
+.tag{font-size:12px;font-weight:500;padding:3px 10px;border-radius:4px;background:var(--bg3);color:var(--text2)}
+.tag.green{background:var(--green-bg);color:var(--green)}
+.tag.purple{background:var(--purple-bg);color:var(--purple)}
+.tag.amber{background:var(--amber-bg);color:var(--amber)}
+.tag.blue{background:var(--blue-bg);color:var(--blue)}
+.tag.red{background:var(--red-bg);color:var(--red)}
+.callout{display:flex;gap:12px;padding:14px 16px;border-radius:8px;margin:16px 0;font-size:14px;line-height:1.6}
+.callout-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.callout p{margin:0}
+.callout.info{background:var(--blue-bg)}
+.callout.green{background:var(--green-bg)}
+.callout.amber{background:var(--amber-bg)}
+.callout.red{background:var(--red-bg)}
+.callout.purple{background:var(--purple-bg)}
+pre{background:#1e1e2e;border-radius:8px;padding:16px 18px;margin:12px 0;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.8}
+code{font-family:var(--mono);font-size:13px;background:var(--bg3);padding:1px 5px;border-radius:4px;color:#c0392b}
+pre code{background:none;color:#cdd6f4;padding:0;font-size:12.5px}
+.cm{color:#6c7086}.cf{color:#89b4fa}.cv{color:#a6e3a1}.cc{color:#f38ba8}
+.table-wrap{overflow-x:auto;margin:16px 0;border-radius:8px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:var(--bg2);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
+td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg2)}
+.good{color:var(--green);font-weight:500}.bad{color:var(--red);font-weight:500}.mid{color:var(--amber);font-weight:500}
+.quote{border-left:3px solid var(--blue);padding:12px 16px;margin:16px 0;background:var(--blue-bg);border-radius:0 6px 6px 0;font-size:14px;font-style:italic;line-height:1.7}
+.quote-label{font-style:normal;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--blue);margin-bottom:6px}
+.divider{border:none;border-top:1px solid var(--border);margin:40px 0}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+.mini-card{background:var(--bg2);border-radius:8px;padding:14px 16px;font-size:13px}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:1px 7px;border-radius:4px;margin-left:4px;vertical-align:middle}
+.badge.red{background:var(--red-bg);color:var(--red)}
+.badge.green{background:var(--green-bg);color:var(--green)}
+.badge.blue{background:var(--blue-bg);color:var(--blue)}
+
+/* ── Shared interactive styles ── */
+.sim-box{background:var(--bg2);border-radius:10px;padding:20px;margin:20px 0;border:1px solid var(--border)}
+.sim-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:14px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+button{font-family:var(--font);font-size:13px;padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);cursor:pointer;transition:all .15s}
+button:hover{background:var(--bg3);border-color:#ccc}
+button:disabled{opacity:.4;cursor:not-allowed}
+.step-dots{display:flex;gap:6px;margin-bottom:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:background .2s}
+.dot.on{background:var(--purple)}
+.msg-bar{margin-top:10px;font-size:13px;color:var(--text2);min-height:20px;font-style:italic}
+
+/* ── Object grid (mark & sweep / tri-color) ── */
+.obj-grid{display:flex;flex-wrap:wrap;gap:7px;min-height:56px}
+.obj{width:52px;height:44px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:600;transition:all .4s;gap:2px}
+.obj .obj-id{font-size:9px;opacity:.7}
+.o-white{background:var(--bg);border:1.5px solid var(--border);color:var(--text3)}
+.o-gray{background:#d3d1c7;border:1.5px solid #888780;color:#2c2c2a}
+.o-black{background:#3C3489;border:1.5px solid #534AB7;color:#EEEDFE}
+.o-dead{background:var(--red-bg);border:1.5px solid #f0a0a0;color:var(--red);opacity:.5}
+.o-gone{opacity:0;transform:scale(.3);pointer-events:none}
+.o-alive{background:var(--green-bg);border:1.5px solid #a0d8cf;color:var(--green)}
+
+/* ── TLAB ── */
+.tlab-wrap{display:flex;gap:10px;flex-wrap:wrap}
+.tlab-thread{flex:1;min-width:150px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px}
+.tlab-label{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px}
+.tlab-slots{display:flex;gap:3px;flex-wrap:wrap}
+.slot{width:18px;height:18px;border-radius:3px;border:1px solid var(--border);background:var(--bg3);transition:all .25s}
+.slot.used{background:var(--green-bg);border-color:var(--green)}
+.slot.ptr{background:var(--purple);border-color:#3C3489}
+.slot.waste{background:var(--red-bg);border-color:#f0a0a0}
+.eden-bar-wrap{margin-top:14px}
+.eden-bar-label{font-size:12px;color:var(--text2);margin-bottom:4px}
+.bar-bg{background:var(--bg3);border-radius:4px;height:8px}
+.bar-fill{height:8px;border-radius:4px;transition:width .4s,background .4s}
+
+/* ── Safepoint ── */
+.sp-thread{margin-bottom:14px}
+.sp-thread-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.sp-name{font-size:13px;font-weight:500;color:var(--text)}
+.sp-badge{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500}
+.sp-badge.waiting{background:var(--amber-bg);color:var(--amber)}
+.sp-badge.ready{background:var(--green-bg);color:var(--green)}
+.sp-badge.running{background:var(--blue-bg);color:var(--blue)}
+.sp-track{background:var(--bg3);border-radius:5px;height:12px;overflow:hidden;position:relative}
+.sp-prog{height:12px;border-radius:5px;transition:width .08s linear}
+.sp-status-box{margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:500;transition:all .3s}
+
+/* ── Failure modes ── */
+.fail-card{border:1px solid var(--red);border-radius:8px;padding:14px 16px;margin-bottom:10px}
+.fail-title{font-size:13px;font-weight:600;color:var(--red);margin-bottom:6px}
+.fail-body{font-size:13px;color:var(--text2);line-height:1.6}
+.fail-body span{color:var(--text);font-weight:500}
+
+/* ── Write barrier ── */
+.wb-stage{display:flex;gap:12px;align-items:center;flex-wrap:wrap;min-height:100px}
+.wb-box{flex:1;min-width:130px;padding:12px 14px;border-radius:8px;text-align:center;border:1.5px solid var(--border);transition:all .4s}
+.wb-box .wb-title{font-size:12px;font-weight:600;margin-bottom:4px}
+.wb-box .wb-sub{font-size:11px;color:var(--text2)}
+.wb-arrow{font-size:22px;color:var(--text3);flex-shrink:0}
+
+/* ── Bar chart ── */
+.chart-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.chart-label{width:150px;flex-shrink:0;font-size:13px;color:var(--text2)}
+.chart-bar-wrap{flex:1;background:var(--bg3);border-radius:4px;height:22px;overflow:hidden}
+.chart-bar{height:22px;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:600;color:white;white-space:nowrap}
+.chart-val{font-size:12px;font-weight:600;color:var(--text);width:90px;flex-shrink:0}
+
+/* ── TOC ── */
+.toc{background:var(--bg2);border-radius:10px;padding:18px 22px;margin:24px 0 40px;font-size:14px}
+.toc-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:10px}
+.toc ol{margin:0;padding-left:18px}
+.toc li{margin-bottom:4px}
+.toc a{color:var(--text2);text-decoration:none}
+.toc a:hover{color:var(--blue);text-decoration:underline}
+
+/* ── Heap visual ── */
+.heap-visual{display:flex;height:56px;border-radius:8px;overflow:hidden;margin:14px 0}
+.heap-seg{display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:600}
+
+.flow{display:flex;gap:0;margin:20px 0;flex-wrap:wrap}
+.flow-step{flex:1;min-width:110px;text-align:center;padding:14px 8px;position:relative}
+.flow-step:not(:last-child)::after{content:'→';position:absolute;right:-8px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--text3)}
+.flow-icon{width:38px;height:38px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.flow-title{font-size:12px;font-weight:600;color:var(--text)}
+.flow-sub{font-size:11px;color:var(--text3);margin-top:2px}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+  <span style="font-size:40px">☕</span>
+  <div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:4px">Engineering Interview Prep</div>
+    <h1>Java Garbage Collection</h1>
+  </div>
+</div>
+<div class="meta">
+  <span class="tag purple">Senior SDE</span>
+  <span class="tag blue">Apple level</span>
+  <span class="tag green">1B rpm context</span>
+  <span class="tag amber">Fully interactive</span>
+</div>
+<div class="callout info">
+  <span class="callout-icon">💡</span>
+  <p><strong>Mental model:</strong> GC finds objects your code no longer references and frees their memory. The whole challenge is doing this without freezing your app for too long. Every section below has a live animation — click the buttons.</p>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <div class="toc-title">Contents</div>
+  <ol>
+    <li><a href="#s1">What GC does</a></li>
+    <li><a href="#s2">Mark &amp; sweep — animated</a></li>
+    <li><a href="#s3">Tri-color marking — step through</a></li>
+    <li><a href="#s4">Generational GC — live simulation</a></li>
+    <li><a href="#s5">G1 GC — regions &amp; remembered sets</a></li>
+    <li><a href="#s6">TLAB — allocation animation</a></li>
+    <li><a href="#s7">Write barrier — step through</a></li>
+    <li><a href="#s8">Safepoints — live thread simulation</a></li>
+    <li><a href="#s9">Failure modes</a></li>
+    <li><a href="#s10">ZGC vs G1 — comparison</a></li>
+    <li><a href="#s11">Commands cheatsheet</a></li>
+    <li><a href="#s12">What to say in the interview</a></li>
+  </ol>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="s1">1. What GC does</h2>
+<p>Every <code>new SomeObject()</code> puts an object on the <strong>heap</strong>. When nothing references it anymore, it's garbage — but sits in memory until GC removes it. The challenge: inspecting the heap safely while your app is running at full speed.</p>
+
+<div style="margin:16px 0">
+  <div style="font-size:12px;color:var(--text3);margin-bottom:6px">Heap layout — traditional generational design</div>
+  <div class="heap-visual">
+    <div class="heap-seg" style="flex:3;background:#0f7b6c">Eden</div>
+    <div class="heap-seg" style="flex:1;background:#2d6a4f">S0</div>
+    <div class="heap-seg" style="flex:1;background:#2d6a4f">S1</div>
+    <div class="heap-seg" style="flex:5;background:#6e50a2">Old generation</div>
+    <div class="heap-seg" style="flex:1;background:#9c5a00">Meta</div>
+  </div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:var(--text3)">
+    <span><span style="display:inline-block;width:10px;height:10px;background:#0f7b6c;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Young gen — collected often, fast</span>
+    <span><span style="display:inline-block;width:10px;height:10px;background:#6e50a2;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Old gen — collected rarely, expensive</span>
+    <span><span style="display:inline-block;width:10px;height:10px;background:#9c5a00;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Metaspace — class metadata</span>
+  </div>
+</div>
+
+<div class="table-wrap"><table>
+  <thead><tr><th>Term</th><th>Plain English</th><th>Impact</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Stop-the-world</strong></td><td>All app threads freeze while GC works</td><td class="bad">Causes latency spikes</td></tr>
+    <tr><td><strong>Minor GC</strong></td><td>Cleans only the young generation</td><td class="good">Fast — 1–20ms</td></tr>
+    <tr><td><strong>Full GC</strong></td><td>Cleans the entire heap</td><td class="bad">Can take seconds. Avoid.</td></tr>
+    <tr><td><strong>Promotion</strong></td><td>Object moves young → old gen</td><td class="mid">Too much = Full GC</td></tr>
+    <tr><td><strong>Allocation rate</strong></td><td>Bytes/sec your app creates</td><td class="mid">Main driver of GC frequency</td></tr>
+  </tbody>
+</table></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="s2">2. Mark &amp; Sweep — animated</h2>
+<p>Create objects, dereference some, then run GC to see exactly what happens.</p>
+
+<div class="sim-box">
+  <div class="sim-title">Live heap — create objects, mark some as garbage, run GC</div>
+  <div class="obj-grid" id="ms-grid"></div>
+  <div class="btn-row">
+    <button onclick="msSpawn()">+ Create objects</button>
+    <button onclick="msKill()">Dereference some</button>
+    <button onclick="msRun()">▶ Run GC</button>
+    <button onclick="msReset()">Reset</button>
+  </div>
+  <div class="msg-bar" id="ms-msg">Click "Create objects" to start</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="s3">3. Tri-color marking — step through</h2>
+<p>When GC marks concurrently (while your app runs), it uses three colors to track progress safely. Step through each phase:</p>
+
+<div class="sim-box">
+  <div class="sim-title" id="tri-title">Step 1 of 5 — starting state</div>
+  <div class="step-dots" id="tri-dots"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;font-size:12px">
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:var(--bg);border:1.5px solid var(--border);display:inline-block"></span>White — unknown</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:#d3d1c7;border:1.5px solid #888;display:inline-block"></span>Gray — found, scanning</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:#3C3489;border:1.5px solid #534AB7;display:inline-block"></span>Black — confirmed live</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:var(--red-bg);border:1.5px solid #f0a0a0;display:inline-block"></span>Red — garbage, deleted</span>
+  </div>
+  <div class="obj-grid" id="tri-grid"></div>
+  <div class="btn-row">
+    <button onclick="triMove(-1)">← Back</button>
+    <button onclick="triMove(1)">Next →</button>
+  </div>
+  <div class="msg-bar" id="tri-msg"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="s4">4. Generational GC — live simulation</h2>
+<p><strong>Key insight:</strong> most objects die young. GC exploits this by collecting the small young generation frequently (cheap) and the large old generation rarely (expensive).</p>
+
+<div class="sim-box">
+  <div class="sim-title">Simulate time passing — watch objects age and get promoted</div>
+  <div class="two-col">
+    <div>
+      <h4 style="color:var(--green)">Young generation</h4>
+      <div class="obj-grid" id="gen-young" style="min-height:80px"></div>
+    </div>
+    <div>
+      <h4 style="color:var(--purple)">Old generation</h4>
+      <div class="obj-grid" id="gen-old" style="min-height:80px"></div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button onclick="genTick()">▶ Tick (time passes)</button>
+    <button onclick="genReset()">Reset</button>
+  </div>
+  <div class="msg-bar" id="gen-msg">Click Tick to simulate time. Age shown on each object.</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="s5">5. G1 GC — heap regions &amp; remembered sets</h2>
+<p><strong>G1 = Garbage First</strong> — divides the heap into equal regions and collects the most garbage-dense ones first, keeping pauses bounded by a time budget.</p>
+
+<div class="callout info">
+  <span class="callout-icon">📦</span>
+  <p><strong>Why regions?</strong> Traditional GC had to collect the entire old gen at once — pauses scaled with heap size. G1 can collect any subset of regions, so pause = only as much work as fits in your time budget.</p>
+</div>
+
+<div class="sim-box">
+  <div class="sim-title">G1 region grid — collect the most garbage-dense regions</div>
+  <div id="g1-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px"></div>
+  <div class="btn-row">
+    <button onclick="g1Shuffle()">Shuffle regions</button>
+    <button onclick="g1Collect()">▶ Collect (Garbage First)</button>
+    <button onclick="g1Reset()">Reset</button>
+  </div>
+  <div class="msg-bar" id="g1-msg">Click Collect to see G1 pick highest-garbage regions first</div>
+</div>
+
+<h3>Pause budget — how G1 stays predictable</h3>
+<div style="margin:12px 0">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+    <label style="font-size:13px;color:var(--text2);min-width:160px">Pause target (ms): <strong id="bv">200</strong>ms</label>
+    <input type="range" min="50" max="500" step="10" value="200" id="budget-slider" style="flex:1" oninput="budgetUpdate()">
+  </div>
+  <div id="budget-regions" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"></div>
+  <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Estimated pause for selected regions:</div>
+  <div style="background:var(--bg3);border-radius:6px;height:22px;overflow:hidden">
+    <div id="budget-bar" style="height:22px;border-radius:6px;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:600;color:white;transition:width .5s,background .4s"></div>
+  </div>
+  <div class="msg-bar" id="budget-msg"></div>
+</div>
+
+<h3>Remembered sets (RSets)</h3>
+<p>If G1 only collects some regions, how does it know all objects pointing <em>into</em> those regions? Each region has its own <strong>RSet</strong> — a list of (other-region, card) pairs. During GC, only roots + RSets of collected regions are scanned — never the whole heap.</p>
+
+<div class="callout amber">
+  <span class="callout-icon">💸</span>
+  <p><strong>RSet cost:</strong> RSets consume 1–5% of heap. Write-heavy workloads that update many references force background "refinement threads" to continuously update RSets, costing CPU.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="s6">6. TLAB — why object allocation is nearly free</h2>
+<p>Each thread has its own private chunk of Eden called a <strong>Thread-Local Allocation Buffer</strong>. Allocating inside = just bumping a pointer. No locks, no coordination.</p>
+
+<div class="sim-box">
+  <div class="sim-title">Three threads, each with their own TLAB — allocate objects independently</div>
+  <div class="tlab-wrap" id="tlab-wrap"></div>
+  <div style="margin-top:14px">
+    <div class="eden-bar-label">Eden overall: <strong id="eden-pct">22</strong>% full</div>
+    <div class="bar-bg"><div class="bar-fill" id="eden-bar" style="width:22%;background:var(--green)"></div></div>
+  </div>
+  <div class="btn-row">
+    <button onclick="tlabAlloc(0)">Thread 1 allocates</button>
+    <button onclick="tlabAlloc(1)">Thread 2 allocates</button>
+    <button onclick="tlabAlloc(2)">Thread 3 allocates</button>
+    <button onclick="tlabReset()">Reset</button>
+  </div>
+  <div class="msg-bar" id="tlab-msg">Purple slot = bump pointer (next allocation lands here)</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="s7">7. Write barrier — keeping concurrent marking correct</h2>
+<p>Problem: your app mutates references while GC is mid-marking. A black object could get a new reference to a white (unscanned) object — GC would then delete that white object even though it's now reachable.</p>
+
+<div class="sim-box">
+  <div class="sim-title" id="wb-title">Write barrier — step through the problem and solution</div>
+  <div class="step-dots" id="wb-dots"></div>
+  <div id="wb-stage"></div>
+  <div class="btn-row">
+    <button onclick="wbMove(-1)">← Back</button>
+    <button onclick="wbMove(1)">Next →</button>
+  </div>
+  <div class="msg-bar" id="wb-msg"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="s8">8. Safepoints — the hidden latency source</h2>
+<p>Before GC can run, <em>every app thread</em> must reach a safepoint — a safe pause location. GC waits until the slowest thread arrives. Your total pause = GC work time + time waiting for that thread.</p>
+
+<div class="callout red">
+  <span class="callout-icon">🚨</span>
+  <p><strong>Thread C below has a long loop with no safepoint poll inside.</strong> Watch how GC must wait for it, even though the other threads are ready immediately. This "time-to-safepoint" is a real source of mysterious long pauses in production.</p>
+</div>
+
+<div class="sim-box">
+  <div class="sim-title">GC requests a safepoint — all threads must pause</div>
+  <div id="sp-threads"></div>
+  <div id="sp-status" class="sp-status-box" style="background:var(--amber-bg);color:var(--amber);margin-top:4px">
+    Waiting for GC request...
+  </div>
+  <div class="btn-row">
+    <button id="sp-btn" onclick="spStart()">▶ Request safepoint (simulate)</button>
+    <button onclick="spReset()">Reset</button>
+  </div>
+  <div class="msg-bar" id="sp-msg">Click the button to see all threads race to the safepoint</div>
+</div>
+
+<div class="table-wrap"><table>
+  <thead><tr><th>Hidden safepoint cause</th><th>Fix</th></tr></thead>
+  <tbody>
+    <tr><td>Long counted loops (no poll inside)</td><td><code>-XX:+UseCountedLoopSafepoints</code> (JDK 14+)</td></tr>
+    <tr><td>Biased lock revocation (pre-JDK 15)</td><td>Upgrade to JDK 15+ — biased locking removed</td></tr>
+    <tr><td><code>jmap -dump</code> on live process</td><td>Use <code>jcmd GC.heap_dump</code>, drain traffic first</td></tr>
+    <tr><td>Class redefinition / hot-reload</td><td>Dev only. Never in production.</td></tr>
+  </tbody>
+</table></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="s9">9. Failure modes</h2>
+
+<div class="callout red">
+  <span class="callout-icon">🔥</span>
+  <p><strong>Interview signal:</strong> Naming the exact failure mode + root cause separates senior from mid-level. Don't say "GC is slow" — say <em>which</em> failure and <em>why</em>.</p>
+</div>
+
+<div id="fail-cards"></div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="s10">10. ZGC vs G1 vs ParallelGC</h2>
+
+<div class="table-wrap"><table>
+  <thead><tr><th>Property</th><th>ParallelGC</th><th>G1 GC</th><th>ZGC</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Pause time</strong></td><td class="bad">Seconds possible</td><td class="mid">10–200ms</td><td class="good">&lt;1ms</td></tr>
+    <tr><td><strong>Throughput</strong></td><td class="good">Highest</td><td class="good">High</td><td class="mid">Slightly lower</td></tr>
+    <tr><td><strong>Max heap sweet spot</strong></td><td>Any</td><td class="mid">≤32GB best</td><td class="good">Terabytes</td></tr>
+    <tr><td><strong>Object relocation</strong></td><td>STW only</td><td>STW evacuation</td><td class="good">Concurrent</td></tr>
+    <tr><td><strong>Tuning needed</strong></td><td class="mid">Medium</td><td class="mid">Medium</td><td class="good">Mostly self-tuning</td></tr>
+    <tr><td><strong>Best for</strong></td><td>Batch jobs</td><td>APIs, mixed</td><td>Latency-critical</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Pause time — visual comparison</h3>
+<div style="margin:16px 0">
+  <div class="chart-row"><div class="chart-label">ParallelGC</div><div class="chart-bar-wrap"><div class="chart-bar" style="width:95%;background:#c0392b">seconds possible</div></div><div class="chart-val">2–5s</div></div>
+  <div class="chart-row"><div class="chart-label">G1 GC</div><div class="chart-bar-wrap"><div class="chart-bar" style="width:40%;background:#e67e22">50–200ms</div></div><div class="chart-val">~200ms</div></div>
+  <div class="chart-row"><div class="chart-label">Shenandoah</div><div class="chart-bar-wrap"><div class="chart-bar" style="width:5%;background:#2980b9"></div></div><div class="chart-val">&lt;5ms</div></div>
+  <div class="chart-row"><div class="chart-label">ZGC</div><div class="chart-bar-wrap"><div class="chart-bar" style="width:2%;background:#0f7b6c"></div></div><div class="chart-val">&lt;1ms</div></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="s11">11. Commands cheatsheet</h2>
+
+<h4>Build-time — paste into your service config</h4>
+<pre><code><span class="cm"># Baseline for latency-sensitive 1B rpm service</span>
+<span class="cf">-XX:+UseZGC</span>                              <span class="cm"># sub-ms pauses, JDK 17+</span>
+<span class="cf">-Xms</span><span class="cv">16g</span> <span class="cf">-Xmx</span><span class="cv">16g</span>                        <span class="cm"># lock heap, prevent resize pauses</span>
+<span class="cf">-XX:+AlwaysPreTouch</span>                      <span class="cm"># pre-fault pages at startup</span>
+<span class="cf">-Xlog:gc*:file=gc.log:time:filecount=5,filesize=20m</span>
+<span class="cf">-XX:+HeapDumpOnOutOfMemoryError</span>
+<span class="cf">-XX:HeapDumpPath</span>=<span class="cv">/tmp/oom.hprof</span>
+<span class="cf">-XX:+ExitOnOutOfMemoryError</span>              <span class="cm"># fail fast, let k8s restart</span>
+<span class="cf">-XX:+UseCountedLoopSafepoints</span>            <span class="cm"># reduce time-to-safepoint</span></code></pre>
+
+<h4>Runtime detection</h4>
+<pre><code><span class="cm"># Real-time GC stats (1s refresh). FGC should stay near 0.</span>
+<span class="cc">jstat</span> <span class="cf">-gcutil</span> <span class="cv">PID</span> <span class="cv">1000</span>
+
+<span class="cm"># Allocation flame graph (find what's creating the most objects)</span>
+<span class="cc">./asprof</span> <span class="cf">-e alloc -d 30 -f alloc.html</span> <span class="cv">PID</span>
+
+<span class="cm"># JFR deep recording on running process (no restart)</span>
+<span class="cc">jcmd</span> <span class="cv">PID</span> <span class="cf">JFR.start</span> <span class="cv">name=rec duration=120s filename=out.jfr</span>
+
+<span class="cm"># Heap state, native memory, active flags</span>
+<span class="cc">jcmd</span> <span class="cv">PID</span> <span class="cf">GC.heap_info</span>
+<span class="cc">jcmd</span> <span class="cv">PID</span> <span class="cf">VM.native_memory</span>
+<span class="cc">jcmd</span> <span class="cv">PID</span> <span class="cf">VM.flags</span></code></pre>
+
+<h4>Emergency — free memory in production</h4>
+<pre><code><span class="cm"># Option 1: trigger GC (causes pause — drain traffic first)</span>
+<span class="cc">jcmd</span> <span class="cv">PID</span> <span class="cf">GC.run</span>
+
+<span class="cm"># Option 2: heap dump then restart (safest at 1B rpm)</span>
+<span class="cc">jcmd</span> <span class="cv">PID</span> <span class="cf">GC.heap_dump</span> <span class="cv">/tmp/emergency.hprof</span>
+<span class="cm"># → restart pod, analyze dump offline in Eclipse MAT</span>
+
+<span class="cm"># Option 3: clear a cache via admin endpoint</span>
+<span class="cv">cache</span>.invalidateAll();</code></pre>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<h2 id="s12">12. What to say in the interview</h2>
+
+<div class="callout purple">
+  <span class="callout-icon">🎯</span>
+  <p><strong>What they're really testing:</strong> Can you reason about GC at system scale and connect JVM internals to user-facing latency? Listing flags is not the answer.</p>
+</div>
+
+<h3>Opening — set the stakes</h3>
+<div class="quote">
+  <div class="quote-label">Say this first</div>
+  "At 1 billion requests per minute, we're allocating 50–200 GB of objects per second. A 200ms GC pause means millions of requests queuing up or timing out. The design decision isn't just which collector — it's how to architect the service so GC pressure is minimal in the first place."
+</div>
+
+<h3>Collector choice</h3>
+<div class="quote">
+  <div class="quote-label">G1 vs ZGC</div>
+  "I'd default to ZGC on JDK 17+. The key difference: ZGC moves objects concurrently while requests are being served — pauses stay under a millisecond. G1 must stop the world to evacuate objects, so pause time scales with how much it moves."
+</div>
+
+<h3>Code-level design</h3>
+<div class="quote">
+  <div class="quote-label">What you'd actually change</div>
+  "I'd profile with async-profiler in allocation mode first. Usually 2–3 hotspots account for 80% of allocations — boxing primitives in maps, intermediate strings in hot paths, stream chains. For network payloads, DirectByteBuffer keeps large buffers off-heap entirely. The goal: make GC boring — infrequent minor collections, near-zero old-gen pressure."
+</div>
+
+<h3>Failure scenario</h3>
+<div class="quote">
+  <div class="quote-label">If they push harder</div>
+  "The failure mode I'd watch for is evacuation failure — G1 can't find free regions, falls back to full STW mark-compact, pauses for seconds. I'd prevent it: size the heap with 40–50% headroom, set InitiatingHeapOccupancyPercent=35 so concurrent marking starts early, and keep FGC count in jstat near zero as a prod signal."
+</div>
+
+<div class="table-wrap"><table>
+  <thead><tr><th>They ask</th><th>You say</th></tr></thead>
+  <tbody>
+    <tr><td>"What's a safepoint?"</td><td>A pause checkpoint every thread must reach before GC starts. Time-to-safepoint = hidden latency from the slowest thread.</td></tr>
+    <tr><td>"What's a write barrier?"</td><td>JIT-injected code on every reference write that keeps concurrent marking correct — logs overwritten references so GC re-scans them.</td></tr>
+    <tr><td>"What's TLAB?"</td><td>Each thread's private Eden chunk. Allocation = pointer bump, no locks. Nearly free.</td></tr>
+    <tr><td>"What's SATB?"</td><td>G1's technique: snapshot live refs at marking start, log overwrites, re-scan them. May retain floating garbage but never deletes live objects.</td></tr>
+    <tr><td>"Free memory in prod?"</td><td>Drain pod → jcmd GC.run → heap dump → restart. Analyze dump offline. Fix root cause in code.</td></tr>
+    <tr><td>"Show live GC stats?"</td><td>jstat -gcutil PID 1000 — updates every second, shows Eden %, Old gen %, Full GC count.</td></tr>
+  </tbody>
+</table></div>
+
+<div class="callout green">
+  <span class="callout-icon">✅</span>
+  <p><strong>The answer that wins the room:</strong> "I'd fix the allocation hotspot in code. Flags buy you time. Code changes save you permanently. GC tuning is the last resort, not the first."</p>
+</div>
+
+<hr class="divider">
+<div style="text-align:center;color:var(--text3);font-size:13px;padding-bottom:20px">Java GC Interactive Notes · Apple Senior SDE Interview Prep · 2025</div>
+
+</div><!-- /page -->
+
+<script>
+// ─────────────────────────────────────────────
+// SECTION 2: Mark & Sweep
+// ─────────────────────────────────────────────
+let msObjs=[];
+function msReset(){msObjs=[];document.getElementById('ms-grid').innerHTML='';document.getElementById('ms-msg').textContent='Click "Create objects" to start';}
+function msRender(){
+  const g=document.getElementById('ms-grid');g.innerHTML='';
+  msObjs.forEach((o,i)=>{
+    const d=document.createElement('div');
+    d.className='obj '+(o.gone?'o-gone':o.alive?'o-alive':'o-dead');
+    d.innerHTML=`<span>${o.alive?'live':'dead'}</span><span class="obj-id">#${i+1}</span>`;
+    g.appendChild(d);
+  });
+}
+function msSpawn(){
+  for(let i=0;i<8;i++) msObjs.push({alive:true,gone:false});
+  document.getElementById('ms-msg').textContent=`Heap: ${msObjs.filter(o=>!o.gone&&o.alive).length} live objects`;
+  msRender();
+}
+function msKill(){
+  const live=msObjs.filter(o=>o.alive&&!o.gone);
+  if(!live.length){document.getElementById('ms-msg').textContent='Create some objects first!';return;}
+  live.slice(0,Math.ceil(live.length*0.55)).forEach(o=>o.alive=false);
+  document.getElementById('ms-msg').textContent='Some references dropped — objects are now garbage (still in memory, just unreachable)';
+  msRender();
+}
+function msRun(){
+  const dead=msObjs.filter(o=>!o.alive&&!o.gone);
+  if(!dead.length){document.getElementById('ms-msg').textContent='No garbage to collect! Dereference some objects first.';return;}
+  dead.forEach(o=>o.gone=true);
+  document.getElementById('ms-msg').textContent=`GC freed ${dead.length} objects. ${msObjs.filter(o=>!o.gone&&o.alive).length} live objects remain.`;
+  msRender();
+}
+
+// ─────────────────────────────────────────────
+// SECTION 3: Tri-color marking
+// ─────────────────────────────────────────────
+const triSteps=[
+  {title:'Step 1/5 — starting state: all objects are white (unknown)',whites:[0,1,2,3,4,5,6,7,8,9],grays:[],blacks:[],dead:[],msg:'Every object starts white — GC has not examined any of them yet. All are candidates for deletion.'},
+  {title:'Step 2/5 — GC finds roots and marks them gray',whites:[2,3,5,6,7,9],grays:[0,1,4],blacks:[],dead:[],msg:'GC starts from roots (stack variables, static fields). Those objects become gray — found, but not yet fully scanned.'},
+  {title:'Step 3/5 — scanning gray objects, their children turn gray',whites:[5,7,9],grays:[2,3,4,6,8],blacks:[0,1],dead:[],msg:'Each gray object is fully scanned. Its referenced objects become gray. Once fully scanned, an object turns black — confirmed alive with all references processed.'},
+  {title:'Step 4/5 — marking complete',whites:[5,7,9],grays:[],blacks:[0,1,2,3,4,6,8],dead:[],msg:'No more gray objects. Everything is black (reachable = live) or still white (never reached = garbage). White objects are safe to delete.'},
+  {title:'Step 5/5 — sweep phase: delete white objects',whites:[],grays:[],blacks:[0,1,2,3,4,6,8],dead:[5,7,9],msg:'GC deletes all remaining white objects. Memory freed. Your app resumes. Total pause = time from step 1 to now.'},
+];
+let triStep=0;
+function triRender(){
+  const s=triSteps[triStep];
+  document.getElementById('tri-title').textContent=s.title;
+  document.getElementById('tri-msg').textContent=s.msg;
+  const dots=document.getElementById('tri-dots');
+  dots.innerHTML=triSteps.map((_,i)=>`<div class="dot ${i<=triStep?'on':''}"></div>`).join('');
+  const g=document.getElementById('tri-grid');g.innerHTML='';
+  for(let i=0;i<10;i++){
+    const d=document.createElement('div');
+    let cls='o-white',label='?';
+    if(s.blacks.includes(i)){cls='o-black';label='live';}
+    else if(s.grays.includes(i)){cls='o-gray';label='scan';}
+    else if(s.dead.includes(i)){cls='o-gone';label='';}
+    d.className=`obj ${cls}`;
+    d.innerHTML=`<span>${label}</span><span class="obj-id">#${i+1}</span>`;
+    g.appendChild(d);
+  }
+}
+function triMove(d){triStep=Math.max(0,Math.min(triSteps.length-1,triStep+d));triRender();}
+triRender();
+
+// ─────────────────────────────────────────────
+// SECTION 4: Generational GC
+// ─────────────────────────────────────────────
+let genYoung=[],genOld=[],genId=0;
+function genReset(){
+  genYoung=Array.from({length:8},()=>({id:++genId,age:0}));
+  genOld=[];
+  genRender();
+  document.getElementById('gen-msg').textContent='Click Tick. Objects age in young gen, survivors get promoted to old gen.';
+}
+function genTick(){
+  genYoung.forEach(o=>o.age++);
+  const promoted=genYoung.filter(o=>o.age>=4);
+  const survived=genYoung.filter(o=>o.age>0&&o.age<4);
+  const killed=genYoung.filter(o=>o.age===0||Math.random()<0.4&&o.age<3);
+  genYoung=survived.filter(o=>!killed.includes(o));
+  genOld.push(...promoted);
+  const news=3+Math.floor(Math.random()*3);
+  for(let i=0;i<news;i++) genYoung.push({id:++genId,age:0});
+  const msg=promoted.length?`${promoted.length} object(s) promoted to old gen (survived 4 GC cycles)`:'Young gen collected — most objects discarded, survivors aged';
+  document.getElementById('gen-msg').textContent=msg;
+  genRender();
+}
+function genRender(){
+  const yg=document.getElementById('gen-young'),og=document.getElementById('gen-old');
+  yg.innerHTML=genYoung.slice(0,12).map(o=>`<div class="obj o-alive" title="age ${o.age}"><span>age ${o.age}</span><span class="obj-id">#${o.id}</span></div>`).join('');
+  og.innerHTML=genOld.slice(0,8).map(o=>`<div class="obj o-black" title="promoted"><span>old</span><span class="obj-id">#${o.id}</span></div>`).join('')||'<span style="font-size:12px;color:var(--text3)">empty</span>';
+}
+genReset();
+
+// ─────────────────────────────────────────────
+// SECTION 5: G1 regions
+// ─────────────────────────────────────────────
+const roleColors={eden:{bg:'#edfaf7',border:'#0f7b6c',text:'#0f7b6c'},surv:{bg:'#f4f0fc',border:'#6e50a2',text:'#6e50a2'},old:{bg:'#fef2f1',border:'#c0392b',text:'#c0392b'},free:{bg:'var(--bg)',border:'var(--border)',text:'var(--text3)'}};
+let g1State=[];
+function g1Init(){
+  const layout=['eden','eden','eden','surv','old','old','old','free','eden','surv','old','free','free','old','eden','free'];
+  g1State=layout.map(r=>({role:r,pct:r==='free'?0:30+Math.floor(Math.random()*60)}));
+}
+function g1Render(cset){
+  const grid=document.getElementById('g1-grid');
+  grid.innerHTML=g1State.map((r,i)=>{
+    const c=roleColors[r.role];
+    const selected=cset&&cset.includes(i);
+    const outline=selected?`box-shadow:0 0 0 3px #2383e2`:'';
+    const bar=r.role!=='free'?`<div style="background:var(--bg3);border-radius:3px;height:5px;margin-top:4px"><div style="height:5px;border-radius:3px;background:${c.border};width:${r.pct}%"></div></div><div style="font-size:10px;opacity:.7">${r.pct}% garbage</div>`:'';
+    return `<div style="background:${c.bg};border:1.5px solid ${c.border};border-radius:8px;padding:10px;text-align:center;font-size:12px;font-weight:600;color:${c.text};transition:all .4s;${outline}">
+      ${r.role==='free'?'Free':r.role.charAt(0).toUpperCase()+r.role.slice(1)}${bar}</div>`;
+  }).join('');
+}
+function g1Shuffle(){
+  const roles=['eden','eden','eden','surv','old','old','old','free','eden','surv','old','free','free','old','eden','free'];
+  g1State=roles.map(r=>({role:r,pct:r==='free'?0:30+Math.floor(Math.random()*60)}));
+  g1Render();
+  document.getElementById('g1-msg').textContent='Heap reshuffled';
+}
+function g1Collect(){
+  const ranked=g1State.map((r,i)=>({...r,i})).filter(r=>r.role!=='free').sort((a,b)=>b.pct-a.pct);
+  const cset=ranked.slice(0,4).map(r=>r.i);
+  g1Render(cset);
+  document.getElementById('g1-msg').textContent='Blue outline = selected CSet (4 highest-garbage regions)';
+  setTimeout(()=>{
+    cset.forEach(i=>g1State[i]={role:'free',pct:0});
+    g1Render();
+    document.getElementById('g1-msg').textContent='✓ Collected — those regions are now free. Pause only proportional to CSet size, not whole heap.';
+  },1400);
+}
+function g1Reset(){g1Init();g1Render();document.getElementById('g1-msg').textContent='Click Collect to see G1 pick highest-garbage regions first';}
+g1Init();g1Render();
+
+// Budget slider
+const budgetRegs=[
+  {label:'Eden A',ms:8,type:'eden'},{label:'Eden B',ms:6,type:'eden'},
+  {label:'Survivor',ms:5,type:'surv'},{label:'Old 1',ms:40,type:'old'},
+  {label:'Old 2',ms:35,type:'old'},{label:'Old 3',ms:55,type:'old'},{label:'Old 4',ms:20,type:'old'}
+];
+function budgetUpdate(){
+  const budget=+document.getElementById('budget-slider').value;
+  document.getElementById('bv').textContent=budget;
+  let used=0;const sel=[];
+  [...budgetRegs].sort((a,b)=>b.ms-a.ms).forEach(r=>{if(used+r.ms<=budget){used+=r.ms;sel.push(r.label);}});
+  const tc={eden:'var(--green)',surv:'var(--purple)',old:'var(--amber)'};
+  document.getElementById('budget-regions').innerHTML=budgetRegs.map(r=>{
+    const in_=sel.includes(r.label);
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;border:1.5px solid ${in_?tc[r.type]:'var(--border)'};color:${in_?tc[r.type]:'var(--text3)'};opacity:${in_?1:.5}">${r.label}</div>
+      <span style="font-size:10px;color:var(--text3)">${r.ms}ms</span></div>`;
+  }).join('');
+  const pct=Math.min(100,Math.round(used/500*100));
+  const bar=document.getElementById('budget-bar');
+  bar.style.width=pct+'%';
+  bar.style.background=used>budget*.9?'#c0392b':used>budget*.6?'#e67e22':'#0f7b6c';
+  bar.textContent=used+'ms used';
+  document.getElementById('budget-msg').textContent=`${sel.length} regions selected · ${budget-used}ms headroom remaining`;
+}
+budgetUpdate();
+
+// ─────────────────────────────────────────────
+// SECTION 6: TLAB
+// ─────────────────────────────────────────────
+let tlabState=[{used:8,total:20},{used:4,total:20},{used:11,total:20}];
+let edenPct=22;
+function tlabRender(){
+  const wrap=document.getElementById('tlab-wrap');
+  wrap.innerHTML=tlabState.map((t,i)=>`
+    <div class="tlab-thread">
+      <div class="tlab-label">Thread ${i+1} — ${t.used}/${t.total} slots used</div>
+      <div class="tlab-slots">${Array.from({length:t.total},(_,j)=>{
+        const isPtr=j===t.used&&t.used<t.total;
+        const isFull=t.used>=t.total;
+        return `<div class="slot ${isPtr?'ptr':j<t.used?'used':''}" title="${isPtr?'bump pointer (next allocation here)':j<t.used?'allocated':'free'}"></div>`;
+      }).join('')}</div>
+      ${t.used>=t.total?`<div style="font-size:11px;color:var(--red);margin-top:6px">TLAB full — JVM will issue a new TLAB or trigger minor GC</div>`:''}
+    </div>`).join('');
+  const ep=Math.min(100,edenPct);
+  document.getElementById('eden-pct').textContent=ep;
+  const eb=document.getElementById('eden-bar');
+  eb.style.width=ep+'%';
+  eb.style.background=ep>85?'#c0392b':ep>60?'#e67e22':'#0f7b6c';
+}
+function tlabAlloc(t){
+  if(tlabState[t].used<tlabState[t].total){
+    tlabState[t].used++;edenPct=Math.min(100,edenPct+1.5);
+    document.getElementById('tlab-msg').textContent=`Thread ${t+1} allocated — just moved the bump pointer. No lock needed.`;
+  } else {
+    document.getElementById('tlab-msg').textContent=`Thread ${t+1}'s TLAB is full! JVM retires it and issues a fresh one from Eden.`;
+    tlabState[t].used=0;edenPct=Math.min(100,edenPct+3);
+  }
+  tlabRender();
+}
+function tlabReset(){tlabState=[{used:8,total:20},{used:4,total:20},{used:11,total:20}];edenPct=22;document.getElementById('tlab-msg').textContent='Purple slot = bump pointer (next allocation lands here)';tlabRender();}
+tlabRender();
+
+// ─────────────────────────────────────────────
+// SECTION 7: Write barrier
+// ─────────────────────────────────────────────
+let wbStep=0;
+const wbSteps=[
+  {
+    title:'Step 1/3 — the race condition: black object gets a new reference',
+    msg:'GC has already marked "Old Obj" black (all done with it). Meanwhile your app creates "New Obj" — which starts white (unseen). So far, no problem.',
+    stage(){return `<div class="wb-stage">
+      <div class="wb-box" style="background:#E6F1FB;border-color:#2383e2"><div class="wb-title" style="color:#2383e2">Black obj</div><div class="wb-sub">fully scanned by GC</div></div>
+      <div class="wb-arrow">→</div>
+      <div class="wb-box" style="background:var(--bg);border-color:var(--border)"><div class="wb-title" style="color:var(--text3)">New obj</div><div class="wb-sub">not yet seen (white)</div></div>
+    </div>`;}
+  },
+  {
+    title:'Step 2/3 — danger: app writes OldObj.ref = NewObj',
+    msg:'Your app just linked a black object to a white one. GC already scanned black and will never revisit it. New obj is reachable — but GC thinks it\'s garbage. If GC sweeps now, it deletes a live object → crash or data corruption.',
+    stage(){return `<div class="wb-stage">
+      <div class="wb-box" style="background:#E6F1FB;border-color:#2383e2"><div class="wb-title" style="color:#2383e2">Black obj</div><div class="wb-sub">points to New obj ↓</div></div>
+      <div class="wb-arrow" style="color:#c0392b">→</div>
+      <div class="wb-box" style="background:var(--red-bg);border-color:var(--red)"><div class="wb-title" style="color:var(--red)">⚠ New obj</div><div class="wb-sub">reachable but white — danger!</div></div>
+      <div class="wb-arrow">→</div>
+      <div class="wb-box" style="background:var(--red-bg);border-color:var(--red)"><div class="wb-title" style="color:var(--red)">GC would delete it</div><div class="wb-sub">even though it's live</div></div>
+    </div>`;}
+  },
+  {
+    title:'Step 3/3 — write barrier saves the day (SATB)',
+    msg:'The JIT injected a tiny check on every reference write — the write barrier. It detected a black→white link was created, and pushed New Obj onto a SATB queue. GC will re-scan it before sweeping. Object is safe. This is the cost of concurrent marking: a few extra instructions on every reference store.',
+    stage(){return `<div class="wb-stage">
+      <div class="wb-box" style="background:#E6F1FB;border-color:#2383e2"><div class="wb-title" style="color:#2383e2">Black obj</div><div class="wb-sub">reference written</div></div>
+      <div class="wb-arrow" style="color:#0f7b6c">→</div>
+      <div class="wb-box" style="background:#d3d1c7;border-color:#888780"><div class="wb-title" style="color:#2c2c2a">New obj → Gray</div><div class="wb-sub">rescued by write barrier</div></div>
+      <div class="wb-arrow">→</div>
+      <div class="wb-box" style="background:var(--green-bg);border-color:var(--green)"><div class="wb-title" style="color:var(--green)">GC re-scans it</div><div class="wb-sub">marked live. Safe. ✓</div></div>
+    </div>`;}
+  }
+];
+function wbRender(){
+  const s=wbSteps[wbStep];
+  document.getElementById('wb-title').textContent=s.title;
+  document.getElementById('wb-msg').textContent=s.msg;
+  document.getElementById('wb-dots').innerHTML=wbSteps.map((_,i)=>`<div class="dot ${i<=wbStep?'on':''}"></div>`).join('');
+  document.getElementById('wb-stage').innerHTML=s.stage();
+}
+function wbMove(d){wbStep=Math.max(0,Math.min(wbSteps.length-1,wbStep+d));wbRender();}
+wbRender();
+
+// ─────────────────────────────────────────────
+// SECTION 8: Safepoints
+// ─────────────────────────────────────────────
+let spRunning=false,spRaf=null;
+const spThreadDefs=[
+  {name:'Thread A',speed:2.2,note:'normal thread'},
+  {name:'Thread B',speed:1.8,note:'normal thread'},
+  {name:'Thread C',speed:0.35,note:'long loop — no safepoint poll inside',slow:true},
+];
+let spProgress=[0,0,0],spDone=[false,false,false],spStartTime=null;
+function spRenderStatic(){
+  document.getElementById('sp-threads').innerHTML=spThreadDefs.map((t,i)=>`
+    <div class="sp-thread">
+      <div class="sp-thread-header">
+        <span class="sp-name">${t.name} <span style="font-size:11px;color:${t.slow?'var(--red)':'var(--text3)'}">(${t.note})</span></span>
+        <span class="sp-badge ${spDone[i]?'ready':'waiting'}" id="sp-badge-${i}">${spDone[i]?'at safepoint ✓':'waiting...'}</span>
+      </div>
+      <div class="sp-track">
+        <div class="sp-prog" id="sp-prog-${i}" style="width:${spProgress[i]}%;background:${spDone[i]?'#0f7b6c':'#2383e2'}"></div>
+      </div>
+    </div>`).join('');
+}
+function spUpdateStatus(){
+  const allDone=spDone.every(Boolean);
+  const box=document.getElementById('sp-status');
+  if(allDone){
+    box.style.background='var(--green-bg)';box.style.color='var(--green)';
+    box.textContent='✓ All threads at safepoint — GC can now run safely';
+    document.getElementById('sp-msg').textContent=`Thread C was the bottleneck — your total pause included waiting ${Math.round(spProgress[2]/spThreadDefs[2].speed*0.008*1000)}ms extra just for it to reach the checkpoint.`;
+  } else {
+    const pending=spDone.filter(Boolean).length;
+    box.style.background='var(--amber-bg)';box.style.color='var(--amber)';
+    box.textContent=`${pending}/3 threads at safepoint — GC is blocked, your app is fully paused`;
+  }
+}
+function spAnimate(ts){
+  if(!spStartTime) spStartTime=ts;
+  let anyRunning=false;
+  spThreadDefs.forEach((t,i)=>{
+    if(!spDone[i]){
+      anyRunning=true;
+      spProgress[i]=Math.min(100,spProgress[i]+t.speed);
+      if(spProgress[i]>=100) spDone[i]=true;
+      const bar=document.getElementById('sp-prog-'+i);
+      const badge=document.getElementById('sp-badge-'+i);
+      if(bar) bar.style.width=spProgress[i]+'%';
+      if(bar) bar.style.background=spDone[i]?'#0f7b6c':'#2383e2';
+      if(badge&&spDone[i]){badge.textContent='at safepoint ✓';badge.className='sp-badge ready';}
+    }
+  });
+  spUpdateStatus();
+  if(anyRunning) spRaf=requestAnimationFrame(spAnimate);
+  else{spRunning=false;document.getElementById('sp-btn').disabled=false;}
+}
+function spStart(){
+  if(spRunning) return;
+  spRunning=true;spStartTime=null;
+  document.getElementById('sp-btn').disabled=true;
+  document.getElementById('sp-msg').textContent='Watch Thread C — it takes much longer because its loop has no safepoint check inside';
+  document.getElementById('sp-status').textContent='GC requested safepoint — waiting for all threads...';
+  spRaf=requestAnimationFrame(spAnimate);
+}
+function spReset(){
+  if(spRaf) cancelAnimationFrame(spRaf);
+  spRunning=false;spProgress=[0,0,0];spDone=[false,false,false];spStartTime=null;
+  document.getElementById('sp-btn').disabled=false;
+  document.getElementById('sp-status').style.background='var(--amber-bg)';
+  document.getElementById('sp-status').style.color='var(--amber)';
+  document.getElementById('sp-status').textContent='Waiting for GC request...';
+  document.getElementById('sp-msg').textContent='Click the button to see all threads race to the safepoint';
+  spRenderStatic();
+}
+spRenderStatic();
+
+// ─────────────────────────────────────────────
+// SECTION 9: Failure modes
+// ─────────────────────────────────────────────
+const failures=[
+  {title:'Evacuation failure',badge:'worst',what:"G1 can't find free regions to copy live objects into → falls back to full stop-the-world mark-compact.",why:'Heap too small, allocation rate too high, too many humongous objects.',effect:'Pause goes from milliseconds to seconds. All requests queue up.',fix:'Increase -Xmx. Set InitiatingHeapOccupancyPercent=35. Profile allocation rate.'},
+  {title:'Humongous object allocation',badge:'',what:'An object ≥ half a G1 region bypasses TLAB entirely and goes directly into old gen.',why:'Deserializing large payloads, large byte arrays, loading big files into memory.',effect:'Old gen fills faster, triggers more concurrent marking cycles, increases Full GC risk.',fix:'Stream data instead of loading all at once. Use DirectByteBuffer for large network buffers.'},
+  {title:'Reference processing lag',badge:'',what:'SoftReference / WeakReference caches force GC to process them all before sweeping — adds hundreds of ms.',why:'Guava Cache with SoftValues, image caches, custom lookup maps using SoftReference.',effect:'The "process references" GC phase stretches the pause unpredictably.',fix:'Use Caffeine (explicit size limits). Add -Xlog:gc+ref to see reference processing time.'},
+  {title:'Metaspace exhaustion',badge:'',what:'Metaspace (class metadata) fills up — triggers a full GC to unload unused classes.',why:'Dynamic class generation, hot-reload tools, Groovy scripting, heavy reflection frameworks.',effect:'Rare but brutal — causes a long STW pause followed by class unloading.',fix:'Set -XX:MaxMetaspaceSize. Profile class loading with JFR.'},
+];
+document.getElementById('fail-cards').innerHTML=failures.map(f=>`
+  <div class="fail-card">
+    <div class="fail-title">${f.title}${f.badge?` <span class="badge red">${f.badge}</span>`:''}</div>
+    <div class="fail-body">
+      <div style="margin-bottom:4px"><span>What is it:</span> ${f.what}</div>
+      <div style="margin-bottom:4px"><span>Root cause:</span> ${f.why}</div>
+      <div style="margin-bottom:4px"><span>Effect on app:</span> ${f.effect}</div>
+      <div><span>Fix:</span> ${f.fix}</div>
+    </div>
+  </div>`).join('');
+</script>
+</body>
+</html>
