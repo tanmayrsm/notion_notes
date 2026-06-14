@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Real-time Distributed Data Processing — Study Notes</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+:root {
+  --bg:#191919;--surface:#222222;--surface2:#2a2a2a;--border:#333333;
+  --text:#e8e6e0;--muted:#888680;--accent:#e8a838;
+  --green:#1D9E75;--blue:#3B82F6;--purple:#8B5CF6;
+  --coral:#E24B4A;--teal:#0F9E8A;--amber:#e8a838;--red:#E24B4A;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;line-height:1.7;padding-bottom:120px;}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:100;background:rgba(25,25,25,0.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:12px 40px;display:flex;align-items:center;gap:24px;overflow-x:auto;}
+.nav-brand{font-weight:700;font-size:14px;color:var(--green);white-space:nowrap;flex-shrink:0;}
+.nav-links{display:flex;gap:18px;}
+.nav-link{font-size:12px;color:var(--muted);text-decoration:none;white-space:nowrap;transition:color .2s;}
+.nav-link:hover{color:var(--text);}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,#191919 0%,#1a1f2e 50%,#191919 100%);padding:72px 40px 56px;border-bottom:1px solid var(--border);position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:-80px;right:-80px;width:400px;height:400px;background:radial-gradient(circle,rgba(29,158,117,0.12) 0%,transparent 70%);pointer-events:none;}
+.hero-eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--green);margin-bottom:14px;}
+.hero h1{font-size:clamp(26px,5vw,46px);font-weight:700;line-height:1.15;max-width:680px;margin-bottom:18px;}
+.hero h1 span{color:var(--green);}
+.hero-sub{color:var(--muted);font-size:15px;max-width:540px;margin-bottom:28px;}
+.tag-row{display:flex;flex-wrap:wrap;gap:8px;}
+.tag{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 12px;font-size:12px;font-weight:500;font-family:'JetBrains Mono',monospace;color:var(--muted);}
+.tag.hot{border-color:var(--green);color:var(--green);}
+
+/* PAGE */
+.page{max-width:900px;margin:0 auto;padding:0 40px;}
+
+/* TOC */
+.toc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin:32px 0 0;}
+.toc-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px 16px;cursor:pointer;transition:all .2s;text-decoration:none;color:var(--muted);font-size:13px;display:flex;align-items:center;gap:10px;}
+.toc-item:hover{border-color:var(--green);color:var(--text);transform:translateY(-1px);}
+.toc-num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--green);}
+
+/* SECTION */
+.section{margin-top:72px;}
+.section-label{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--green);margin-bottom:6px;}
+.section h2{font-size:26px;font-weight:700;margin-bottom:6px;line-height:1.2;}
+.section-sub{color:var(--muted);font-size:14px;margin-bottom:28px;}
+hr.divider{border:none;border-top:1px solid var(--border);margin:56px 0;}
+
+/* CALLOUT */
+.callout{background:var(--surface);border-left:3px solid var(--green);border-radius:8px;padding:14px 18px;margin:20px 0;font-size:14px;}
+.callout.amber{border-left-color:var(--amber);}
+.callout.coral{border-left-color:var(--coral);}
+.callout.blue{border-left-color:var(--blue);}
+.callout.purple{border-left-color:var(--purple);}
+.callout strong{color:var(--accent);}
+
+/* PROSE */
+.prose{font-size:15px;line-height:1.8;}
+.prose p{margin-bottom:14px;}
+.prose strong{color:#fff;font-weight:600;}
+.prose code{font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;color:var(--amber);}
+
+/* CODE BLOCK */
+.code-block{background:#111;border:1px solid var(--border);border-radius:10px;padding:18px 22px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;overflow-x:auto;margin:18px 0;color:#ccc;}
+.code-block .k{color:var(--purple);}
+.code-block .s{color:var(--green);}
+.code-block .c{color:var(--muted);font-style:italic;}
+.code-block .n{color:var(--amber);}
+
+/* CARDS */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:13px;margin:20px 0;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;transition:all .2s;}
+.card:hover{border-color:var(--green);transform:translateY(-2px);}
+.card-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:7px;}
+.card h3{font-size:15px;font-weight:600;margin-bottom:7px;}
+.card p{font-size:13px;color:var(--muted);line-height:1.6;}
+.card.green .card-label{color:var(--green);}
+.card.blue  .card-label{color:var(--blue);}
+.card.purple .card-label{color:var(--purple);}
+.card.coral  .card-label{color:var(--coral);}
+.card.amber  .card-label{color:var(--amber);}
+.card.teal   .card-label{color:var(--teal);}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;margin:20px 0;border-radius:10px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:var(--surface2);}
+th{text-align:left;padding:11px 15px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);}
+td{padding:11px 15px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5;}
+tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:var(--surface);}
+.cg{color:var(--green);font-weight:600;}.ca{color:var(--amber);font-weight:600;}.cc{color:var(--coral);font-weight:600;}
+.cp{color:var(--purple);font-weight:600;}.cb{color:var(--blue);font-weight:600;}.ct{color:var(--teal);font-weight:600;}
+
+/* BADGE */
+.badge{display:inline-block;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;}
+.bg{background:rgba(29,158,117,.15);color:var(--green);}
+.bc{background:rgba(226,75,74,.15);color:var(--coral);}
+.ba{background:rgba(232,168,56,.15);color:var(--amber);}
+.bp{background:rgba(139,92,246,.15);color:var(--purple);}
+.bb{background:rgba(59,130,246,.15);color:var(--blue);}
+.bt{background:rgba(15,158,138,.15);color:var(--teal);}
+
+/* INSIGHT BOX */
+.insight{background:linear-gradient(135deg,rgba(29,158,117,.08),rgba(29,158,117,.03));border:1px solid rgba(29,158,117,.3);border-radius:10px;padding:18px 22px;margin:20px 0;position:relative;overflow:hidden;}
+.insight::before{content:'💡';position:absolute;top:14px;right:18px;font-size:22px;opacity:.6;}
+.insight-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:7px;}
+.insight p{font-size:14px;line-height:1.7;}
+.insight strong{color:#fff;}
+
+/* DIAGRAM CONTAINER */
+.diagram{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 20px;margin:24px 0;overflow-x:auto;}
+.diagram-title{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:20px;}
+
+/* ANIMATED PIPELINE */
+.pipeline{display:flex;align-items:center;overflow-x:auto;padding-bottom:8px;}
+.pipe-node{flex-shrink:0;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:13px 16px;text-align:center;min-width:110px;}
+.pipe-node .pn-label{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px;}
+.pipe-node .pn-name{font-size:13px;font-weight:600;}
+.pipe-node .pn-sub{font-size:10px;color:var(--muted);margin-top:3px;}
+.pipe-node.kafka{border-color:var(--amber);}.pipe-node.kafka .pn-label{color:var(--amber);}
+.pipe-node.flink{border-color:var(--green);}.pipe-node.flink .pn-label{color:var(--green);}
+.pipe-node.spark{border-color:var(--coral);}.pipe-node.spark .pn-label{color:var(--coral);}
+.pipe-node.redis{border-color:var(--blue);}.pipe-node.redis .pn-label{color:var(--blue);}
+.pipe-node.cass{border-color:var(--purple);}.pipe-node.cass .pn-label{color:var(--purple);}
+.pipe-node.druid{border-color:var(--teal);}.pipe-node.druid .pn-label{color:var(--teal);}
+.pipe-arrow{flex-shrink:0;width:36px;display:flex;align-items:center;justify-content:center;position:relative;}
+.pipe-arrow::before{content:'';position:absolute;top:50%;left:0;width:100%;height:2px;background:linear-gradient(90deg,var(--border),var(--green));transform:translateY(-50%);}
+.pipe-arrow::after{content:'▶';font-size:9px;color:var(--green);position:relative;z-index:1;background:var(--surface);padding:0 2px;}
+.packet{position:absolute;top:50%;left:0;width:7px;height:7px;background:var(--green);border-radius:50%;transform:translateY(-50%);animation:travel 2.4s linear infinite;opacity:0;}
+@keyframes travel{0%{left:0%;opacity:0;}5%{opacity:1;}95%{opacity:1;}100%{left:100%;opacity:0;}}
+.pipe-arrow:nth-child(2) .packet{animation-delay:0s;}
+.pipe-arrow:nth-child(4) .packet{animation-delay:.4s;}
+.pipe-arrow:nth-child(6) .packet{animation-delay:.8s;}
+.pipe-arrow:nth-child(8) .packet{animation-delay:1.2s;}
+.pipe-arrow:nth-child(10) .packet{animation-delay:1.6s;}
+
+/* COMPARE GRID */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0;}
+@media(max-width:600px){.compare-grid{grid-template-columns:1fr;}}
+.compare-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;}
+.compare-panel h4{font-size:15px;font-weight:600;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.compare-panel.spark h4{color:var(--coral);}
+.compare-panel.flink h4{color:var(--green);}
+.compare-row{display:flex;align-items:flex-start;gap:9px;margin-bottom:9px;font-size:13px;}
+.compare-row .icon{flex-shrink:0;margin-top:1px;}
+
+/* TIMELINE VIZ (batch vs stream) */
+.tl-viz{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px;margin:18px 0;}
+.tl-header{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+.tl-track{display:flex;align-items:center;gap:6px;margin-bottom:10px;}
+.tl-name{width:72px;flex-shrink:0;color:var(--muted);font-size:11px;font-family:'JetBrains Mono',monospace;}
+.tl-bar{height:22px;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;}
+.tb-spark{background:rgba(226,75,74,.2);border:1px solid var(--coral);color:var(--coral);}
+.tb-flink{background:rgba(29,158,117,.2);border:1px solid var(--green);color:var(--green);}
+.tb-kafka{background:rgba(232,168,56,.2);border:1px solid var(--amber);color:var(--amber);}
+.tb-redis{background:rgba(59,130,246,.2);border:1px solid var(--blue);color:var(--blue);}
+.tb-cass{background:rgba(139,92,246,.2);border:1px solid var(--purple);color:var(--purple);}
+
+/* LEADERBOARD */
+.lb-demo{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:22px 0;max-width:460px;}
+.lb-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.lb-title{font-size:13px;font-weight:600;}
+.lb-live{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--coral);font-weight:600;font-family:'JetBrains Mono',monospace;}
+.lb-dot{width:6px;height:6px;background:var(--coral);border-radius:50%;animation:pulse 1s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.lb-row{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.lb-row:last-child{border-bottom:none;}
+.lb-rank{width:22px;text-align:center;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--muted);}
+.lb-rank.gold{color:#F6C94E;}.lb-rank.silver{color:#B0B8C1;}.lb-rank.bronze{color:#CD7F32;}
+.lb-team{flex:1;font-weight:500;}
+.lb-pts{font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--green);transition:color .3s;}
+.lb-pts.updated{animation:flash .6s ease;}
+@keyframes flash{0%{color:var(--amber);}100%{color:var(--green);}}
+.lb-delta{font-size:11px;color:var(--green);font-weight:600;min-width:28px;text-align:right;}
+.lb-ball{background:var(--surface2);border-radius:6px;padding:7px 11px;font-size:12px;margin-bottom:14px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.lb-ball .ev{color:var(--amber);font-weight:600;}
+.lb-btn{margin-top:14px;background:rgba(29,158,117,.15);border:1px solid var(--green);color:var(--green);border-radius:6px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;}
+.lb-btn:hover{background:rgba(29,158,117,.25);}
+
+/* CASSANDRA SCHEMA */
+.schema-box{background:#111;border:1px solid var(--border);border-radius:10px;padding:18px 22px;margin:18px 0;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.8;}
+.schema-box .sk{color:var(--purple);}.schema-box .ck{color:var(--blue);}
+.schema-box .col{color:var(--green);}.schema-box .kw{color:var(--amber);}
+.schema-box .cm{color:var(--muted);font-style:italic;}
+
+/* TIER STACK */
+.tier-stack{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin:22px 0;}
+.tier{border-radius:8px;padding:13px 16px;margin-bottom:9px;display:flex;align-items:center;gap:14px;font-size:13px;transition:transform .2s;}
+.tier:hover{transform:translateX(4px);}
+.tier-hot{background:rgba(29,158,117,.1);border:1px solid rgba(29,158,117,.3);}
+.tier-warm{background:rgba(232,168,56,.1);border:1px solid rgba(232,168,56,.3);}
+.tier-cold{background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);}
+.tier-hist{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);}
+.tier-icon{font-size:20px;flex-shrink:0;}
+.tier-name{font-weight:600;min-width:130px;}
+.tier-hot .tier-name{color:var(--green);}
+.tier-warm .tier-name{color:var(--amber);}
+.tier-cold .tier-name{color:var(--purple);}
+.tier-hist .tier-name{color:var(--blue);}
+.tier-detail{color:var(--muted);flex:1;font-size:12px;}
+.tier-lat{font-family:'JetBrains Mono',monospace;font-size:11px;margin-left:auto;flex-shrink:0;font-weight:600;}
+.tier-hot .tier-lat{color:var(--green);}
+.tier-warm .tier-lat{color:var(--amber);}
+.tier-cold .tier-lat{color:var(--purple);}
+.tier-hist .tier-lat{color:var(--blue);}
+
+/* USE CASE GRID */
+.uc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:13px;margin:20px 0;}
+.uc-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;transition:all .2s;}
+.uc-card:hover{border-color:var(--coral);transform:translateY(-2px);}
+.uc-icon{font-size:22px;margin-bottom:9px;}
+.uc-title{font-size:14px;font-weight:600;margin-bottom:5px;}
+.uc-company{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--coral);margin-bottom:8px;font-weight:600;}
+.uc-desc{font-size:12px;color:var(--muted);line-height:1.6;}
+
+/* DB GRID */
+.db-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:12px;margin:20px 0;}
+.db-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;transition:all .2s;}
+.db-card:hover{transform:translateY(-2px);}
+.db-name{font-size:15px;font-weight:700;margin-bottom:4px;}
+.db-model{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);margin-bottom:9px;}
+.db-good{font-size:12px;color:var(--green);margin-bottom:5px;line-height:1.6;}
+.db-bad{font-size:12px;color:var(--muted);line-height:1.6;}
+.db-card.redis{border-top:2px solid var(--blue);}
+.db-card.cass{border-top:2px solid var(--purple);}
+.db-card.druid{border-top:2px solid var(--teal);}
+.db-card.es{border-top:2px solid var(--amber);}
+.db-card.pg{border-top:2px solid #336791;}
+.db-card.rocks{border-top:2px solid var(--coral);}
+
+/* MATH BOX */
+.math-box{background:#111;border:1px solid var(--border);border-radius:10px;padding:18px 22px;font-family:'JetBrains Mono',monospace;font-size:13px;margin:18px 0;line-height:1.9;}
+.math-box .eq{color:var(--amber);}.math-box .res{color:var(--green);font-weight:600;}
+.math-box .cmt{color:var(--muted);font-style:italic;}
+
+/* TIMING BAR */
+.timing-bar{display:flex;height:26px;border-radius:6px;overflow:hidden;margin:14px 0;font-size:11px;font-family:'JetBrains Mono',monospace;}
+.tb-seg{display:flex;align-items:center;justify-content:center;font-weight:600;white-space:nowrap;overflow:hidden;}
+.tbs-flink{background:rgba(29,158,117,.5);color:var(--green);}
+.tbs-heap{background:rgba(29,158,117,.3);color:var(--green);}
+.tbs-redis{background:rgba(59,130,246,.5);color:var(--blue);}
+.tbs-cass{background:rgba(139,92,246,.3);color:var(--purple);}
+
+/* SCROLL REVEAL */
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .5s ease,transform .5s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+
+/* ROCKS DIAGRAM */
+.rocks-diagram{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin:22px 0;}
+.rocks-worker{background:var(--surface2);border:2px dashed var(--green);border-radius:10px;padding:18px;margin-bottom:14px;position:relative;}
+.rocks-worker::before{content:'Flink TaskManager (worker)';position:absolute;top:-10px;left:14px;background:var(--surface2);padding:0 8px;font-size:10px;color:var(--green);font-weight:600;font-family:'JetBrains Mono',monospace;}
+.rocks-inner{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px;}
+.rocks-box{background:rgba(226,75,74,.1);border:1px solid rgba(226,75,74,.3);border-radius:8px;padding:12px;text-align:center;}
+.rocks-box .rb-name{font-size:12px;font-weight:600;color:var(--coral);margin-bottom:6px;}
+.rocks-box .rb-data{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;line-height:1.6;}
+.rocks-checkpoint{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:12px;display:flex;align-items:center;gap:12px;font-size:13px;}
+.rocks-checkpoint .rc-icon{font-size:20px;flex-shrink:0;}
+.rocks-checkpoint .rc-text strong{color:var(--blue);}
+.rocks-checkpoint .rc-text{font-size:13px;}
+
+/* FLINK INTERNALS */
+.flink-diagram{background:var(--surface);border:2px dashed var(--green);border-radius:12px;padding:24px;margin:22px 0;position:relative;}
+.flink-diagram::before{content:'Flink Job — always running 24x7';position:absolute;top:-11px;left:18px;background:var(--surface);padding:0 8px;font-size:10px;color:var(--green);font-weight:600;font-family:'JetBrains Mono',monospace;}
+.flink-op{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 15px;display:flex;align-items:center;gap:13px;font-size:13px;margin-bottom:8px;transition:border-color .2s;}
+.flink-op:hover{border-color:var(--green);}
+.fop-icon{font-size:17px;flex-shrink:0;}
+.fop-name{font-weight:600;min-width:150px;}
+.fop-desc{color:var(--muted);font-size:12px;}
+.fop-tag{margin-left:auto;flex-shrink:0;}
+.flink-arrow{text-align:center;color:var(--muted);font-size:12px;margin:2px 0;}
+
+/* HISTOGRAM */
+.hist-wrap{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin:18px 0;}
+.hist-title{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+.hist-bars{display:flex;align-items:flex-end;gap:6px;height:90px;padding:0 2px;}
+.hist-bw{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;}
+.hist-b{width:100%;border-radius:4px 4px 0 0;background:rgba(29,158,117,.35);border:1px solid var(--green);}
+.hist-l{font-size:9px;color:var(--muted);font-family:'JetBrains Mono',monospace;white-space:nowrap;text-align:center;}
+.hist-count{font-size:9px;color:var(--green);font-weight:600;text-align:center;margin-top:2px;}
+
+@media(max-width:640px){
+  .hero,.page{padding-left:20px;padding-right:20px;}
+  .nav{padding:10px 20px;}
+  .rocks-inner{grid-template-columns:1fr;}
+  .compare-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <span class="nav-brand">⚡ Distributed Systems</span>
+  <div class="nav-links">
+    <a class="nav-link" href="#s1">Big Picture</a>
+    <a class="nav-link" href="#s2">Kafka</a>
+    <a class="nav-link" href="#s3">Flink + RocksDB</a>
+    <a class="nav-link" href="#s4">Spark</a>
+    <a class="nav-link" href="#s5">Leaderboard</a>
+    <a class="nav-link" href="#s6">Storage</a>
+    <a class="nav-link" href="#s7">DB Guide</a>
+    <a class="nav-link" href="#s8">Interview</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="page">
+    <div class="hero-eyebrow">Senior SDE — System Design Notes</div>
+    <h1>Real-time Distributed<br/><span>Data Processing</span></h1>
+    <p class="hero-sub">Kafka, Flink, RocksDB, Spark, Redis, Cassandra, Druid — internals, tradeoffs, and Dream11-level real use cases for MAANG interviews.</p>
+    <div class="tag-row">
+      <span class="tag hot">Kafka</span><span class="tag hot">Flink</span><span class="tag hot">RocksDB</span>
+      <span class="tag hot">Spark</span><span class="tag">Redis</span><span class="tag">Cassandra</span>
+      <span class="tag">Druid</span><span class="tag">Elasticsearch</span><span class="tag">Kafka Streams</span>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div style="margin-top:36px;">
+    <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Contents</div>
+    <div class="toc-grid">
+      <a class="toc-item" href="#s1"><span class="toc-num">01</span>Big Picture</a>
+      <a class="toc-item" href="#s2"><span class="toc-num">02</span>Kafka — The Highway</a>
+      <a class="toc-item" href="#s3"><span class="toc-num">03</span>Flink + RocksDB</a>
+      <a class="toc-item" href="#s4"><span class="toc-num">04</span>Spark Use Cases</a>
+      <a class="toc-item" href="#s5"><span class="toc-num">05</span>Leaderboard Design</a>
+      <a class="toc-item" href="#s6"><span class="toc-num">06</span>Storage Strategy</a>
+      <a class="toc-item" href="#s7"><span class="toc-num">07</span>DB Decision Guide</a>
+      <a class="toc-item" href="#s8"><span class="toc-num">08</span>Interview Answers</a>
+    </div>
+  </div>
+
+<!-- ══════════════════════ 01 BIG PICTURE ══════════════════════ -->
+<div class="section reveal" id="s1">
+  <div class="section-label">Section 01</div>
+  <h2>The Big Picture</h2>
+  <p class="section-sub">One mental model — city water infrastructure</p>
+
+  <div class="callout">
+    <strong>Mental model:</strong> Data = water. User clicks / score APIs = taps. Kafka = pipe network. Flink/Spark = treatment plants. Redis/Cassandra = water tanks serving homes. Each component has one job it does best.
+  </div>
+
+  <div class="diagram">
+    <div class="diagram-title">End-to-end pipeline — Dream11 live match (animated)</div>
+    <div class="pipeline">
+      <div class="pipe-node"><div class="pn-label">Sources</div><div class="pn-name">Events</div><div class="pn-sub">clicks, scores, payments</div></div>
+      <div class="pipe-arrow"><div class="packet"></div></div>
+      <div class="pipe-node kafka"><div class="pn-label">Broker</div><div class="pn-name">Kafka</div><div class="pn-sub">highway, durable log</div></div>
+      <div class="pipe-arrow"><div class="packet"></div></div>
+      <div class="pipe-node flink"><div class="pn-label">Stream</div><div class="pn-name">Flink</div><div class="pn-sub">live scores, fraud</div></div>
+      <div class="pipe-arrow"><div class="packet"></div></div>
+      <div class="pipe-node redis"><div class="pn-label">Serve</div><div class="pn-name">Redis</div><div class="pn-sub">live leaderboard</div></div>
+      <div class="pipe-arrow"><div class="packet"></div></div>
+      <div class="pipe-node cass"><div class="pn-label">Store</div><div class="pn-name">Cassandra</div><div class="pn-sub">delta log</div></div>
+      <div class="pipe-arrow"><div class="packet"></div></div>
+      <div class="pipe-node druid"><div class="pn-label">Analyse</div><div class="pn-name">Druid</div><div class="pn-sub">historical queries</div></div>
+    </div>
+  </div>
+
+  <div class="callout amber"><strong>Parallel Spark path:</strong> Kafka → S3 dump → Spark (nightly) → Data Warehouse → ML models, reports, ETL. Runs in minutes/hours, never touches the live path above.</div>
+
+  <div class="card-grid">
+    <div class="card green"><div class="card-label">Layer 1 — Ingest</div><h3>Kafka</h3><p>All events land here first. Multiple consumers read independently at their own pace. 7-day replay window. Durable. Ordered.</p></div>
+    <div class="card coral"><div class="card-label">Layer 2 — Process</div><h3>Flink / Spark</h3><p>Flink for millisecond reactions. Spark for heavy batch. Pick based purely on latency requirement — not preference.</p></div>
+    <div class="card blue"><div class="card-label">Layer 3 — Serve</div><h3>Redis + Cassandra + Druid</h3><p>Redis for live reads (&lt;1ms). Cassandra for entity history. Druid for analytics. Never one DB for everything.</p></div>
+  </div>
+</div>
+
+<hr class="divider"/>
+
+<!-- ══════════════════════ 02 KAFKA ══════════════════════ -->
+<div class="section reveal" id="s2">
+  <div class="section-label">Section 02</div>
+  <h2>Kafka — The Highway</h2>
+  <p class="section-sub">Every event flows here before anything else touches it</p>
+
+  <div class="prose">
+    <p><strong>What it is:</strong> A durable, ordered, append-only log. Every event published stays there for a configurable time (7 days default). Any consumer can read from any offset — independently, without blocking others.</p>
+    <p><strong>Why not send directly to each service?</strong> Without Kafka, the score API would push to leaderboard + fraud + notifications + analytics simultaneously. One slow consumer blocks all. One crash loses the event. Kafka decouples producers from consumers completely.</p>
+  </div>
+
+  <!-- Kafka fanout diagram as HTML -->
+  <div class="diagram">
+    <div class="diagram-title">Kafka fan-out — one ball event, four independent consumers</div>
+    <div style="display:grid;grid-template-columns:1fr 60px 1fr 60px 1fr;gap:0;align-items:center;">
+      <div style="background:rgba(232,168,56,.1);border:1px solid var(--amber);border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:10px;color:var(--amber);font-weight:600;margin-bottom:5px;">PRODUCER</div>
+        <div style="font-size:14px;font-weight:600;">Score API</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">{ player:"Rohit", runs:6, over:"12.3" }</div>
+      </div>
+      <div style="text-align:center;font-size:18px;color:var(--amber);">→</div>
+      <div style="background:rgba(232,168,56,.15);border:2px solid var(--amber);border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:10px;color:var(--amber);font-weight:600;margin-bottom:4px;">KAFKA TOPIC</div>
+        <div style="font-size:15px;font-weight:700;">match-events</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;">partitioned · ordered · durable · replayable</div>
+      </div>
+      <div style="text-align:center;font-size:18px;color:var(--amber);">→</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="background:var(--surface2);border:1px solid var(--green);border-radius:7px;padding:9px 12px;font-size:12px;"><span style="color:var(--green);font-weight:600;">Consumer 1</span> Flink — leaderboard</div>
+        <div style="background:var(--surface2);border:1px solid var(--coral);border-radius:7px;padding:9px 12px;font-size:12px;"><span style="color:var(--coral);font-weight:600;">Consumer 2</span> Flink — fraud</div>
+        <div style="background:var(--surface2);border:1px solid var(--purple);border-radius:7px;padding:9px 12px;font-size:12px;"><span style="color:var(--purple);font-weight:600;">Consumer 3</span> Kafka Streams — enrich</div>
+        <div style="background:var(--surface2);border:1px solid var(--blue);border-radius:7px;padding:9px 12px;font-size:12px;"><span style="color:var(--blue);font-weight:600;">Consumer 4</span> Spark — analytics</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight">
+    <div class="insight-label">Key mental model</div>
+    <p>Kafka is <strong>not a database</strong>. It's a durable ordered log — like a newspaper that never goes out of print. Consumers track which "page" (offset) they've read up to. They can re-read from any point in history without affecting other consumers.</p>
+  </div>
+</div>
+
+<hr class="divider"/>
+
+<!-- ══════════════════════ 03 FLINK + ROCKSDB ══════════════════════ -->
+<div class="section reveal" id="s3">
+  <div class="section-label">Section 03</div>
+  <h2>Flink + RocksDB — The Surgeon</h2>
+  <p class="section-sub">True streaming with stateful memory — this is the core of the live leaderboard</p>
+
+  <!-- Spark vs Flink processing model -->
+  <div class="tl-viz">
+    <div class="tl-header">Spark (micro-batch) vs Flink (true streaming) — processing model</div>
+    <div style="font-size:12px;color:var(--coral);font-weight:600;margin-bottom:8px;">Spark — waits, accumulates, then fires</div>
+    <div style="display:flex;gap:4px;margin-bottom:16px;">
+      <div style="background:rgba(226,75,74,.2);border:1px solid var(--coral);border-radius:4px;padding:6px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--coral);">batch 1</div>
+      <div style="background:rgba(226,75,74,.2);border:1px solid var(--coral);border-radius:4px;padding:6px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--coral);">batch 2</div>
+      <div style="background:rgba(226,75,74,.2);border:1px solid var(--coral);border-radius:4px;padding:6px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--coral);">batch 3</div>
+      <div style="background:rgba(226,75,74,.2);border:1px solid var(--coral);border-radius:4px;padding:6px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--coral);">batch 4</div>
+      <div style="font-size:11px;color:var(--muted);align-self:center;margin-left:4px;">→ fires every 1–5s</div>
+    </div>
+    <div style="font-size:12px;color:var(--green);font-weight:600;margin-bottom:8px;">Flink — each event processed the instant it arrives</div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:100%;background:var(--surface2);border-radius:4px;height:28px;position:relative;overflow:hidden;">
+        <div style="position:absolute;display:flex;gap:0;height:100%;align-items:center;">
+          <div class="event-dot" style="width:8px;height:8px;background:var(--green);border-radius:50%;margin:0 14px;animation:blink 1.8s infinite 0s;"></div>
+          <div class="event-dot" style="width:8px;height:8px;background:var(--green);border-radius:50%;margin:0 14px;animation:blink 1.8s infinite .3s;"></div>
+          <div class="event-dot" style="width:8px;height:8px;background:var(--green);border-radius:50%;margin:0 14px;animation:blink 1.8s infinite .6s;"></div>
+          <div class="event-dot" style="width:8px;height:8px;background:var(--green);border-radius:50%;margin:0 14px;animation:blink 1.8s infinite .9s;"></div>
+          <div class="event-dot" style="width:8px;height:8px;background:var(--green);border-radius:50%;margin:0 14px;animation:blink 1.8s infinite 1.2s;"></div>
+          <div class="event-dot" style="width:8px;height:8px;background:var(--green);border-radius:50%;margin:0 14px;animation:blink 1.8s infinite 1.5s;"></div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);white-space:nowrap;">each = one event processed immediately</div>
+    </div>
+  </div>
+  <style>@keyframes blink{0%,100%{opacity:.2;transform:scale(1);}50%{opacity:1;transform:scale(1.4);}}</style>
+
+  <h3 style="font-size:18px;font-weight:600;margin:28px 0 14px;">What happens inside Flink per ball — every operator</h3>
+
+  <div class="flink-diagram">
+    <div class="flink-op">
+      <span class="fop-icon">📥</span>
+      <span class="fop-name">Source operator</span>
+      <span class="fop-desc">Reads from Kafka topic, deserializes JSON. { player:"Rohit", runs:6, over:"12.3" }</span>
+      <span class="fop-tag"><span class="badge ba">~1ms</span></span>
+    </div>
+    <div class="flink-arrow">▼</div>
+    <div class="flink-op">
+      <span class="fop-icon">🔑</span>
+      <span class="fop-name">keyBy(playerId)</span>
+      <span class="fop-desc">Hashes playerId → routes to consistent worker. ALL Rohit events always go to Worker 3. Enables parallel processing without race conditions.</span>
+      <span class="fop-tag"><span class="badge bg">routing</span></span>
+    </div>
+    <div class="flink-arrow">▼</div>
+    <div class="flink-op">
+      <span class="fop-icon">💾</span>
+      <span class="fop-name">RocksDB state store</span>
+      <span class="fop-desc">Local embedded DB on the worker. Reads Rohit's current state (48pts), updates to 54pts, writes back. <strong>No network call. No external DB.</strong> This is why Flink is fast.</span>
+      <span class="fop-tag"><span class="badge bg">in-process</span></span>
+    </div>
+    <div class="flink-arrow">▼</div>
+    <div class="flink-op">
+      <span class="fop-icon">📡</span>
+      <span class="fop-name">Broadcast state lookup</span>
+      <span class="fop-desc">player→team mapping pre-loaded in RAM at match start. "Which teams contain Rohit?" answered from memory — 2.3 crore teams found instantly, no DB query.</span>
+      <span class="fop-tag"><span class="badge bp">RAM</span></span>
+    </div>
+    <div class="flink-arrow">▼</div>
+    <div class="flink-op">
+      <span class="fop-icon">🏆</span>
+      <span class="fop-name">Min-heap (size 10K)</span>
+      <span class="fop-desc">Holds top-10K teams in a heap (min at top). New score 91 &gt; heap min 87 → team enters, old evicted. Only 2–5 teams cross boundary per ball. Only those go to Redis.</span>
+      <span class="fop-tag"><span class="badge bg">O(log 10K)</span></span>
+    </div>
+    <div class="flink-arrow">▼</div>
+    <div class="flink-op">
+      <span class="fop-icon">📤</span>
+      <span class="fop-name">Sink operator</span>
+      <span class="fop-desc">2–5 ZADD/ZREM to Redis (diff only, pipelined = 1 network round trip). Async INSERT to Cassandra. Druid never touched — it ingests from Cassandra in background.</span>
+      <span class="fop-tag"><span class="badge bb">~5ms</span></span>
+    </div>
+  </div>
+
+  <div class="timing-bar">
+    <div class="tb-seg tbs-flink" style="flex:5;">Flink ~5ms</div>
+    <div class="tb-seg tbs-heap" style="flex:1;">heap 1ms</div>
+    <div class="tb-seg tbs-redis" style="flex:3;">Redis diff ~3ms</div>
+    <div class="tb-seg tbs-cass" style="flex:6;opacity:.5;">Cassandra async (non-blocking)</div>
+  </div>
+  <div style="font-size:11px;color:var(--muted);margin-top:6px;font-family:'JetBrains Mono',monospace;">Total hot path per ball: ~10ms &nbsp;·&nbsp; Druid: never in this path</div>
+
+  <!-- ════ ROCKSDB SECTION ════ -->
+  <h3 style="font-size:20px;font-weight:700;margin:36px 0 6px;color:var(--coral);">RocksDB — Flink's Local Brain</h3>
+  <p style="color:var(--muted);font-size:14px;margin-bottom:20px;">The most important piece most people skip over</p>
+
+  <div class="prose">
+    <p><strong>What is RocksDB?</strong> It's an embedded key-value database — like SQLite but built for high write throughput and SSDs. It was created by Facebook (forked from Google's LevelDB). "Embedded" means it runs <em>inside</em> the Flink process on each worker machine — there's no separate RocksDB server. No network hop. No serialization overhead. The Flink worker reads and writes to it like reading a local file.</p>
+    <p><strong>Why not just use RAM (HashMap)?</strong> A pure in-memory HashMap cannot hold state for 2.3 crore teams — that'd require ~100GB+ RAM per worker. RocksDB uses RAM for hot data and spills to SSD for cold data automatically. You get near-memory speed for recently accessed keys and disk-scale capacity for the rest.</p>
+  </div>
+
+  <div class="rocks-diagram">
+    <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;">What lives inside each Flink worker's RocksDB</div>
+    <div class="rocks-worker">
+      <div class="rocks-inner">
+        <div class="rocks-box">
+          <div class="rb-name">Player Score Map</div>
+          <div class="rb-data">
+            "Rohit_M101" → 54pts<br/>
+            "Virat_M101" → 32pts<br/>
+            "Hardik_M101" → 28pts<br/>
+            <span style="color:var(--muted);">... all players</span>
+          </div>
+        </div>
+        <div class="rocks-box">
+          <div class="rb-name">Team Score Map</div>
+          <div class="rb-data">
+            "team_77" → 91pts<br/>
+            "team_22" → 88pts<br/>
+            "team_55" → 85pts<br/>
+            <span style="color:var(--muted);">... 2.3 crore teams</span>
+          </div>
+        </div>
+        <div class="rocks-box">
+          <div class="rb-name">Min-Heap (Top 10K)</div>
+          <div class="rb-data">
+            min = 87pts<br/>
+            team_77 = 91<br/>
+            team_22 = 88<br/>
+            <span style="color:var(--muted);">... top 10K entries</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:13px;font-weight:600;margin:16px 0 10px;">How RocksDB stores data internally</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;">
+        <div style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:8px;">WRITE PATH — LSM Tree</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+          1. Write → MemTable (RAM)<br/>
+          2. MemTable full → flush to SST file on SSD<br/>
+          3. Background compaction merges SST files<br/>
+          4. Result: fast writes, sorted on disk
+        </div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;">
+        <div style="font-size:11px;color:var(--blue);font-weight:600;margin-bottom:8px;">READ PATH</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+          1. Check MemTable (RAM) first — fastest<br/>
+          2. Check Block Cache (RAM) — fast<br/>
+          3. Check SST files (SSD) — slower<br/>
+          4. Bloom filters skip unnecessary disk reads
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <div class="rocks-checkpoint">
+        <span class="rc-icon">📸</span>
+        <div class="rc-text">
+          <strong>Checkpointing to S3</strong> — every 30 seconds, Flink snapshots all RocksDB state stores across all workers and uploads to S3/HDFS. If a worker crashes mid-match, it restarts, downloads the last checkpoint, and resumes from exactly that point. <strong>Zero data loss.</strong> This is what makes Flink production-safe — without it, a crash would lose all in-memory scores.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Why RocksDB and not Redis for Flink state?</strong> Redis is a separate server — every state read/write would be a network call. At millions of events/sec, that's catastrophic latency. RocksDB is <em>in-process</em> — the call cost is nanoseconds. Flink uses Redis only for the final output (top-10K leaderboard), never for internal computation.
+  </div>
+
+  <h3 style="font-size:18px;font-weight:600;margin:28px 0 14px;">Windowing — answering "last N minutes" questions</h3>
+  <div class="card-grid">
+    <div class="card amber">
+      <div class="card-label">Tumbling Window</div>
+      <h3>Fixed non-overlapping slices</h3>
+      <p>Every 5 minutes: process and emit. Like turning pages — no overlap. Dream11: publish leaderboard snapshot to social every 5 min.</p>
+    </div>
+    <div class="card purple">
+      <div class="card-label">Sliding Window</div>
+      <h3>Overlapping slices</h3>
+      <p>Every 1 min, look back 10 min. More compute, smoother signal. Fraud: "did this user do 20+ actions in any 10-minute window?"</p>
+    </div>
+    <div class="card teal">
+      <div class="card-label">Session Window</div>
+      <h3>Inactivity-based</h3>
+      <p>Group events until user idle for 30 min. Dynamic size — could be 2 min or 2 hours. Dream11: session length and engagement depth.</p>
+    </div>
+  </div>
+</div>
+
+<hr class="divider"/>
+
+<!-- ══════════════════════ 04 SPARK ══════════════════════ -->
+<div class="section reveal" id="s4">
+  <div class="section-label">Section 04</div>
+  <h2>Apache Spark — The Factory</h2>
+  <p class="section-sub">Massive data, heavy computation, no urgency for milliseconds</p>
+
+  <div class="callout">
+    <strong>Core superpower:</strong> In-memory computation across hundreds of machines. Old Hadoop wrote intermediate data to disk after every step. Spark keeps it in RAM — 10–100× faster. Its Catalyst optimizer also builds a DAG of all transformations and optimises the whole plan before executing (same idea as a SQL query planner).
+  </div>
+
+  <!-- Spark vs Flink -->
+  <div class="compare-grid">
+    <div class="compare-panel spark">
+      <h4>⚙️ Apache Spark — when to use</h4>
+      <div class="compare-row"><span class="icon">📦</span><span>Data is already sitting somewhere (S3, warehouse)</span></div>
+      <div class="compare-row"><span class="icon">🔗</span><span>Need joins across multiple large tables</span></div>
+      <div class="compare-row"><span class="icon">🤖</span><span>Training ML models (need multiple passes over all data)</span></div>
+      <div class="compare-row"><span class="icon">⏱️</span><span>Result needed in minutes or hours — not milliseconds</span></div>
+      <div class="compare-row"><span class="icon">📊</span><span>ETL, reporting, feature engineering</span></div>
+    </div>
+    <div class="compare-panel flink">
+      <h4>⚡ Apache Flink — when to use</h4>
+      <div class="compare-row"><span class="icon">🌊</span><span>Events are streaming in right now via Kafka</span></div>
+      <div class="compare-row"><span class="icon">⚡</span><span>Need to react within milliseconds</span></div>
+      <div class="compare-row"><span class="icon">💾</span><span>Need stateful logic across events (counts, sums, heaps)</span></div>
+      <div class="compare-row"><span class="icon">🚨</span><span>Fraud detection, live score updates, real-time alerts</span></div>
+      <div class="compare-row"><span class="icon">🔄</span><span>Always-on job — not triggered, always running</span></div>
+    </div>
+  </div>
+
+  <div class="uc-grid">
+    <div class="uc-card">
+      <div class="uc-icon">🤖</div>
+      <div class="uc-title">ML Model Training</div>
+      <div class="uc-company">Dream11 / Netflix</div>
+      <div class="uc-desc">Train player recommendation on 90 days of match + user data. Runs nightly at 2 AM. Output: model file on S3. Netflix: retrain "next watch" on 200M user histories. Takes 45 min — nobody cares, runs while you sleep.</div>
+    </div>
+    <div class="uc-card">
+      <div class="uc-icon">🔄</div>
+      <div class="uc-title">ETL Pipelines</div>
+      <div class="uc-company">Uber / Swiggy</div>
+      <div class="uc-desc">Raw ride_started + payment_captured events → joined clean trips table in warehouse. Spark joins messy sources from 10 microservices into one clean record. Runs hourly.</div>
+    </div>
+    <div class="uc-card">
+      <div class="uc-icon">🕵️</div>
+      <div class="uc-title">Batch Fraud Analysis</div>
+      <div class="uc-company">PayPal / Razorpay</div>
+      <div class="uc-desc">Graph analysis on billions of transaction edges. Who sent money to flagged accounts 3 hops away? Patterns only visible across weeks. GraphX (Spark) runs nightly, outputs risk scores per account by morning.</div>
+    </div>
+    <div class="uc-card">
+      <div class="uc-icon">📊</div>
+      <div class="uc-title">Business Reporting</div>
+      <div class="uc-company">Flipkart / Dream11</div>
+      <div class="uc-desc">Daily GMV by category, region, seller → CEO dashboard. Post-match: which players were picked most, win rates by user tier. Spark computes over the full day's data in minutes.</div>
+    </div>
+    <div class="uc-card">
+      <div class="uc-icon">🧮</div>
+      <div class="uc-title">Feature Engineering</div>
+      <div class="uc-company">Zomato / Swiggy</div>
+      <div class="uc-desc">"Avg order value per user per cuisine" across 2 years. 200 features × 10 crore users. Pre-computed daily by Spark → written to feature store → ML model reads at inference time. Never computed live.</div>
+    </div>
+    <div class="uc-card">
+      <div class="uc-icon">📋</div>
+      <div class="uc-title">Log Analysis</div>
+      <div class="uc-company">Any large tech co.</div>
+      <div class="uc-desc">Scan 10TB of yesterday's server logs. Find P99 latency spikes by service, error rate by API. Incident post-mortems. Capacity planning. Spark processes it in minutes across a cluster.</div>
+    </div>
+  </div>
+
+  <div class="math-box">
+    <span class="cmt">// Latency decision — which processing tool to pick</span><br/>
+    <span class="eq">latency needed &lt; 100ms  </span> →  <span class="res">Flink</span>              <span class="cmt">// fraud, live scores, alerts</span><br/>
+    <span class="eq">latency needed 1–30s    </span> →  <span class="res">Spark Structured Streaming</span> <span class="cmt">// supply/demand balancing</span><br/>
+    <span class="eq">latency needed minutes  </span> →  <span class="res">Spark batch</span>        <span class="cmt">// ETL, feature engineering</span><br/>
+    <span class="eq">latency needed hours    </span> →  <span class="res">Spark batch</span>        <span class="cmt">// ML training, graph analysis</span>
+  </div>
+
+  <div class="callout amber">
+    <strong>Spark Structured Streaming</strong> — Spark also reads from Kafka in micro-batches every 1–5s. Not Flink-level real time, but good enough for many use cases. Swiggy uses it for delivery partner supply-demand: every 10s, count available partners vs active orders per zone and adjust fee estimate.
+  </div>
+</div>
+
+<hr class="divider"/>
+
+<!-- ══════════════════════ 05 LEADERBOARD ══════════════════════ -->
+<div class="section reveal" id="s5">
+  <div class="section-label">Section 05</div>
+  <h2>Dream11 Leaderboard — Full Deep Dive</h2>
+  <p class="section-sub">From ball event → 2.3 crore team ranks updated → user sees rank — all in &lt;500ms</p>
+
+  <!-- Live interactive leaderboard -->
+  <div class="lb-demo">
+    <div class="lb-header">
+      <span class="lb-title">MI vs RCB — Live Leaderboard</span>
+      <span class="lb-live"><span class="lb-dot"></span> LIVE</span>
+    </div>
+    <div class="lb-ball" id="ballInfo">Over 15.3 — Click the button to simulate next ball ▼</div>
+    <div id="lbRows">
+      <div class="lb-row"><span class="lb-rank gold">1</span><span class="lb-team">TeamRohit_77</span><span class="lb-pts" id="p1">91</span><span class="lb-delta" id="d1"></span></div>
+      <div class="lb-row"><span class="lb-rank silver">2</span><span class="lb-team">ViratFans_22</span><span class="lb-pts" id="p2">88</span><span class="lb-delta" id="d2"></span></div>
+      <div class="lb-row"><span class="lb-rank bronze">3</span><span class="lb-team">IPLMaster_55</span><span class="lb-pts" id="p3">85</span><span class="lb-delta" id="d3"></span></div>
+      <div class="lb-row"><span class="lb-rank">4</span><span class="lb-team">CricKing_9</span><span class="lb-pts" id="p4">84</span><span class="lb-delta" id="d4"></span></div>
+      <div class="lb-row"><span class="lb-rank">5</span><span class="lb-team">FantasyPro_11</span><span class="lb-pts" id="p5">83</span><span class="lb-delta" id="d5"></span></div>
+    </div>
+    <button class="lb-btn" onclick="simBall()">▶ Simulate Next Ball</button>
+  </div>
+
+  <h3 style="font-size:18px;font-weight:600;margin:28px 0 14px;">The scale problem — and why we don't write all 2.3 crore rows per ball</h3>
+
+  <div class="math-box">
+    <span class="cmt">// Naive approach — full write per ball</span><br/>
+    <span class="eq">2.3 crore teams × 120 balls</span>  =  <span class="res">27.6 crore rows per match</span>  <span class="cmt">← fine for storage</span><br/><br/>
+    <span class="cmt">// Problem: only teams WITH Rohit changed when Rohit scored</span><br/>
+    <span class="eq">Rohit in ~30 lakh teams</span>      =  <span class="res">30 lakh inserts per Rohit ball</span>  <span class="cmt">← not 2.3 crore</span><br/>
+    <span class="eq">Redis top-K diff</span>             =  <span class="res">2–5 ZADD ops per ball</span>       <span class="cmt">← only boundary crossings</span>
+  </div>
+
+  <h3 style="font-size:18px;font-weight:600;margin:24px 0 14px;">Two-tier leaderboard — hot and cold path</h3>
+
+  <div class="tier-stack">
+    <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;">Storage tiers by freshness requirement</div>
+    <div class="tier tier-hot"><span class="tier-icon">⚡</span><span class="tier-name">Redis sorted set</span><span class="tier-detail">Top ~10K teams only. ZADD on diff. App reads rank here. ZRANK query → your exact rank.</span><span class="tier-lat">&lt; 1ms</span></div>
+    <div class="tier tier-warm"><span class="tier-icon">📊</span><span class="tier-name">Score histogram</span><span class="tier-detail">Bucket counts in Redis (50–55pts: 3.2L teams). Approximate rank for everyone else.</span><span class="tier-lat">~1ms</span></div>
+    <div class="tier tier-cold"><span class="tier-icon">📝</span><span class="tier-name">Cassandra delta log</span><span class="tier-detail">One new row per (teamId, over). Append-only. Partition: (matchId, teamId). Cluster: over.</span><span class="tier-lat">~5ms write</span></div>
+    <div class="tier tier-hist"><span class="tier-icon">🔍</span><span class="tier-name">Druid + S3 snapshots</span><span class="tier-detail">Full snapshot every 5 overs. Historical "top 5 at over 15.3" queries via OLAP.</span><span class="tier-lat">1–2s query</span></div>
+  </div>
+
+  <!-- Approximate rank histogram -->
+  <h3 style="font-size:18px;font-weight:600;margin:24px 0 14px;">How approximate rank works for 4+ lakh users</h3>
+  <div class="hist-wrap">
+    <div class="hist-title">Score histogram stored in Redis — bucket counts</div>
+    <div class="hist-bars">
+      <div class="hist-bw"><div class="hist-b" style="height:20px;"></div><div class="hist-l">30–40</div><div class="hist-count">8L</div></div>
+      <div class="hist-bw"><div class="hist-b" style="height:40px;"></div><div class="hist-l">40–50</div><div class="hist-count">18L</div></div>
+      <div class="hist-bw"><div class="hist-b" style="height:70px;"></div><div class="hist-l">50–55</div><div class="hist-count">32L</div></div>
+      <div class="hist-bw"><div class="hist-b" style="height:90px;background:rgba(232,168,56,.4);border-color:var(--amber);"></div><div class="hist-l">55–60</div><div class="hist-count">42L ← you</div></div>
+      <div class="hist-bw"><div class="hist-b" style="height:60px;"></div><div class="hist-l">60–65</div><div class="hist-count">24L</div></div>
+      <div class="hist-bw"><div class="hist-b" style="height:45px;"></div><div class="hist-l">65–75</div><div class="hist-count">19L</div></div>
+      <div class="hist-bw"><div class="hist-b" style="height:25px;"></div><div class="hist-l">75–85</div><div class="hist-count">10L</div></div>
+      <div class="hist-bw"><div class="hist-b" style="height:12px;"></div><div class="hist-l">85+</div><div class="hist-count">3L</div></div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-top:10px;">Your score = 57pts. Sum all buckets above yours (85+, 75–85, 65–75, 60–65) = 56L teams → approx rank ~56,00,000. One Redis read. No scanning 2.3 crore rows.</div>
+  </div>
+
+  <h3 style="font-size:18px;font-weight:600;margin:24px 0 14px;">Cassandra schema — append-only design</h3>
+  <div class="schema-box">
+    <span class="cm">-- WRONG mental model: UPDATE scores SET pts=54 WHERE teamId=77</span><br/>
+    <span class="cm">-- Cassandra uses LSM tree — every UPDATE is secretly an INSERT anyway</span><br/>
+    <span class="cm">-- So design append-only from the start ↓</span><br/><br/>
+    <span class="kw">CREATE TABLE</span> team_scores (<br/>
+    &nbsp;&nbsp;<span class="sk">match_id   TEXT</span>,&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">-- partition key part 1</span><br/>
+    &nbsp;&nbsp;<span class="sk">team_id    TEXT</span>,&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">-- partition key part 2</span><br/>
+    &nbsp;&nbsp;<span class="ck">over       TEXT</span>,&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">-- clustering key — rows sorted within partition</span><br/>
+    &nbsp;&nbsp;<span class="col">pts_delta  INT</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">-- how much changed THIS ball: +6, 0, +4</span><br/>
+    &nbsp;&nbsp;<span class="col">cumulative INT</span>,&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">-- running total: 48→54→54→58</span><br/>
+    &nbsp;&nbsp;<span class="col">rank_at    INT</span>,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">-- rank at this over snapshot</span><br/>
+    &nbsp;&nbsp;<span class="kw">PRIMARY KEY</span> ((<span class="sk">match_id</span>, <span class="sk">team_id</span>), <span class="ck">over</span>)<br/>
+    );<br/><br/>
+    <span class="cm">-- What 3 balls look like as rows (all INSERTs, never UPDATE)</span><br/>
+    <span class="cm">-- match_id | team_id | over  | pts_delta | cumulative | rank_at</span><br/>
+    <span class="cm">-- M101     | 77      | 15.1  |  +6       |  54        | 1</span><br/>
+    <span class="cm">-- M101     | 77      | 15.2  |   0       |  54        | 1</span><br/>
+    <span class="cm">-- M101     | 77      | 15.3  |  +4       |  58        | 1</span><br/><br/>
+    <span class="cm">-- Query: team_77's full history → one partition scan, instant</span><br/>
+    <span class="kw">SELECT</span> <span class="col">over, cumulative, rank_at</span> <span class="kw">FROM</span> team_scores<br/>
+    <span class="kw">WHERE</span> <span class="sk">match_id</span>=<span class="n">'M101'</span> <span class="kw">AND</span> <span class="sk">team_id</span>=<span class="n">'77'</span>;
+  </div>
+
+  <h3 style="font-size:18px;font-weight:600;margin:24px 0 14px;">Historical query: "top 5 at over 15.3"</h3>
+  <div class="diagram">
+    <div class="diagram-title">Snapshot + delta replay pattern</div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+      <div style="background:rgba(29,158,117,.1);border:1px solid var(--green);border-radius:5px;padding:7px 13px;font-size:12px;font-family:'JetBrains Mono',monospace;">snap 5.0</div>
+      <span style="color:var(--muted);">···</span>
+      <div style="background:rgba(29,158,117,.1);border:1px solid var(--green);border-radius:5px;padding:7px 13px;font-size:12px;font-family:'JetBrains Mono',monospace;">snap 10.0</div>
+      <span style="color:var(--muted);">···</span>
+      <div style="background:rgba(29,158,117,.4);border:2px solid var(--green);border-radius:5px;padding:7px 13px;font-size:12px;font-family:'JetBrains Mono',monospace;font-weight:700;">snap 15.0 ✓ load this</div>
+      <span style="color:var(--amber);font-weight:600;font-size:13px;">+ replay 15.1 + 15.2 + 15.3 from Cassandra</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:13px;">
+        <div style="color:var(--teal);font-weight:600;margin-bottom:6px;">Step 1 — Load snapshot</div>
+        <div style="color:var(--muted);font-size:12px;">over_15.0/ranks.parquet on S3. Druid pre-indexed this — 2.3 crore rows, columnar. Loads instantly into Druid query engine.</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:13px;">
+        <div style="color:var(--purple);font-weight:600;margin-bottom:6px;">Step 2 — Replay 3 deltas</div>
+        <div style="color:var(--muted);font-size:12px;">Fetch rows for over 15.1, 15.2, 15.3 from Cassandra. Only changed teams are there. Apply pts_delta to snapshot scores.</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;background:rgba(29,158,117,.1);border:1px solid rgba(29,158,117,.3);border-radius:8px;padding:12px;font-size:13px;">
+      <strong style="color:var(--green);">Step 3 — Merge + top-5 sort in Druid.</strong> <span style="color:var(--muted);">ORDER BY total_pts DESC LIMIT 5. Result in &lt;1 second — even over 27 crore rows total.</span>
+    </div>
+  </div>
+</div>
+
+<hr class="divider"/>
+
+<!-- ══════════════════════ 06 STORAGE ══════════════════════ -->
+<div class="section reveal" id="s6">
+  <div class="section-label">Section 06</div>
+  <h2>Storage Strategy — Redis vs Druid vs Elasticsearch</h2>
+  <p class="section-sub">Same data, completely different jobs. Never one DB for all.</p>
+
+  <h3 style="font-size:18px;font-weight:600;margin:0 0 16px;">Redis vs Druid</h3>
+  <div class="compare-grid">
+    <div class="compare-panel" style="border-top:2px solid var(--blue);">
+      <h4 style="color:var(--blue);">Redis sorted set</h4>
+      <div class="compare-row"><span class="icon">⚡</span><span>Latency: <strong>&lt;1ms always</strong></span></div>
+      <div class="compare-row"><span class="icon">🎯</span><span>Query: ZRANK teamId → my rank right now</span></div>
+      <div class="compare-row"><span class="icon">📸</span><span>Data: current state only. No history.</span></div>
+      <div class="compare-row"><span class="icon">💸</span><span>Cost: expensive RAM. ~100M entries practical max.</span></div>
+      <div class="compare-row"><span class="icon">✅</span><span>Use for: live app reads per-user during match</span></div>
+    </div>
+    <div class="compare-panel" style="border-top:2px solid var(--teal);">
+      <h4 style="color:var(--teal);">Apache Druid</h4>
+      <div class="compare-row"><span class="icon">🕐</span><span>Latency: 100ms–2 seconds</span></div>
+      <div class="compare-row"><span class="icon">📊</span><span>Query: SQL top-N across billions of rows</span></div>
+      <div class="compare-row"><span class="icon">📚</span><span>Data: all history, every over, queryable</span></div>
+      <div class="compare-row"><span class="icon">💰</span><span>Cost: columnar compression — billions of rows fine</span></div>
+      <div class="compare-row"><span class="icon">✅</span><span>Use for: analytics, historical rank queries, dashboards</span></div>
+    </div>
+  </div>
+
+  <div class="insight">
+    <div class="insight-label">Why Redis still exists alongside Druid</div>
+    <p>Druid cannot give sub-millisecond latency. Even a fast Druid query is 100ms+. At 5 crore users refreshing every few seconds: <strong>100ms × 5 crore concurrent requests = you need a thousand Druid nodes</strong>. Redis at &lt;1ms handles the same load with a handful of machines. Redis is the scoreboard on the wall. Druid is the statistician in the back office.</p>
+  </div>
+
+  <h3 style="font-size:18px;font-weight:600;margin:28px 0 14px;">Druid vs Elasticsearch — internal design difference</h3>
+  <div class="compare-grid">
+    <div class="compare-panel" style="border-top:2px solid var(--teal);">
+      <h4 style="color:var(--teal);">Druid — columnar store</h4>
+      <div class="prose" style="font-size:13px;">
+        <p>All <code>pts</code> values for all rows sit physically adjacent on disk. SUM(pts) reads only that column — never touches teamId, city, device. Pre-computes rollups at ingest time.</p>
+        <p style="color:var(--green);font-weight:600;margin-top:6px;">✓ Great: aggregations, top-N, time-series, COUNT/SUM/AVG over billions</p>
+        <p style="color:var(--coral);margin-top:4px;">✗ Bad: full-text search, frequent updates</p>
+      </div>
+    </div>
+    <div class="compare-panel" style="border-top:2px solid var(--amber);">
+      <h4 style="color:var(--amber);">Elasticsearch — inverted index</h4>
+      <div class="prose" style="font-size:13px;">
+        <p>For every word in your documents, stores a list of which docs contain it. "NullPointerException" → [doc3, doc9, doc41]. Word lookup = O(1).</p>
+        <p style="color:var(--green);font-weight:600;margin-top:6px;">✓ Great: full-text search, log analysis, Kibana dashboards</p>
+        <p style="color:var(--coral);margin-top:4px;">✗ Bad: aggregating crore-scale numerical data</p>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="font-size:18px;font-weight:600;margin:28px 0 14px;">Druid vs Postgres — not the same thing at all</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Dimension</th><th>Postgres</th><th>Druid</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Storage</strong></td><td class="cb">Row store — full row on disk together</td><td class="ct">Column store — each column stored separately</td></tr>
+        <tr><td><strong>UPDATE</strong></td><td class="cb">Full in-place update (MVCC)</td><td class="cc">Append-only. No UPDATE or DELETE.</td></tr>
+        <tr><td><strong>Time</strong></td><td>Just another column</td><td class="ct">First-class. Auto-partitions by time.</td></tr>
+        <tr><td><strong>Pre-aggregation</strong></td><td>No</td><td class="ct">Yes — rollups computed at ingest</td></tr>
+        <tr><td><strong>Best for</strong></td><td class="cb">Transactions, joins, ACID</td><td class="ct">Time-series analytics, billions of rows</td></tr>
+        <tr><td><strong>SUM across 2.3 crore rows</strong></td><td class="cc">Slow — reads all columns first</td><td class="ct">Fast — reads only pts column, in memory</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<hr class="divider"/>
+
+<!-- ══════════════════════ 07 DB GUIDE ══════════════════════ -->
+<div class="section reveal" id="s7">
+  <div class="section-label">Section 07</div>
+  <h2>Database Decision Guide</h2>
+  <p class="section-sub">Pick by access pattern, not popularity</p>
+
+  <div class="db-grid">
+    <div class="db-card redis">
+      <div class="db-name">Redis</div>
+      <div class="db-model">in-memory key-value</div>
+      <div class="db-good">✓ Sub-ms reads<br/>✓ Sorted sets — leaderboard<br/>✓ Pub/sub, rate limiting<br/>✓ Cache layer</div>
+      <div class="db-bad">✗ RAM-limited<br/>✗ No history<br/>✗ Not durable by default</div>
+    </div>
+    <div class="db-card cass">
+      <div class="db-name">Cassandra</div>
+      <div class="db-model">wide-column, append-only</div>
+      <div class="db-good">✓ One entity's full history<br/>✓ Write-heavy, append-only<br/>✓ Billions of rows fine<br/>✓ Multi-region</div>
+      <div class="db-bad">✗ No cross-partition scan<br/>✗ No top-N queries<br/>✗ Schema must match query</div>
+    </div>
+    <div class="db-card druid">
+      <div class="db-name">Druid / Pinot</div>
+      <div class="db-model">columnar OLAP</div>
+      <div class="db-good">✓ Top-N across all rows<br/>✓ SUM/COUNT at scale<br/>✓ Time-series queries<br/>✓ Pre-aggregation</div>
+      <div class="db-bad">✗ 100ms+ latency<br/>✗ No UPDATE/DELETE<br/>✗ Complex ops overhead</div>
+    </div>
+    <div class="db-card es">
+      <div class="db-name">Elasticsearch</div>
+      <div class="db-model">inverted index</div>
+      <div class="db-good">✓ Full-text search<br/>✓ Log analysis<br/>✓ Kibana dashboards<br/>✓ Fuzzy matching</div>
+      <div class="db-bad">✗ Bad at aggregations<br/>✗ Expensive for numerics<br/>✗ Schema flexibility = footgun</div>
+    </div>
+    <div class="db-card pg">
+      <div class="db-name">Postgres</div>
+      <div class="db-model">relational, ACID</div>
+      <div class="db-good">✓ ACID transactions<br/>✓ Complex joins<br/>✓ User accounts, payments<br/>✓ Business logic</div>
+      <div class="db-bad">✗ Single machine limit<br/>✗ Slow on 100M+ row scans<br/>✗ Not for time-series</div>
+    </div>
+    <div class="db-card rocks">
+      <div class="db-name">RocksDB</div>
+      <div class="db-model">embedded key-value (LSM tree)</div>
+      <div class="db-good">✓ Flink's local state store<br/>✓ In-process — no network<br/>✓ RAM + SSD, persistent<br/>✓ High write throughput</div>
+      <div class="db-bad">✗ Not standalone<br/>✗ No SQL<br/>✗ Local only — no replication</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+<span class="c">// Decision tree — run through this in any interview</span>
+
+<span class="k">if</span> query == <span class="s">"find documents matching text / search logs"</span>:
+    <span class="k">return</span> <span class="n">Elasticsearch</span>   <span class="c">// log search, Kibana, full-text</span>
+
+<span class="k">elif</span> query == <span class="s">"my rank right now"</span> <span class="k">and</span> latency &lt; <span class="n">1ms</span>:
+    <span class="k">return</span> <span class="n">Redis</span>            <span class="c">// sorted set ZRANK</span>
+
+<span class="k">elif</span> query == <span class="s">"top-N / SUM / COUNT over time window"</span>:
+    <span class="k">return</span> <span class="n">Druid</span>            <span class="c">// columnar OLAP, pre-aggregated</span>
+
+<span class="k">elif</span> query == <span class="s">"one entity's full history in time order"</span>:
+    <span class="k">return</span> <span class="n">Cassandra</span>        <span class="c">// partition by entity, cluster by time</span>
+
+<span class="k">elif</span> query == <span class="s">"complex joins + ACID transactions"</span>:
+    <span class="k">return</span> <span class="n">Postgres</span>         <span class="c">// financial records, user accounts</span>
+
+<span class="k">elif</span> query == <span class="s">"Flink internal state — zero latency"</span>:
+    <span class="k">return</span> <span class="n">RocksDB</span>          <span class="c">// embedded in Flink worker, in-process</span>
+  </div>
+</div>
+
+<hr class="divider"/>
+
+<!-- ══════════════════════ 08 INTERVIEW ══════════════════════ -->
+<div class="section reveal" id="s8">
+  <div class="section-label">Section 08</div>
+  <h2>Interview One-Liners</h2>
+  <p class="section-sub">10 questions they will definitely ask — crisp answers ready</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Question</th><th>Answer</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Why Kafka before Flink?</strong></td><td>Decouples producers from consumers. Multiple systems read independently. Kafka is a durable buffer — if Flink restarts, it replays from last committed offset. No event loss.</td></tr>
+        <tr><td><strong>Why not update all 2.3 crore in Redis per ball?</strong></td><td>Only ~10K teams in Redis (hot tier). Flink maintains a min-heap in state. Only boundary-crossing teams trigger Redis writes — 2–5 ZADD ops per ball, pipelined in one network call.</td></tr>
+        <tr><td><strong>What does Flink keep in RocksDB state?</strong></td><td>Three things: player score map, team cumulative score map, and min-heap of top-K teams. All local to the worker — no external DB queried per ball. That's why it's fast.</td></tr>
+        <tr><td><strong>Why RocksDB inside Flink and not Redis?</strong></td><td>RocksDB is in-process — no network hop. Redis is a separate server — every state read/write adds network latency. At millions of events/sec that's fatal. Redis is only used for the final output.</td></tr>
+        <tr><td><strong>What if Flink crashes mid-match?</strong></td><td>Checkpointing: Flink snapshots all RocksDB state to S3 every ~30s. On restart, loads last checkpoint and resumes. Zero data loss by design.</td></tr>
+        <tr><td><strong>Why can't Cassandra do top-N across all teams?</strong></td><td>Partition key is (matchId, teamId). Top-N = 2.3 crore partition scans. Takes minutes. Druid is the right tool — columnar, pre-indexed, one-column scan for aggregations.</td></tr>
+        <tr><td><strong>How do you answer "top 5 at over 15.3"?</strong></td><td>Nearest snapshot (over_15.0, pre-indexed in Druid) + replay 3 delta balls from Cassandra. Merge and top-5 sort in Druid. Under 1 second.</td></tr>
+        <tr><td><strong>Druid vs Postgres?</strong></td><td>Druid: columnar, append-only, time-series, pre-aggregation. Never use for transactions or updates. Postgres: row store, ACID, UPDATE/DELETE, joins. Never use for billion-row analytics scans.</td></tr>
+        <tr><td><strong>Why not just Druid for everything?</strong></td><td>Druid has 100ms+ latency. Live app needs &lt;1ms for rank reads during match. Redis wins on latency. Druid wins on scale and analytical depth. They solve different problems.</td></tr>
+        <tr><td><strong>When Spark vs Flink?</strong></td><td>Flink: always-on, millisecond reactions, stateful per-event logic. Spark: kicked off on schedule, minutes latency, heavy batch — ML training, ETL, reports, graph analysis.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="font-size:18px;font-weight:600;margin:32px 0 14px;">Full system summary — one table to rule them all</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Tool</th><th>Mental model</th><th>Latency</th><th>Dream11 use</th><th>Internal storage</th></tr></thead>
+      <tbody>
+        <tr><td class="ca">Kafka</td><td>The highway</td><td>N/A (transport)</td><td>All events funnel here first</td><td>Distributed commit log, disk</td></tr>
+        <tr><td class="cc">Spark</td><td>Washing machine</td><td>Seconds–minutes</td><td>ML models, ETL, daily recalculations</td><td>In-memory RDDs, spills to disk</td></tr>
+        <tr><td class="cg">Flink</td><td>Surgeon</td><td>Milliseconds</td><td>Live points, fraud detection</td><td>RocksDB (local, in-process)</td></tr>
+        <tr><td class="cp">Kafka Streams</td><td>In-app filter</td><td>Milliseconds</td><td>Event enrichment, simple routing</td><td>RocksDB (embedded in app)</td></tr>
+        <tr><td class="cb">Redis</td><td>Scoreboard on wall</td><td>&lt; 1ms</td><td>Top-10K leaderboard, live reads</td><td>All in RAM (optional AOF/RDB)</td></tr>
+        <tr><td class="cp">Cassandra</td><td>Fault-tolerant vault</td><td>5ms writes</td><td>Delta log, team score history</td><td>LSM tree, SSTables on disk</td></tr>
+        <tr><td class="ct">Druid / Pinot</td><td>Statistician in back office</td><td>100ms–2s</td><td>Historical top-N, analytics dashboards</td><td>Columnar segments, pre-aggregated</td></tr>
+        <tr><td class="cc">RocksDB</td><td>Flink's local brain</td><td>&lt; 1ms (local)</td><td>All Flink state: player/team maps, heap</td><td>LSM tree, MemTable + SSTables</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="insight" style="margin-top:28px;">
+    <div class="insight-label">The senior engineer signal</div>
+    <p>The sign of a senior engineer is knowing <strong>which tool's weakness disqualifies it for a given job</strong> — not just what each tool does. Redis is disqualified for historical analytics (no history). Cassandra is disqualified for top-N across all teams (wrong partition model). Druid is disqualified for live reads (too slow). Always reason from <strong>access pattern first</strong>, then pick the tool.</p>
+  </div>
+</div>
+
+</div><!-- /page -->
+
+<!-- FOOTER -->
+<div style="border-top:1px solid var(--border);margin-top:80px;padding:28px 40px;text-align:center;color:var(--muted);font-size:12px;">
+  <span style="color:var(--green);font-weight:600;">Real-time Distributed Data Processing</span> — MAANG Interview Notes &nbsp;·&nbsp;
+  <span style="font-family:'JetBrains Mono',monospace;">Kafka · Flink · RocksDB · Spark · Redis · Cassandra · Druid · Elasticsearch</span>
+</div>
+
+<script>
+// Scroll reveal
+const reveals=document.querySelectorAll('.reveal');
+const io=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('visible');io.unobserve(x.target);}});},{threshold:.06});
+reveals.forEach(el=>io.observe(el));
+
+// Leaderboard sim
+let scores=[91,88,85,84,83];
+let teams=['TeamRohit_77','ViratFans_22','IPLMaster_55','CricKing_9','FantasyPro_11'];
+let ov=15,bl=3;
+const evts=[
+  {d:'Rohit hits a SIX! 🏏',dl:[6,0,0,4,0]},
+  {d:'Kohli scores 4! 🏏',dl:[0,4,0,0,2]},
+  {d:'Dot ball.',dl:[0,0,0,0,0]},
+  {d:'Hardik smashes 6! 🏏',dl:[4,0,6,0,0]},
+  {d:'Wide + 4 runs!',dl:[2,2,2,0,4]},
+  {d:'Wicket! Points drop. 😱',dl:[0,-2,0,-4,0]},
+];
+let ei=0;
+function simBall(){
+  bl++;if(bl>6){bl=1;ov++;}
+  const ev=evts[ei%evts.length];ei++;
+  document.getElementById('ballInfo').innerHTML='Over '+ov+'.'+bl+' — <span class="ev">'+ev.d+'</span>';
+  ev.dl.forEach((d,i)=>{
+    scores[i]+=d;
+    const pe=document.getElementById('p'+(i+1));
+    const de=document.getElementById('d'+(i+1));
+    if(d!==0){
+      pe.textContent=scores[i];
+      pe.classList.add('updated');
+      de.textContent=(d>0?'+':'')+d;
+      de.className='lb-delta'+(d<0?' neg':'');
+      setTimeout(()=>pe.classList.remove('updated'),700);
+    } else { de.textContent=''; }
+  });
+  // re-sort
+  let c=scores.map((s,i)=>({s,t:teams[i]}));
+  c.sort((a,b)=>b.s-a.s);
+  c.forEach((item,i)=>{
+    scores[i]=item.s;teams[i]=item.t;
+    document.getElementById('p'+(i+1)).textContent=item.s;
+    document.querySelectorAll('.lb-team')[i].textContent=item.t;
+  });
+}
+</script>
+</body>
+</html>
