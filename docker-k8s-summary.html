@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Docker & Kubernetes — Visual Summary</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:        #0e1117;
+    --bg2:       #161b25;
+    --bg3:       #1d2535;
+    --border:    rgba(255,255,255,0.08);
+    --border2:   rgba(255,255,255,0.14);
+    --text:      #e2e8f4;
+    --text2:     #8b93a8;
+    --text3:     #5a6278;
+    --blue:      #4f8ef7;
+    --blue-bg:   rgba(79,142,247,0.10);
+    --teal:      #2dd4bf;
+    --teal-bg:   rgba(45,212,191,0.10);
+    --purple:    #a78bfa;
+    --purple-bg: rgba(167,139,250,0.10);
+    --coral:     #fb7185;
+    --coral-bg:  rgba(251,113,133,0.10);
+    --amber:     #fbbf24;
+    --amber-bg:  rgba(251,191,36,0.10);
+    --gray-bg:   rgba(255,255,255,0.05);
+    --green:     #4ade80;
+    --green-bg:  rgba(74,222,128,0.10);
+    --red:       #f87171;
+    --red-bg:    rgba(248,113,113,0.10);
+    --mono:      'JetBrains Mono', monospace;
+    --sans:      'Inter', sans-serif;
+    --radius:    12px;
+    --radius-sm: 8px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    background: linear-gradient(160deg, #0e1525 0%, #111827 60%, #0d1a2e 100%);
+    border-bottom: 1px solid var(--border2);
+    padding: 72px 40px 56px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(79,142,247,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 600;
+    line-height: 1.15;
+    color: #fff;
+    margin-bottom: 16px;
+  }
+  .hero h1 span { color: var(--blue); }
+  .hero-sub {
+    font-size: 16px;
+    color: var(--text2);
+    max-width: 560px;
+    margin: 0 auto 28px;
+  }
+  .hero-pills { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .pill {
+    font-size: 12px; font-weight: 500;
+    padding: 4px 12px; border-radius: 20px;
+    border: 1px solid var(--border2);
+    background: var(--bg3);
+    color: var(--text2);
+  }
+
+  /* ── Layout ── */
+  .page { max-width: 980px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* ── Section headers ── */
+  .section { margin-top: 64px; }
+  .section-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--blue);
+    margin-bottom: 8px;
+  }
+  .section h2 {
+    font-size: clamp(20px, 3vw, 28px);
+    font-weight: 600; color: #fff;
+    margin-bottom: 10px;
+  }
+  .section-desc {
+    color: var(--text2); font-size: 14px;
+    max-width: 700px; margin-bottom: 28px;
+    line-height: 1.75;
+  }
+
+  /* ── Diagram card ── */
+  .diagram-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px 24px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+  }
+  .diagram-card svg { width: 100%; display: block; }
+
+  /* ── Key concepts grid ── */
+  .concepts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+    margin-top: 24px;
+  }
+  .concept-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .concept-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block; margin-right: 8px; flex-shrink: 0;
+    position: relative; top: -1px;
+  }
+  .concept-title {
+    font-size: 13px; font-weight: 600; color: #fff;
+    display: flex; align-items: center; margin-bottom: 6px;
+  }
+  .concept-body { font-size: 13px; color: var(--text2); line-height: 1.65; }
+
+  /* ── kubectl table ── */
+  .cmd-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 24px;
+  }
+  @media (max-width: 620px) { .cmd-grid { grid-template-columns: 1fr; } }
+  .cmd-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .cmd-tag {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 2px 8px; border-radius: 20px;
+    display: inline-block; margin-bottom: 8px;
+  }
+  .tag-incident { background: var(--red-bg); color: var(--red); }
+  .tag-deploy   { background: var(--green-bg); color: var(--green); }
+  .tag-debug    { background: var(--amber-bg); color: var(--amber); }
+  .tag-ops      { background: var(--blue-bg); color: var(--blue); }
+  .cmd-title { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .cmd-desc  { font-size: 12px; color: var(--text2); margin-bottom: 8px; line-height: 1.6; }
+  .cmd-line {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--teal);
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 9px;
+    display: inline-block;
+    margin: 2px 0;
+  }
+  .cmd-note { font-size: 11px; color: var(--text3); margin-top: 6px; line-height: 1.6; }
+
+  /* ── Vault section ── */
+  .vault-flow {
+    display: flex; align-items: stretch; gap: 0;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    margin-top: 24px; flex-wrap: wrap;
+  }
+  .vault-step {
+    flex: 1; min-width: 180px;
+    padding: 22px 20px;
+    border-right: 1px solid var(--border);
+    position: relative;
+  }
+  .vault-step:last-child { border-right: none; }
+  .vault-step-num {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.1em;
+    color: var(--text3); margin-bottom: 8px;
+  }
+  .vault-step-title { font-size: 13px; font-weight: 600; color: #fff; margin-bottom: 5px; }
+  .vault-step-body  { font-size: 12px; color: var(--text2); line-height: 1.65; }
+  .vault-arrow {
+    align-self: center; padding: 0 4px;
+    color: var(--text3); font-size: 18px; flex-shrink: 0;
+  }
+
+  /* ── Mental model ── */
+  .mental-model {
+    background: linear-gradient(135deg, rgba(79,142,247,0.06) 0%, rgba(167,139,250,0.06) 100%);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    margin-top: 48px;
+    text-align: center;
+  }
+  .mental-model h3 { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 14px; }
+  .mental-chain {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; flex-wrap: wrap;
+  }
+  .chain-box {
+    font-size: 12px; font-weight: 500;
+    padding: 6px 14px; border-radius: 8px;
+    border: 1px solid var(--border2);
+    background: var(--bg3); color: var(--text);
+  }
+  .chain-arrow { color: var(--text3); font-size: 14px; }
+
+  /* ── Divider ── */
+  .divider {
+    border: none; border-top: 1px solid var(--border);
+    margin: 48px 0;
+  }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center; font-size: 12px;
+    color: var(--text3); padding: 32px 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── SVG theme overrides ── */
+  .diagram-card svg text { font-family: var(--sans) !important; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════════════ -->
+<div class="hero">
+  <div class="hero-eyebrow">Visual Reference Guide</div>
+  <h1>Docker & <span>Kubernetes</span><br/>From Basics to Production</h1>
+  <p class="hero-sub">A complete conceptual summary — containers, pods, clusters, API gateways, Vault secrets, and kubectl in real production use.</p>
+  <div class="hero-pills">
+    <span class="pill">Docker</span>
+    <span class="pill">Kubernetes</span>
+    <span class="pill">Spring Boot</span>
+    <span class="pill">API Gateway</span>
+    <span class="pill">HashiCorp Vault</span>
+    <span class="pill">kubectl</span>
+  </div>
+</div>
+
+<div class="page">
+
+<!-- ═══════════════════════════════════════════════════
+     SECTION 1 — Cluster Architecture
+══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Section 01</div>
+  <h2>Cluster Architecture — Docker → Pod → Node → Cluster</h2>
+  <p class="section-desc">
+    Docker is just the packaging format — the "box" your app lives in. A <strong style="color:#fff">Pod</strong> wraps one or more containers that share a network and disk. <strong style="color:#fff">Nodes</strong> are the actual servers that run pods. The <strong style="color:#fff">Cluster</strong> is the whole environment orchestrated by Kubernetes. Vault runs as a <em>sidecar</em> container inside the same pod as your app, injecting secrets transparently.
+  </p>
+
+  <div class="diagram-card">
+    <!-- DIAGRAM 1 — Cluster Architecture SVG -->
+    <svg viewBox="0 0 680 580" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Kubernetes cluster architecture diagram">
+      <defs>
+        <marker id="arr1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- Cluster outer -->
+      <rect x="20" y="20" width="640" height="540" rx="20"
+            fill="rgba(79,142,247,0.06)" stroke="rgba(79,142,247,0.35)" stroke-width="1"/>
+      <text x="40" y="48" font-family="Inter,sans-serif" font-size="14" font-weight="600" fill="#4f8ef7">Kubernetes cluster</text>
+      <text x="40" y="64" font-family="Inter,sans-serif" font-size="12" fill="#8b93a8">Your entire production environment</text>
+
+      <!-- Node 1 -->
+      <rect x="40" y="80" width="290" height="460" rx="14"
+            fill="rgba(45,212,191,0.07)" stroke="rgba(45,212,191,0.3)" stroke-width="0.8"/>
+      <text x="185" y="104" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#2dd4bf">Node (VM / physical server)</text>
+      <text x="185" y="120" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">Runs the kubelet agent</text>
+
+      <!-- Pod A -->
+      <rect x="56" y="132" width="258" height="180" rx="10"
+            fill="rgba(167,139,250,0.10)" stroke="rgba(167,139,250,0.3)" stroke-width="0.8"/>
+      <text x="185" y="152" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#a78bfa">Pod A</text>
+      <text x="185" y="168" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">Shared network + storage</text>
+
+      <!-- Spring Boot container -->
+      <rect x="70" y="178" width="108" height="52" rx="8"
+            fill="rgba(251,113,133,0.12)" stroke="rgba(251,113,133,0.35)" stroke-width="0.5"/>
+      <text x="124" y="200" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#fb7185" dominant-baseline="central">Spring Boot</text>
+      <text x="124" y="218" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">app container</text>
+
+      <!-- Vault sidecar -->
+      <rect x="190" y="178" width="110" height="52" rx="8"
+            fill="rgba(251,191,36,0.10)" stroke="rgba(251,191,36,0.35)" stroke-width="0.5"/>
+      <text x="245" y="200" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#fbbf24" dominant-baseline="central">Vault agent</text>
+      <text x="245" y="218" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">sidecar container</text>
+
+      <!-- Arrow secrets -->
+      <line x1="178" y1="204" x2="190" y2="204" stroke="#5a6278" stroke-width="1" marker-end="url(#arr1)"/>
+      <text x="184" y="196" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#5a6278">secrets</text>
+
+      <!-- Pod B -->
+      <rect x="56" y="328" width="258" height="80" rx="10"
+            fill="rgba(167,139,250,0.08)" stroke="rgba(167,139,250,0.25)" stroke-width="0.8"/>
+      <text x="185" y="350" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#a78bfa">Pod B</text>
+      <text x="185" y="366" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">e.g. Redis cache container</text>
+      <rect x="70" y="374" width="110" height="26" rx="6"
+            fill="rgba(45,212,191,0.12)" stroke="rgba(45,212,191,0.3)" stroke-width="0.5"/>
+      <text x="125" y="387" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#2dd4bf" dominant-baseline="central">Redis</text>
+
+      <!-- Pod C -->
+      <rect x="56" y="422" width="258" height="88" rx="10"
+            fill="rgba(167,139,250,0.08)" stroke="rgba(167,139,250,0.25)" stroke-width="0.8"/>
+      <text x="185" y="444" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#a78bfa">Pod C</text>
+      <text x="185" y="460" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">e.g. API Gateway</text>
+      <rect x="70" y="468" width="130" height="26" rx="6"
+            fill="rgba(79,142,247,0.12)" stroke="rgba(79,142,247,0.3)" stroke-width="0.5"/>
+      <text x="135" y="481" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#4f8ef7" dominant-baseline="central">Spring Cloud GW</text>
+
+      <!-- Node 2 -->
+      <rect x="350" y="80" width="290" height="230" rx="14"
+            fill="rgba(45,212,191,0.06)" stroke="rgba(45,212,191,0.25)" stroke-width="0.8"/>
+      <text x="495" y="104" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#2dd4bf">Node 2 (another server)</text>
+      <text x="495" y="120" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">Horizontal scale-out</text>
+
+      <!-- Pod A replica -->
+      <rect x="366" y="132" width="258" height="80" rx="10"
+            fill="rgba(167,139,250,0.10)" stroke="rgba(167,139,250,0.3)" stroke-width="0.8"/>
+      <text x="495" y="152" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#a78bfa">Pod A — replica 2</text>
+      <text x="495" y="168" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">Same Spring Boot image</text>
+      <rect x="380" y="176" width="108" height="28" rx="6"
+            fill="rgba(251,113,133,0.12)" stroke="rgba(251,113,133,0.3)" stroke-width="0.5"/>
+      <text x="434" y="190" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#fb7185" dominant-baseline="central">Spring Boot</text>
+      <rect x="500" y="176" width="110" height="28" rx="6"
+            fill="rgba(251,191,36,0.10)" stroke="rgba(251,191,36,0.3)" stroke-width="0.5"/>
+      <text x="555" y="190" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#fbbf24" dominant-baseline="central">Vault agent</text>
+
+      <!-- Vault Central -->
+      <rect x="366" y="232" width="258" height="62" rx="10"
+            fill="rgba(251,191,36,0.10)" stroke="rgba(251,191,36,0.35)" stroke-width="0.8"/>
+      <text x="495" y="255" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#fbbf24">HashiCorp Vault server</text>
+      <text x="495" y="272" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">DB passwords, API keys, TLS certs</text>
+
+      <!-- Control Plane -->
+      <rect x="350" y="316" width="290" height="224" rx="14"
+            fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.10)" stroke-width="0.8"/>
+      <text x="495" y="340" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#e2e8f4">Control plane</text>
+      <text x="495" y="356" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">Brains of the cluster</text>
+
+      <rect x="366" y="366" width="118" height="36" rx="8"
+            fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.10)" stroke-width="0.5"/>
+      <text x="425" y="384" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#e2e8f4" dominant-baseline="central">API server</text>
+
+      <rect x="496" y="366" width="128" height="36" rx="8"
+            fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.10)" stroke-width="0.5"/>
+      <text x="560" y="384" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#e2e8f4" dominant-baseline="central">Scheduler</text>
+
+      <rect x="366" y="414" width="118" height="36" rx="8"
+            fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.10)" stroke-width="0.5"/>
+      <text x="425" y="432" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#e2e8f4" dominant-baseline="central">etcd (state DB)</text>
+
+      <rect x="496" y="414" width="128" height="36" rx="8"
+            fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.10)" stroke-width="0.5"/>
+      <text x="560" y="432" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="500" fill="#e2e8f4" dominant-baseline="central">Controller mgr</text>
+
+      <text x="495" y="478" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#5a6278">kubectl talks to the API server</text>
+      <text x="495" y="494" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#5a6278">to issue commands to all nodes</text>
+    </svg>
+  </div>
+
+  <!-- Key concepts -->
+  <div class="concepts-grid">
+    <div class="concept-card">
+      <div class="concept-title"><span class="concept-dot" style="background:var(--coral)"></span>Docker container</div>
+      <div class="concept-body">The packaged application — your Spring Boot JAR, its runtime, dependencies, all bundled into one portable image. Runs identically on any machine.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-title"><span class="concept-dot" style="background:var(--purple)"></span>Pod</div>
+      <div class="concept-body">The smallest deployable unit in Kubernetes. Wraps one or more containers that share localhost networking and mounted volumes. Usually one app container + optional sidecars.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-title"><span class="concept-dot" style="background:var(--teal)"></span>Node</div>
+      <div class="concept-body">An actual server — VM or physical — that runs pods. Kubernetes can span hundreds of nodes. The kubelet agent on each node reports to the control plane.</div>
+    </div>
+    <div class="concept-card">
+      <div class="concept-title"><span class="concept-dot" style="background:var(--amber)"></span>Vault sidecar</div>
+      <div class="concept-body">Runs alongside your app container in the same pod. Fetches secrets from the central Vault server and writes them to a shared in-memory volume. Your app never touches Vault directly.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════════════════════════════════════
+     SECTION 2 — API Gateway Traffic Flow
+══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Section 02</div>
+  <h2>API Gateway — Where It Lives &amp; How Traffic Flows</h2>
+  <p class="section-desc">
+    The API Gateway is <em>not</em> a special dedicated server — it is just another pod inside your cluster, exposed to the outside world via a <code style="font-family:var(--mono);font-size:12px;color:var(--teal)">LoadBalancer</code> service. Downstream Spring Boot services use <code style="font-family:var(--mono);font-size:12px;color:var(--teal)">ClusterIP</code> — invisible to the internet, reachable only inside the cluster by DNS name.
+  </p>
+
+  <div class="diagram-card">
+    <!-- DIAGRAM 2 — Traffic Flow SVG -->
+    <svg viewBox="0 0 680 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="API Gateway traffic flow diagram">
+      <defs>
+        <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- Kubernetes cluster boundary -->
+      <rect x="330" y="60" width="340" height="280" rx="16"
+            fill="none" stroke="rgba(79,142,247,0.25)" stroke-dasharray="6 4" stroke-width="1"/>
+      <text x="500" y="82" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#5a6278">Inside Kubernetes cluster</text>
+
+      <!-- Client -->
+      <rect x="30" y="170" width="110" height="56" rx="8"
+            fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" stroke-width="0.5"/>
+      <text x="85" y="196" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#e2e8f4" dominant-baseline="central">Client /</text>
+      <text x="85" y="213" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#e2e8f4" dominant-baseline="central">Internet</text>
+
+      <line x1="140" y1="198" x2="175" y2="198" stroke="#4f8ef7" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+      <!-- Load Balancer -->
+      <rect x="176" y="158" width="130" height="80" rx="8"
+            fill="rgba(79,142,247,0.10)" stroke="rgba(79,142,247,0.35)" stroke-width="0.5"/>
+      <text x="241" y="185" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#4f8ef7" dominant-baseline="central">Load balancer</text>
+      <text x="241" y="205" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">NodePort or cloud LB</text>
+      <text x="241" y="222" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">Routes TCP to cluster</text>
+
+      <line x1="306" y1="198" x2="340" y2="198" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+      <!-- API Gateway Pod -->
+      <rect x="341" y="138" width="140" height="120" rx="10"
+            fill="rgba(167,139,250,0.12)" stroke="rgba(167,139,250,0.35)" stroke-width="0.8"/>
+      <text x="411" y="160" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="600" fill="#a78bfa">API gateway pod</text>
+      <text x="411" y="178" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#e2e8f4">Spring Cloud Gateway</text>
+      <text x="411" y="194" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">or Kong / Nginx</text>
+      <text x="411" y="212" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">Auth, rate limit, routing</text>
+      <text x="411" y="228" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">TLS termination</text>
+
+      <!-- Arrows to services -->
+      <line x1="481" y1="175" x2="534" y2="118" stroke="#fb7185" stroke-width="1.2" marker-end="url(#arr2)"/>
+      <line x1="481" y1="198" x2="534" y2="198" stroke="#fb7185" stroke-width="1.2" marker-end="url(#arr2)"/>
+      <line x1="481" y1="220" x2="534" y2="278" stroke="#fb7185" stroke-width="1.2" marker-end="url(#arr2)"/>
+
+      <!-- Service pods -->
+      <rect x="535" y="88" width="120" height="56" rx="8"
+            fill="rgba(251,113,133,0.10)" stroke="rgba(251,113,133,0.35)" stroke-width="0.5"/>
+      <text x="595" y="111" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#fb7185" dominant-baseline="central">Order service</text>
+      <text x="595" y="130" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">Pod × 3 replicas</text>
+
+      <rect x="535" y="170" width="120" height="56" rx="8"
+            fill="rgba(251,113,133,0.10)" stroke="rgba(251,113,133,0.35)" stroke-width="0.5"/>
+      <text x="595" y="193" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#fb7185" dominant-baseline="central">User service</text>
+      <text x="595" y="212" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">Pod × 2 replicas</text>
+
+      <rect x="535" y="250" width="120" height="56" rx="8"
+            fill="rgba(251,113,133,0.10)" stroke="rgba(251,113,133,0.35)" stroke-width="0.5"/>
+      <text x="595" y="273" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#fb7185" dominant-baseline="central">Payment service</text>
+      <text x="595" y="292" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">Pod × 2 replicas</text>
+
+      <!-- Notes below -->
+      <text x="340" y="345" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#5a6278">Gateway pod is exposed via LoadBalancer service — it IS a pod, not a special server</text>
+      <text x="340" y="362" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#5a6278">Downstream services use ClusterIP (internal only) — never directly reachable from internet</text>
+    </svg>
+  </div>
+
+  <!-- Vault flow strip -->
+  <p style="font-size:13px;color:var(--text2);margin-bottom:12px;margin-top:8px">
+    How Vault secret injection works step by step:
+  </p>
+  <div class="vault-flow">
+    <div class="vault-step">
+      <div class="vault-step-num">Step 01</div>
+      <div class="vault-step-title" style="color:var(--amber)">Pod starts</div>
+      <div class="vault-step-body">Kubernetes creates the pod. The Vault agent sidecar container launches alongside your Spring Boot container.</div>
+    </div>
+    <div class="vault-step">
+      <div class="vault-step-num">Step 02</div>
+      <div class="vault-step-title" style="color:var(--amber)">Agent authenticates</div>
+      <div class="vault-step-body">Vault agent uses the pod's Kubernetes Service Account token to prove its identity to the central Vault server.</div>
+    </div>
+    <div class="vault-step">
+      <div class="vault-step-num">Step 03</div>
+      <div class="vault-step-title" style="color:var(--amber)">Secrets fetched</div>
+      <div class="vault-step-body">Agent retrieves DB passwords, API keys, TLS certs from Vault and writes them to a shared in-memory volume inside the pod.</div>
+    </div>
+    <div class="vault-step">
+      <div class="vault-step-num">Step 04</div>
+      <div class="vault-step-title" style="color:var(--amber)">App reads config</div>
+      <div class="vault-step-body">Spring Boot reads secrets from that volume as environment variables or files. It never calls Vault directly — zero hardcoded credentials.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════════════════════════════════════
+     SECTION 3 — kubectl in Production
+══════════════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-label">Section 03</div>
+  <h2>kubectl in Real Production — What Teams Actually Run</h2>
+  <p class="section-desc">
+    kubectl is far more than a log viewer. It's the command-line remote control for everything in the cluster — used during deployments, incidents, debugging, scaling, config changes, and node maintenance. For JVM heap / GC monitoring specifically, <code style="font-family:var(--mono);font-size:12px;color:var(--teal)">kubectl top pods</code> gives OS-level memory, and <code style="font-family:var(--mono);font-size:12px;color:var(--teal)">kubectl exec</code> lets you run jcmd / jmap inside the container.
+  </p>
+
+  <div class="diagram-card" style="padding: 24px;">
+    <!-- DIAGRAM 3 — kubectl use cases as inline SVG -->
+    <svg viewBox="0 0 680 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="kubectl production use cases diagram">
+
+      <!-- Row 1 boxes -->
+      <!-- Incident response -->
+      <rect x="20" y="20" width="190" height="110" rx="10"
+            fill="rgba(248,113,113,0.08)" stroke="rgba(248,113,113,0.3)" stroke-width="0.8"/>
+      <rect x="20" y="20" width="60" height="18" rx="6" fill="rgba(248,113,113,0.2)"/>
+      <text x="50" y="32" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="600" fill="#f87171" dominant-baseline="central">Incident</text>
+      <text x="115" y="56" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#e2e8f4">Check pod state</text>
+      <text x="30" y="76" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl get pods -n prod</text>
+      <text x="30" y="94" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl describe pod &lt;n&gt;</text>
+      <text x="30" y="112" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl logs &lt;pod&gt; --previous</text>
+
+      <!-- Deployments -->
+      <rect x="230" y="20" width="200" height="110" rx="10"
+            fill="rgba(74,222,128,0.07)" stroke="rgba(74,222,128,0.3)" stroke-width="0.8"/>
+      <rect x="230" y="20" width="70" height="18" rx="6" fill="rgba(74,222,128,0.18)"/>
+      <text x="265" y="32" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="600" fill="#4ade80" dominant-baseline="central">Deploy</text>
+      <text x="330" y="56" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#e2e8f4">Rolling updates</text>
+      <text x="240" y="76" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl set image deploy/svc</text>
+      <text x="240" y="94" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl rollout status</text>
+      <text x="240" y="112" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl rollout undo</text>
+
+      <!-- Debug exec -->
+      <rect x="450" y="20" width="210" height="110" rx="10"
+            fill="rgba(251,191,36,0.07)" stroke="rgba(251,191,36,0.3)" stroke-width="0.8"/>
+      <rect x="450" y="20" width="58" height="18" rx="6" fill="rgba(251,191,36,0.18)"/>
+      <text x="479" y="32" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="600" fill="#fbbf24" dominant-baseline="central">Debug</text>
+      <text x="555" y="56" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#e2e8f4">Shell into container</text>
+      <text x="460" y="76" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl exec -it &lt;pod&gt; -- sh</text>
+      <text x="460" y="94" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl exec &lt;pod&gt; -- env</text>
+      <text x="460" y="112" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl port-forward svc/x 8080</text>
+
+      <!-- Row 2 -->
+      <!-- Scaling -->
+      <rect x="20" y="150" width="190" height="110" rx="10"
+            fill="rgba(79,142,247,0.08)" stroke="rgba(79,142,247,0.3)" stroke-width="0.8"/>
+      <rect x="20" y="150" width="56" height="18" rx="6" fill="rgba(79,142,247,0.2)"/>
+      <text x="48" y="162" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="600" fill="#4f8ef7" dominant-baseline="central">Scaling</text>
+      <text x="115" y="186" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#e2e8f4">Scale replicas</text>
+      <text x="30" y="208" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl scale deploy --replicas=10</text>
+      <text x="30" y="228" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl get hpa</text>
+      <text x="30" y="250" font-family="Inter,sans-serif" font-size="10" fill="#5a6278">HPA auto-scales on CPU/memory</text>
+
+      <!-- Memory GC -->
+      <rect x="230" y="150" width="200" height="110" rx="10"
+            fill="rgba(251,191,36,0.07)" stroke="rgba(251,191,36,0.3)" stroke-width="0.8"/>
+      <rect x="230" y="150" width="100" height="18" rx="6" fill="rgba(251,191,36,0.18)"/>
+      <text x="280" y="162" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="600" fill="#fbbf24" dominant-baseline="central">Memory / GC</text>
+      <text x="330" y="186" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#e2e8f4">JVM heap monitoring</text>
+      <text x="240" y="208" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl top pods -n prod</text>
+      <text x="240" y="226" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl top nodes</text>
+      <text x="240" y="246" font-family="Inter,sans-serif" font-size="10" fill="#5a6278">exec → jcmd / jmap for JVM heap</text>
+
+      <!-- Config secrets -->
+      <rect x="450" y="150" width="210" height="110" rx="10"
+            fill="rgba(79,142,247,0.07)" stroke="rgba(79,142,247,0.25)" stroke-width="0.8"/>
+      <rect x="450" y="150" width="80" height="18" rx="6" fill="rgba(79,142,247,0.18)"/>
+      <text x="490" y="162" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="600" fill="#4f8ef7" dominant-baseline="central">Config</text>
+      <text x="555" y="186" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#e2e8f4">ConfigMaps &amp; Secrets</text>
+      <text x="460" y="208" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl edit configmap x</text>
+      <text x="460" y="226" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl apply -f deploy.yaml</text>
+      <text x="460" y="246" font-family="Inter,sans-serif" font-size="10" fill="#5a6278">CI/CD pipelines also use kubectl</text>
+
+      <!-- Row 3 -->
+      <!-- Network debug -->
+      <rect x="20" y="280" width="290" height="90" rx="10"
+            fill="rgba(248,113,113,0.07)" stroke="rgba(248,113,113,0.25)" stroke-width="0.8"/>
+      <rect x="20" y="280" width="110" height="18" rx="6" fill="rgba(248,113,113,0.18)"/>
+      <text x="75" y="292" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="600" fill="#f87171" dominant-baseline="central">Network debug</text>
+      <text x="165" y="316" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#e2e8f4">Services not connecting?</text>
+      <text x="30" y="336" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl get endpoints order-svc</text>
+      <text x="30" y="355" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl port-forward svc/order-svc 8080:80</text>
+
+      <!-- Node ops -->
+      <rect x="330" y="280" width="330" height="90" rx="10"
+            fill="rgba(79,142,247,0.07)" stroke="rgba(79,142,247,0.25)" stroke-width="0.8"/>
+      <rect x="330" y="280" width="90" height="18" rx="6" fill="rgba(79,142,247,0.18)"/>
+      <text x="375" y="292" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="600" fill="#4f8ef7" dominant-baseline="central">Node ops</text>
+      <text x="495" y="316" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#e2e8f4">Maintenance &amp; patching</text>
+      <text x="340" y="336" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl drain &lt;node&gt; --ignore-daemonsets</text>
+      <text x="340" y="355" font-family="JetBrains Mono,monospace" font-size="10" fill="#2dd4bf">kubectl cordon &lt;node&gt;  → no new pods assigned</text>
+
+      <!-- Note -->
+      <rect x="20" y="390" width="640" height="72" rx="10"
+            fill="rgba(167,139,250,0.07)" stroke="rgba(167,139,250,0.2)" stroke-width="0.5"/>
+      <text x="340" y="412" text-anchor="middle" font-family="Inter,sans-serif" font-size="12" font-weight="600" fill="#a78bfa">JVM GC &amp; heap monitoring — the real stack</text>
+      <text x="340" y="432" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">kubectl top pods → OS memory view  |  kubectl exec → jcmd / jmap inside JVM</text>
+      <text x="340" y="450" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#8b93a8">Prometheus scrapes JVM metrics  →  Grafana graphs GC pause times, heap pressure, old-gen usage</text>
+    </svg>
+  </div>
+
+  <!-- kubectl command quick reference grid -->
+  <div class="cmd-grid">
+    <div class="cmd-card">
+      <span class="cmd-tag tag-incident">Incident</span>
+      <div class="cmd-title">First thing to run when prod breaks</div>
+      <div class="cmd-desc">Check pod state, describe to see events, get previous logs from before the crash restart.</div>
+      <div class="cmd-line">kubectl get pods -n production</div><br>
+      <div class="cmd-line">kubectl describe pod &lt;name&gt;</div><br>
+      <div class="cmd-line">kubectl logs &lt;pod&gt; --previous</div>
+      <div class="cmd-note">--previous is crucial — gets logs from the crashed version, not the freshly restarted one.</div>
+    </div>
+    <div class="cmd-card">
+      <span class="cmd-tag tag-deploy">Deploy</span>
+      <div class="cmd-title">Push new image, watch rollout, instant rollback</div>
+      <div class="cmd-desc">Zero-downtime rolling updates built in. One command to undo.</div>
+      <div class="cmd-line">kubectl set image deployment/svc app=v2.1</div><br>
+      <div class="cmd-line">kubectl rollout status deployment/svc</div><br>
+      <div class="cmd-line">kubectl rollout undo deployment/svc</div>
+      <div class="cmd-note">Undo rolls back to the exact previous ReplicaSet. Kubernetes keeps a revision history.</div>
+    </div>
+    <div class="cmd-card">
+      <span class="cmd-tag tag-debug">Debug</span>
+      <div class="cmd-title">Shell into container — like SSH</div>
+      <div class="cmd-desc">When logs aren't enough — check env vars, run curl, inspect the filesystem.</div>
+      <div class="cmd-line">kubectl exec -it &lt;pod&gt; -- /bin/sh</div><br>
+      <div class="cmd-line">kubectl exec &lt;pod&gt; -- env | grep DB</div><br>
+      <div class="cmd-line">kubectl exec &lt;pod&gt; -- curl localhost:8080/health</div>
+      <div class="cmd-note">Also: run jcmd / jmap here for JVM heap dumps and GC analysis.</div>
+    </div>
+    <div class="cmd-card">
+      <span class="cmd-tag tag-ops">Scaling</span>
+      <div class="cmd-title">Manual scale + inspect autoscaler</div>
+      <div class="cmd-desc">Traffic spike? Scale immediately. HPA handles automatic scaling by CPU/memory threshold.</div>
+      <div class="cmd-line">kubectl scale deployment/svc --replicas=10</div><br>
+      <div class="cmd-line">kubectl get hpa</div>
+      <div class="cmd-note">HPA = Horizontal Pod Autoscaler. kubectl lets you inspect or override its current state.</div>
+    </div>
+    <div class="cmd-card">
+      <span class="cmd-tag tag-debug">Memory / GC</span>
+      <div class="cmd-title">Live resource usage per pod and node</div>
+      <div class="cmd-desc">OS-level view of memory and CPU consumption across the cluster.</div>
+      <div class="cmd-line">kubectl top pods -n production</div><br>
+      <div class="cmd-line">kubectl top nodes</div>
+      <div class="cmd-note">Combine with Prometheus + Grafana for JVM GC pause times, old-gen pressure, and heap charts.</div>
+    </div>
+    <div class="cmd-card">
+      <span class="cmd-tag tag-ops">Node maintenance</span>
+      <div class="cmd-title">Drain and cordon for patching</div>
+      <div class="cmd-desc">Drain gracefully moves pods off before maintenance. Cordon stops new pods landing on a node.</div>
+      <div class="cmd-line">kubectl drain &lt;node&gt; --ignore-daemonsets</div><br>
+      <div class="cmd-line">kubectl cordon &lt;node&gt;</div>
+      <div class="cmd-note">Always drain before patching or rebooting a node. Workloads reschedule to healthy nodes automatically.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider"/>
+
+<!-- ═══════════════════════════════════════════════════
+     MENTAL MODEL SUMMARY
+══════════════════════════════════════════════════════ -->
+<div class="mental-model">
+  <h3>The one-line mental model</h3>
+  <div class="mental-chain">
+    <div class="chain-box" style="border-color:rgba(251,113,133,0.4);color:var(--coral)">Docker<br><span style="font-size:10px;color:var(--text2)">packages app</span></div>
+    <div class="chain-arrow">→</div>
+    <div class="chain-box" style="border-color:rgba(167,139,250,0.4);color:var(--purple)">Pod<br><span style="font-size:10px;color:var(--text2)">groups containers</span></div>
+    <div class="chain-arrow">→</div>
+    <div class="chain-box" style="border-color:rgba(45,212,191,0.4);color:var(--teal)">Node<br><span style="font-size:10px;color:var(--text2)">hosts pods</span></div>
+    <div class="chain-arrow">→</div>
+    <div class="chain-box" style="border-color:rgba(79,142,247,0.4);color:var(--blue)">Cluster<br><span style="font-size:10px;color:var(--text2)">orchestrates nodes</span></div>
+    <div class="chain-arrow">→</div>
+    <div class="chain-box" style="border-color:rgba(251,191,36,0.4);color:var(--amber)">Vault sidecar<br><span style="font-size:10px;color:var(--text2)">injects secrets</span></div>
+    <div class="chain-arrow">→</div>
+    <div class="chain-box" style="border-color:rgba(255,255,255,0.15);color:var(--text)">kubectl<br><span style="font-size:10px;color:var(--text2)">remote control</span></div>
+  </div>
+</div>
+
+</div><!-- /page -->
+
+<footer>
+  Docker &amp; Kubernetes — Visual Summary &nbsp;·&nbsp; Generated from session walkthrough
+</footer>
+
+</body>
+</html>
