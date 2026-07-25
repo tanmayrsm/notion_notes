@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HLD Lesson — Real-time at 1B Scale</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#ffffff;
+  --bg2:#f8f7f4;
+  --bg3:#f0efe9;
+  --border:#e4e1d8;
+  --border2:#cdc9be;
+  --text:#18181a;
+  --text2:#52514e;
+  --text3:#9a9893;
+  --blue:#2563eb;--blue-bg:#eff6ff;--blue-l:#dbeafe;
+  --amber:#d97706;--amber-bg:#fffbeb;--amber-l:#fde68a;
+  --green:#16a34a;--green-bg:#f0fdf4;--green-l:#bbf7d0;
+  --red:#dc2626;--red-bg:#fef2f2;--red-l:#fecaca;
+  --purple:#7c3aed;--purple-bg:#f5f3ff;--purple-l:#ddd6fe;
+  --teal:#0d9488;--teal-bg:#f0fdfa;--teal-l:#99f6e4;
+  --coral:#e05b3a;--coral-bg:#fff7f5;
+  --r:8px;
+  --font:'Inter',system-ui,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.7;font-size:15px}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  position:fixed;left:0;top:0;bottom:0;width:256px;
+  background:var(--bg2);border-right:1px solid var(--border);
+  overflow-y:auto;padding:20px 0;z-index:200;
+}
+.sb-logo{padding:0 16px 16px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.sb-logo-title{font-size:13px;font-weight:600;color:var(--text)}
+.sb-logo-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.sb-section{padding:12px 16px 4px;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)}
+.sb-item{display:flex;align-items:center;gap:8px;padding:5px 16px;font-size:12.5px;color:var(--text2);cursor:pointer;border-left:2px solid transparent;transition:all .15s;text-decoration:none}
+.sb-item:hover{background:var(--bg3);color:var(--text)}
+.sb-item.active{color:var(--blue);border-left-color:var(--blue);background:var(--blue-bg);font-weight:500}
+.sb-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+
+/* ── MAIN ── */
+.main{margin-left:256px;max-width:900px;padding:56px 64px 120px}
+
+/* ── HERO ── */
+.hero{
+  background:linear-gradient(135deg,#1e1b4b 0%,#312e81 40%,#1e3a5f 100%);
+  border-radius:12px;padding:40px 44px;margin-bottom:48px;
+  position:relative;overflow:hidden;
+}
+.hero::after{
+  content:'';position:absolute;right:-60px;top:-60px;
+  width:280px;height:280px;border-radius:50%;
+  background:rgba(255,255,255,.04);
+}
+.hero-tag{display:inline-block;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.12);color:rgba(255,255,255,.8);font-size:11px;font-weight:500;letter-spacing:.05em;margin-bottom:14px}
+.hero-title{font-size:32px;font-weight:600;color:#fff;line-height:1.2;letter-spacing:-.02em}
+.hero-sub{font-size:14px;color:rgba(255,255,255,.6);margin-top:10px;line-height:1.6}
+.hero-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.hero-pill{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.75)}
+
+/* ── TOC CARDS ── */
+.toc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:48px}
+.toc-card{
+  border-radius:var(--r);padding:14px 16px;border:1px solid var(--border);
+  cursor:pointer;transition:all .2s;text-decoration:none;
+  background:var(--bg);
+}
+.toc-card:hover{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg);transform:translateY(-1px)}
+.toc-card-num{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.toc-card-title{font-size:13px;font-weight:500;color:var(--text)}
+
+/* ── SECTION HEADINGS ── */
+.lesson-section{margin-top:64px}
+.section-eyebrow{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.section-eyebrow::before{content:'';width:20px;height:2px;background:var(--blue);border-radius:1px}
+h2.section-title{font-size:26px;font-weight:600;letter-spacing:-.02em;color:var(--text);margin-bottom:6px}
+.section-desc{font-size:14px;color:var(--text2);margin-bottom:24px;line-height:1.7}
+.divider{height:1px;background:var(--border);margin:40px 0}
+h3.sub{font-size:16px;font-weight:600;color:var(--text);margin:28px 0 10px}
+p.body{color:var(--text2);font-size:14.5px;margin-bottom:12px}
+
+/* ── CALLOUTS ── */
+.callout{display:flex;gap:12px;padding:14px 16px;border-radius:var(--r);margin:16px 0;font-size:13.5px;line-height:1.6;border-left:3px solid}
+.callout-body strong{color:var(--text);font-weight:500}
+.callout-body{color:var(--text2)}
+.callout.info{background:var(--blue-bg);border-color:var(--blue)}
+.callout.warn{background:var(--amber-bg);border-color:var(--amber)}
+.callout.danger{background:var(--red-bg);border-color:var(--red)}
+.callout.success{background:var(--green-bg);border-color:var(--green)}
+.callout.purple{background:var(--purple-bg);border-color:var(--purple)}
+.ci{font-size:17px;flex-shrink:0;margin-top:1px}
+
+/* ── CONCEPT CARDS ── */
+.concept-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.concept-card{border-radius:var(--r);padding:16px 18px;border:1px solid var(--border)}
+.concept-card h4{font-size:13px;font-weight:600;margin-bottom:8px}
+.concept-card ul{padding-left:16px;font-size:13px;color:var(--text2)}
+.concept-card li{margin-bottom:4px}
+.cc-blue{background:var(--blue-bg);border-color:var(--blue-l)} .cc-blue h4{color:var(--blue)}
+.cc-green{background:var(--green-bg);border-color:var(--green-l)} .cc-green h4{color:var(--green)}
+.cc-red{background:var(--red-bg);border-color:var(--red-l)} .cc-red h4{color:var(--red)}
+.cc-amber{background:var(--amber-bg);border-color:var(--amber-l)} .cc-amber h4{color:var(--amber)}
+.cc-purple{background:var(--purple-bg);border-color:var(--purple-l)} .cc-purple h4{color:var(--purple)}
+.cc-teal{background:var(--teal-bg);border-color:var(--teal-l)} .cc-teal h4{color:var(--teal)}
+
+/* ── CODE ── */
+pre{background:#1e1e2e;border-radius:var(--r);padding:20px 22px;overflow-x:auto;margin:14px 0;border:1px solid #2d2b40}
+pre code{font-family:var(--mono);font-size:12.5px;color:#cdd6f4;line-height:1.75;background:none;border:none;padding:0}
+code{font-family:var(--mono);font-size:12px;background:var(--bg3);border:1px solid var(--border);padding:1px 5px;border-radius:4px}
+.kw{color:#cba6f7}.fn{color:#89b4fa}.str{color:#a6e3a1}.cm{color:#6c7086;font-style:italic}.num{color:#fab387}.op{color:#89dceb}
+
+/* ── TABLE ── */
+.nt{width:100%;border-collapse:collapse;font-size:13px;margin:14px 0}
+.nt th{text-align:left;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);font-weight:500;color:var(--text2);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em}
+.nt td{padding:9px 12px;border:1px solid var(--border);color:var(--text2);vertical-align:top}
+.nt tr:hover td{background:var(--bg2)}
+.tag{display:inline-block;padding:1px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.tg{background:var(--green-bg);color:#15803d}.ta{background:var(--amber-bg);color:#b45309}.tr{background:var(--red-bg);color:#b91c1c}.tb{background:var(--blue-bg);color:#1d4ed8}.tp{background:var(--purple-bg);color:#6d28d9}
+
+/* ── ARCH DIAGRAM (CSS boxes) ── */
+.arch{display:flex;flex-direction:column;align-items:center;gap:0;padding:8px 0}
+.arch-row{display:flex;gap:10px;justify-content:center;align-items:center;width:100%}
+.abox{
+  border-radius:var(--r);padding:10px 14px;font-size:12px;font-weight:500;
+  text-align:center;flex:1;border:1.5px solid transparent;
+  transition:transform .2s,box-shadow .2s;cursor:default;min-width:0;
+}
+.abox:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.abox small{display:block;font-weight:400;font-size:10.5px;opacity:.7;margin-top:2px}
+.abox.purple{background:var(--purple-bg);border-color:var(--purple-l);color:var(--purple)}
+.abox.teal{background:var(--teal-bg);border-color:var(--teal-l);color:var(--teal)}
+.abox.amber{background:var(--amber-bg);border-color:var(--amber-l);color:var(--amber)}
+.abox.blue{background:var(--blue-bg);border-color:var(--blue-l);color:var(--blue)}
+.abox.green{background:var(--green-bg);border-color:var(--green-l);color:var(--green)}
+.abox.gray{background:var(--bg3);border-color:var(--border);color:var(--text2)}
+.abox.red{background:var(--red-bg);border-color:var(--red-l);color:var(--red)}
+.abox.big{padding:14px 20px;font-size:13px}
+.abox.warn-pulse{animation:apulse 2s ease-in-out infinite}
+@keyframes apulse{0%,100%{box-shadow:0 0 0 0 rgba(217,119,6,.2)}50%{box-shadow:0 0 0 6px rgba(217,119,6,.1)}}
+
+.arch-gap{display:flex;justify-content:center;align-items:center;height:24px;width:100%}
+.arch-svg-connector{overflow:visible}
+
+/* ── LAYER STACK ── */
+.layers{margin:16px 0}
+.layer{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:var(--r);margin-bottom:5px;transition:transform .15s;cursor:default}
+.layer:hover{transform:translateX(4px)}
+.lnum{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.lbody{}
+.ltitle{font-size:13.5px;font-weight:500;color:var(--text)}
+.ldesc{font-size:12px;color:var(--text3);margin-top:1px}
+.l1{background:var(--blue-bg)} .l1 .lnum{background:var(--blue);color:#fff}
+.l2{background:var(--amber-bg)} .l2 .lnum{background:var(--amber);color:#fff}
+.l3{background:var(--green-bg)} .l3 .lnum{background:var(--green);color:#fff}
+.l4{background:var(--red-bg)} .l4 .lnum{background:var(--red);color:#fff}
+.l5{background:var(--purple-bg)} .l5 .lnum{background:var(--purple);color:#fff}
+
+/* ── QUIZ ── */
+.quiz-block{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin:20px 0}
+.quiz-q{padding:14px 18px;background:var(--bg2);font-size:14px;font-weight:500;color:var(--text)}
+.quiz-options{display:flex;flex-direction:column;gap:0}
+.quiz-opt{
+  display:flex;align-items:center;gap:10px;padding:11px 18px;
+  border-top:1px solid var(--border);cursor:pointer;
+  font-size:13.5px;color:var(--text2);transition:background .15s;
+}
+.quiz-opt:hover{background:var(--bg3)}
+.quiz-opt.correct{background:var(--green-bg);color:var(--green);font-weight:500}
+.quiz-opt.wrong{background:var(--red-bg);color:var(--red)}
+.quiz-opt.reveal{pointer-events:none}
+.quiz-radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.quiz-opt.correct .quiz-radio{border-color:var(--green);background:var(--green)}
+.quiz-opt.wrong .quiz-radio{border-color:var(--red);background:var(--red)}
+.quiz-result{padding:10px 18px;font-size:13px;color:var(--text2);border-top:1px solid var(--border);background:var(--bg2);display:none}
+.quiz-result.show{display:block}
+
+/* ── ANIMATIONS ── */
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes slowspin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes flowdown{0%{stroke-dashoffset:40}100%{stroke-dashoffset:0}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+@media(prefers-reduced-motion:reduce){.wspin,.mspin,.hand,.flow-anim{animation:none}}
+
+/* ── DEMO INTERACTIVE ── */
+.demo-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;margin:16px 0}
+.demo-box h4{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:14px}
+.pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.wpill{border-radius:20px;padding:4px 12px;font-size:12px;font-weight:500;border:1px solid transparent;transition:all .25s}
+.wpill.idle{background:var(--bg3);border-color:var(--border);color:var(--text3)}
+.wpill.race{background:var(--amber-bg);border-color:var(--amber-l);color:var(--amber)}
+.wpill.won{background:var(--green-bg);border-color:var(--green-l);color:var(--green)}
+.wpill.lost{background:var(--bg3);border-color:var(--border);color:var(--text3)}
+.fence-out{font-family:var(--mono);font-size:12.5px;background:#1e1e2e;color:#a6e3a1;border-radius:var(--r);padding:10px 14px;margin-top:10px;min-height:38px;transition:all .3s}
+.dbtn{padding:6px 16px;background:var(--blue);color:#fff;border:none;border-radius:6px;font-size:13px;font-family:var(--font);font-weight:500;cursor:pointer;transition:background .15s}
+.dbtn:hover{background:#1d4ed8}
+.dbtn.gray{background:var(--text3)} .dbtn.gray:hover{background:var(--text2)}
+
+/* ── WEBSOCKET SCALE VISUAL ── */
+.ws-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:16px 0}
+.ws-server{border-radius:var(--r);padding:12px 16px;background:var(--blue-bg);border:1.5px solid var(--blue-l);font-size:12px;font-weight:500;color:var(--blue);min-width:130px;text-align:center}
+.ws-server small{display:block;font-weight:400;font-size:10.5px;color:#3b82f6;margin-top:3px}
+.ws-clients{display:flex;gap:4px;flex-wrap:wrap}
+.wsc{width:10px;height:10px;border-radius:50%;background:var(--teal);opacity:.7}
+.ws-arrow{color:var(--text3);font-size:16px}
+
+/* ── SCROLL PROGRESS ── */
+.progress-bar{position:fixed;top:0;left:0;right:0;height:3px;background:var(--blue);transform-origin:left;transform:scaleX(0);transition:transform .1s;z-index:999}
+
+@media(max-width:900px){
+  .sidebar{display:none}
+  .main{margin-left:0;padding:28px 20px 80px}
+  .toc-grid{grid-template-columns:1fr 1fr}
+  .concept-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="pb"></div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-title">HLD Masterclass</div>
+    <div class="sb-logo-sub">Real-time at 1B scale</div>
+  </div>
+
+  <div class="sb-section">Foundations</div>
+  <a class="sb-item" href="#s1"><span class="sb-dot" style="background:var(--purple)"></span>The core problem</a>
+  <a class="sb-item" href="#s2"><span class="sb-dot" style="background:var(--teal)"></span>Full architecture</a>
+
+  <div class="sb-section">Kafka</div>
+  <a class="sb-item" href="#s3"><span class="sb-dot" style="background:var(--amber)"></span>What Kafka is</a>
+  <a class="sb-item" href="#s4"><span class="sb-dot" style="background:var(--red)"></span>Kafka's limitation</a>
+
+  <div class="sb-section">Delay tier</div>
+  <a class="sb-item" href="#s5"><span class="sb-dot" style="background:var(--blue)"></span>Redis sorted set</a>
+  <a class="sb-item" href="#s6"><span class="sb-dot" style="background:var(--blue)"></span>SQS delay queue</a>
+  <a class="sb-item" href="#s7"><span class="sb-dot" style="background:var(--purple)"></span>Timing wheel</a>
+  <a class="sb-item" href="#s8"><span class="sb-dot" style="background:var(--border2)"></span>Comparison</a>
+
+  <div class="sb-section">Real-time delivery</div>
+  <a class="sb-item" href="#s9"><span class="sb-dot" style="background:var(--teal)"></span>WebSocket / SSE</a>
+  <a class="sb-item" href="#s10"><span class="sb-dot" style="background:var(--teal)"></span>Fan-out pattern</a>
+
+  <div class="sb-section">Deduplication</div>
+  <a class="sb-item" href="#s11"><span class="sb-dot" style="background:var(--amber)"></span>The problem</a>
+  <a class="sb-item" href="#s12"><span class="sb-dot" style="background:var(--amber)"></span>SET NX fence</a>
+  <a class="sb-item" href="#s13"><span class="sb-dot" style="background:var(--amber)"></span>Race demo</a>
+  <a class="sb-item" href="#s14"><span class="sb-dot" style="background:var(--red)"></span>Failure cases</a>
+  <a class="sb-item" href="#s15"><span class="sb-dot" style="background:var(--red)"></span>TTL sizing</a>
+
+  <div class="sb-section">Reference</div>
+  <a class="sb-item" href="#s16"><span class="sb-dot" style="background:var(--green)"></span>Defence layers</a>
+  <a class="sb-item" href="#s17"><span class="sb-dot" style="background:var(--green)"></span>Full code</a>
+  <a class="sb-item" href="#quiz"><span class="sb-dot" style="background:var(--text3)"></span>Quiz yourself</a>
+</nav>
+
+<main class="main">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">SYSTEM DESIGN LESSON</div>
+  <h1 class="hero-title">Real-time updates at 1 billion users<br>+ Guaranteed delayed delivery</h1>
+  <p class="hero-sub">Everything covered: why Kafka isn't enough, how the delay tier works, WebSocket fan-out, and the full deduplication fence pattern.</p>
+  <div class="hero-pills">
+    <span class="hero-pill">Kafka</span>
+    <span class="hero-pill">Redis sorted set</span>
+    <span class="hero-pill">SQS delay queue</span>
+    <span class="hero-pill">Timing wheel</span>
+    <span class="hero-pill">WebSocket / SSE</span>
+    <span class="hero-pill">Dedup fence</span>
+    <span class="hero-pill">At-least-once</span>
+    <span class="hero-pill">Idempotency</span>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc-grid">
+  <a class="toc-card" href="#s1"><div class="toc-card-num">01</div><div class="toc-card-title">The core problem</div></a>
+  <a class="toc-card" href="#s2"><div class="toc-card-num">02</div><div class="toc-card-title">Full HLD architecture</div></a>
+  <a class="toc-card" href="#s3"><div class="toc-card-num">03</div><div class="toc-card-title">Kafka internals</div></a>
+  <a class="toc-card" href="#s4"><div class="toc-card-num">04</div><div class="toc-card-title">Kafka's delay limitation</div></a>
+  <a class="toc-card" href="#s5"><div class="toc-card-num">05</div><div class="toc-card-title">Redis sorted set</div></a>
+  <a class="toc-card" href="#s6"><div class="toc-card-num">06</div><div class="toc-card-title">SQS delay queue</div></a>
+  <a class="toc-card" href="#s7"><div class="toc-card-num">07</div><div class="toc-card-title">Timing wheel</div></a>
+  <a class="toc-card" href="#s9"><div class="toc-card-num">08</div><div class="toc-card-title">WebSocket / SSE scale</div></a>
+  <a class="toc-card" href="#s11"><div class="toc-card-num">09</div><div class="toc-card-title">Deduplication problem</div></a>
+  <a class="toc-card" href="#s12"><div class="toc-card-num">10</div><div class="toc-card-title">SET NX fence pattern</div></a>
+  <a class="toc-card" href="#s14"><div class="toc-card-num">11</div><div class="toc-card-title">Failure cases</div></a>
+  <a class="toc-card" href="#quiz"><div class="toc-card-num">12</div><div class="toc-card-title">Quiz yourself</div></a>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 1 ═══ -->
+<div class="lesson-section" id="s1">
+  <div class="section-eyebrow">Foundations · 01</div>
+  <h2 class="section-title">The core problem</h2>
+  <p class="section-desc">Two distinct problems that get confused in interviews and in code.</p>
+
+  <div class="concept-grid">
+    <div class="concept-card cc-teal">
+      <h4>Real-time delivery</h4>
+      <ul>
+        <li>Push events to live clients <em>now</em></li>
+        <li>Low latency — under 100ms ideal</li>
+        <li>WebSocket or SSE connections</li>
+        <li>Requires stateful connection servers</li>
+        <li>Example: chat message, live score update</li>
+      </ul>
+    </div>
+    <div class="concept-card cc-amber">
+      <h4>Timed delivery</h4>
+      <ul>
+        <li>Fire an event at <em>exactly</em> t+Ns</li>
+        <li>Trigger webhook/microservice after delay</li>
+        <li>Requires a dedicated delay scheduler</li>
+        <li>Kafka <strong>cannot guarantee this</strong></li>
+        <li>Example: reminder, SLA breach ping, retry</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <span class="ci">💡</span>
+    <div class="callout-body">At 1 billion users both problems appear simultaneously. Your architecture must solve them independently — the real-time path and the delay path are different components with different guarantees.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 2 ═══ -->
+<div class="lesson-section" id="s2">
+  <div class="section-eyebrow">Foundations · 02</div>
+  <h2 class="section-title">Full HLD architecture</h2>
+  <p class="section-desc">All components, from event producers down to final delivery. Kafka is the backbone — but it fans out into two paths.</p>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:24px;margin:16px 0">
+    <div class="arch">
+      <!-- Producers -->
+      <div class="arch-row" style="gap:8px">
+        <div class="abox purple">User actions / APIs<small>HTTP, gRPC events</small></div>
+        <div class="abox purple">Microservice events<small>internal pub/sub</small></div>
+        <div class="abox purple">DB CDC (Debezium)<small>change data capture</small></div>
+      </div>
+      <div class="arch-gap">
+        <svg class="arch-svg-connector" width="300" height="24">
+          <defs><marker id="ma" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#c4b5fd" stroke-width="1.5"/></marker></defs>
+          <line x1="50" y1="0" x2="150" y2="22" stroke="#c4b5fd" stroke-width="1.5" marker-end="url(#ma)"/>
+          <line x1="150" y1="0" x2="150" y2="22" stroke="#c4b5fd" stroke-width="1.5" marker-end="url(#ma)"/>
+          <line x1="250" y1="0" x2="150" y2="22" stroke="#c4b5fd" stroke-width="1.5" marker-end="url(#ma)"/>
+        </svg>
+      </div>
+      <!-- Kafka -->
+      <div class="abox teal big warn-pulse" style="width:420px;max-width:100%">
+        Kafka — event streaming backbone
+        <small>High-throughput · ordered · durable · partitioned by user_id</small>
+        <small style="color:#f59e0b;margin-top:3px">⚠ pull-based poll — no native delay guarantee</small>
+      </div>
+      <div class="arch-gap">
+        <svg class="arch-svg-connector" width="420" height="24">
+          <defs><marker id="mb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#99f6e4" stroke-width="1.5"/></marker></defs>
+          <line x1="210" y1="0" x2="60" y2="22" stroke="#99f6e4" stroke-width="1.5" marker-end="url(#mb)"/>
+          <line x1="210" y1="0" x2="210" y2="22" stroke="#99f6e4" stroke-width="1.5" marker-end="url(#mb)"/>
+          <line x1="210" y1="0" x2="360" y2="22" stroke="#99f6e4" stroke-width="1.5" marker-end="url(#mb)"/>
+        </svg>
+      </div>
+      <!-- Three consumers -->
+      <div class="arch-row" style="gap:8px">
+        <div class="abox blue">Stream processor<small>Flink / Spark</small></div>
+        <div class="abox amber">Delay / scheduler tier<small>Redis sorted set + SQS</small></div>
+        <div class="abox gray">Dead-letter queue<small>retries + alerts</small></div>
+      </div>
+      <div class="arch-gap">
+        <svg class="arch-svg-connector" width="420" height="24">
+          <defs><marker id="mc" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#6b7280" stroke-width="1.5"/></marker></defs>
+          <line x1="60" y1="0" x2="60" y2="22" stroke="#6b7280" stroke-width="1.5" marker-end="url(#mc)"/>
+          <line x1="210" y1="0" x2="210" y2="22" stroke="#6b7280" stroke-width="1.5" marker-end="url(#mc)"/>
+          <line x1="360" y1="0" x2="360" y2="22" stroke="#6b7280" stroke-width="1.5" marker-end="url(#mc)"/>
+        </svg>
+      </div>
+      <!-- Delivery -->
+      <div class="arch-row" style="gap:8px">
+        <div class="abox green">WebSocket / SSE<small>push live clients</small></div>
+        <div class="abox green">Webhook delivery<small>idempotency key</small></div>
+        <div class="abox green">Microservice call<small>at-least-once</small></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout purple">
+    <span class="ci">📌</span>
+    <div class="callout-body"><strong>Partitioning strategy:</strong> Partition Kafka by <code>user_id % num_partitions</code>. This ensures all events for a given user land on the same partition, preserving order and enabling sticky routing to WebSocket connection servers.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 3 ═══ -->
+<div class="lesson-section" id="s3">
+  <div class="section-eyebrow">Kafka · 03</div>
+  <h2 class="section-title">What Kafka actually is</h2>
+  <p class="section-desc">Understanding the internals is the only way to know what Kafka can and cannot do.</p>
+
+  <div class="concept-grid">
+    <div class="concept-card cc-teal">
+      <h4>Kafka is a commit log</h4>
+      <ul>
+        <li>Records are appended to a log on disk</li>
+        <li>Consumers track their own offset</li>
+        <li>Consumers <strong>pull</strong> at their own pace</li>
+        <li>Records stay on disk (configurable retention)</li>
+        <li>Multiple consumer groups, independent offsets</li>
+      </ul>
+    </div>
+    <div class="concept-card cc-blue">
+      <h4>Key properties</h4>
+      <ul>
+        <li><strong>Ordered</strong> within a partition</li>
+        <li><strong>Durable</strong> — replication across brokers</li>
+        <li><strong>Replayable</strong> — reset offset anytime</li>
+        <li><strong>High-throughput</strong> — millions/sec</li>
+        <li><strong>Scalable</strong> — add partitions linearly</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="sub">How a message flows through Kafka</h3>
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:12px 0;overflow-x:auto">
+    <svg width="100%" viewBox="0 0 700 120" font-family="Inter, sans-serif">
+      <defs><marker id="md" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#6b7280" stroke-width="1.5"/></marker></defs>
+      <!-- Producer -->
+      <rect x="10" y="40" width="100" height="40" rx="6" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1.5"/>
+      <text x="60" y="64" text-anchor="middle" font-size="12" font-weight="500" fill="#7c3aed">Producer</text>
+      <line x1="110" y1="60" x2="155" y2="60" stroke="#6b7280" stroke-width="1.5" marker-end="url(#md)"/>
+      <!-- Broker / partition -->
+      <rect x="156" y="20" width="180" height="80" rx="6" fill="#f0fdfa" stroke="#99f6e4" stroke-width="1.5"/>
+      <text x="246" y="40" text-anchor="middle" font-size="11" font-weight="600" fill="#0d9488">Broker / Partition</text>
+      <rect x="166" y="48" width="20" height="16" rx="2" fill="#0d9488" opacity=".8"/>
+      <rect x="190" y="48" width="20" height="16" rx="2" fill="#0d9488" opacity=".6"/>
+      <rect x="214" y="48" width="20" height="16" rx="2" fill="#0d9488" opacity=".4"/>
+      <rect x="238" y="48" width="20" height="16" rx="2" fill="#0d9488" opacity=".25"/>
+      <rect x="262" y="48" width="20" height="16" rx="2" fill="#0d9488" opacity=".15"/>
+      <text x="246" y="82" text-anchor="middle" font-size="10" fill="#0f766e">offset: 0  1  2  3  4 →</text>
+      <!-- Consumers -->
+      <line x1="336" y1="60" x2="375" y2="42" stroke="#6b7280" stroke-width="1.5" marker-end="url(#md)"/>
+      <line x1="336" y1="60" x2="375" y2="78" stroke="#6b7280" stroke-width="1.5" marker-end="url(#md)"/>
+      <rect x="376" y="24" width="130" height="34" rx="6" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+      <text x="441" y="38" text-anchor="middle" font-size="11" font-weight="500" fill="#2563eb">Consumer group A</text>
+      <text x="441" y="51" text-anchor="middle" font-size="10" fill="#3b82f6">offset stored in Kafka</text>
+      <rect x="376" y="62" width="130" height="34" rx="6" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+      <text x="441" y="76" text-anchor="middle" font-size="11" font-weight="500" fill="#2563eb">Consumer group B</text>
+      <text x="441" y="89" text-anchor="middle" font-size="10" fill="#3b82f6">independent offset</text>
+      <!-- Note -->
+      <text x="530" y="36" font-size="10.5" fill="#9a9893">Each group</text>
+      <text x="530" y="50" font-size="10.5" fill="#9a9893">polls at its</text>
+      <text x="530" y="64" font-size="10.5" fill="#9a9893">own pace</text>
+      <text x="530" y="78" font-size="10.5" fill="#f59e0b">← that's the</text>
+      <text x="530" y="92" font-size="10.5" fill="#f59e0b">delay problem</text>
+    </svg>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 4 ═══ -->
+<div class="lesson-section" id="s4">
+  <div class="section-eyebrow">Kafka · 04</div>
+  <h2 class="section-title">Why Kafka cannot guarantee a 50-second delay</h2>
+
+  <div class="callout danger">
+    <span class="ci">🚫</span>
+    <div class="callout-body"><strong>The core limitation:</strong> Kafka is pull-based. A consumer polls on its own schedule. There is zero mechanism in Kafka to say "deliver this message to a consumer in exactly 50 seconds." Consumers decide when they poll, not Kafka.</div>
+  </div>
+
+  <div class="concept-grid">
+    <div class="concept-card cc-red">
+      <h4>What Kafka cannot do</h4>
+      <ul>
+        <li>Schedule delivery at a wall-clock time</li>
+        <li>Hold a message until a timeout fires</li>
+        <li>Push to a webhook after N seconds</li>
+        <li>Guarantee max delivery latency</li>
+        <li>Fire a callback after exactly 50s</li>
+      </ul>
+    </div>
+    <div class="concept-card cc-green">
+      <h4>What Kafka is perfect for</h4>
+      <ul>
+        <li>High-throughput ordered ingest</li>
+        <li>Durable buffering between services</li>
+        <li>Triggering the delay scheduler</li>
+        <li>Fan-out to many consumer groups</li>
+        <li>Replay for debugging / backfill</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="body">A consumer polling every 100ms will be off by up to 100ms <em>per poll</em>. At 1B events with variable consumer lag, poll drift compounds. <strong>The delay guarantee must live in a dedicated scheduler — not in Kafka.</strong> Kafka's role is to reliably hand the event to the scheduler.</p>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 5 ═══ -->
+<div class="lesson-section" id="s5">
+  <div class="section-eyebrow">Delay tier · 05</div>
+  <h2 class="section-title">Redis sorted set as a delay queue</h2>
+  <p class="section-desc">The most common primary delay mechanism at scale. Supports arbitrary delays, sub-second precision, and up to ~100M pending jobs in RAM.</p>
+
+  <h3 class="sub">How it works</h3>
+  <p class="body">A sorted set stores <code>job_id</code> as the member and <code>fire_timestamp</code> (Unix epoch) as the score. A poller runs every second, fetching all jobs whose score ≤ now.</p>
+
+  <pre><code><span class="cm"># Enqueue: schedule job to fire in 50 seconds</span>
+fire_at = time.<span class="fn">time</span>() + <span class="num">50</span>
+redis.<span class="fn">zadd</span>(<span class="str">"scheduled_jobs"</span>, {job_id: fire_at})
+
+<span class="cm"># Poller: fetch and atomically claim jobs due now</span>
+<span class="kw">def</span> <span class="fn">poll</span>():
+    now = time.<span class="fn">time</span>()
+    jobs = redis.<span class="fn">zrangebyscore</span>(<span class="str">"scheduled_jobs"</span>, <span class="num">0</span>, now)
+    <span class="kw">for</span> job_id <span class="kw">in</span> jobs:
+        removed = redis.<span class="fn">zrem</span>(<span class="str">"scheduled_jobs"</span>, job_id)
+        <span class="kw">if</span> removed:  <span class="cm"># won the ZREM race — we own this job</span>
+            executor.<span class="fn">submit</span>(process_job, job_id)</code></pre>
+
+  <div class="callout info">
+    <span class="ci">🔑</span>
+    <div class="callout-body"><strong>The ZREM trick:</strong> Multiple pollers can call <code>ZRANGEBYSCORE</code> and see the same jobs. <code>ZREM</code> is the claim — it's atomic, so only the first caller gets <code>1</code> back. Others get <code>0</code> and skip. This is a free first layer of deduplication before the fence even fires.</div>
+  </div>
+
+  <div class="concept-grid">
+    <div class="concept-card cc-green">
+      <h4>Strengths</h4>
+      <ul>
+        <li>Sub-second precision (~1s poll interval)</li>
+        <li>No max delay limit — hours, days, weeks</li>
+        <li>O(log N) insert, O(K) fetch</li>
+        <li>Easy to inspect / debug</li>
+        <li>ZRANGEBYSCORE + ZREM pattern is safe</li>
+      </ul>
+    </div>
+    <div class="concept-card cc-red">
+      <h4>Limitations</h4>
+      <ul>
+        <li>All pending jobs live in RAM (~100M limit)</li>
+        <li>Redis restart risk — needs AOF/RDB</li>
+        <li>Single-node bottleneck unless clustered</li>
+        <li>Poller is a long-polling loop</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 6 ═══ -->
+<div class="lesson-section" id="s6">
+  <div class="section-eyebrow">Delay tier · 06</div>
+  <h2 class="section-title">SQS delay queue</h2>
+  <p class="section-desc">AWS-managed, zero ops, at-least-once delivery. The best fallback/overflow layer. Critical constraint: max 15 minutes.</p>
+
+  <h3 class="sub">Key properties</h3>
+
+  <table class="nt">
+    <thead><tr><th>Property</th><th>Value</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Max delay</td><td><span class="tag tr">15 minutes</span></td><td>Use Redis for longer delays</td></tr>
+      <tr><td>Delivery guarantee</td><td><span class="tag ta">At-least-once</span></td><td>Duplicates possible — need dedup fence</td></tr>
+      <tr><td>Visibility timeout</td><td>Configurable</td><td>How long a consumer holds the message before SQS redelivers</td></tr>
+      <tr><td>FIFO dedup window</td><td><span class="tag tg">5 minutes</span></td><td>FIFO queues dedup by MessageDeduplicationId</td></tr>
+      <tr><td>Throughput (FIFO)</td><td>300 TPS / 3000 batched</td><td>Enough for most delay workloads</td></tr>
+    </tbody>
+  </table>
+
+  <pre><code><span class="cm"># Enqueue with SQS FIFO — dedup ID prevents re-enqueueing</span>
+sqs.<span class="fn">send_message</span>(
+    QueueUrl=<span class="str">"https://sqs.us-east-1.amazonaws.com/..."</span>,
+    MessageBody=job_id,
+    DelaySeconds=<span class="num">50</span>,
+    MessageDeduplicationId=job_id,  <span class="cm"># FIFO dedup — 5 min window</span>
+    MessageGroupId=<span class="str">"delayed-jobs"</span>
+)</code></pre>
+
+  <div class="callout warn">
+    <span class="ci">⚠️</span>
+    <div class="callout-body"><strong>Visibility timeout trap:</strong> If your worker takes longer than the visibility timeout to process, SQS assumes it died and redelivers the message to another worker — even if it's still running. Set visibility timeout to at least 2× your max processing time.</div>
+  </div>
+
+  <h3 class="sub">Chaining SQS for long delays (&gt;15 min)</h3>
+  <p class="body">SQS's 15-minute cap means you can't directly schedule a job for 1 hour. Pattern: enqueue to SQS with 15-minute delay → consumer re-enqueues with the remaining delay. Repeat until within the window. Or just use Redis sorted set for anything over 15 minutes.</p>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 7 ═══ -->
+<div class="lesson-section" id="s7">
+  <div class="section-eyebrow">Delay tier · 07</div>
+  <h2 class="section-title">Hierarchical timing wheel</h2>
+  <p class="section-desc">Used inside Kafka itself, Netty, the Linux kernel, and Nginx. O(1) insert and fire regardless of pending job count. Build this only if you need sub-millisecond precision at massive scale.</p>
+
+  <h3 class="sub">The mechanism</h3>
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:12px 0;display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+    <!-- Animated wheel -->
+    <div style="flex-shrink:0">
+      <svg width="240" height="240" viewBox="0 0 240 240">
+        <!-- Outer ring slots -->
+        <circle cx="120" cy="120" r="100" fill="none" stroke="#e4e1d8" stroke-width="24"/>
+        <!-- Outer ring animated -->
+        <g class="wspin" style="transform-origin:120px 120px;animation:spin 5s linear infinite">
+          <circle cx="120" cy="120" r="100" fill="none" stroke="#dbeafe" stroke-width="24" stroke-dasharray="12 50.3" stroke-dashoffset="0"/>
+          <circle cx="120" cy="20" r="5" fill="#2563eb"/>
+          <circle cx="191" cy="49" r="5" fill="#2563eb" opacity=".7"/>
+          <circle cx="220" cy="120" r="5" fill="#f59e0b"/>
+          <circle cx="191" cy="191" r="5" fill="#2563eb" opacity=".5"/>
+          <circle cx="120" cy="220" r="5" fill="#2563eb" opacity=".4"/>
+          <circle cx="49" cy="191" r="5" fill="#2563eb" opacity=".4"/>
+          <circle cx="20" cy="120" r="5" fill="#2563eb" opacity=".3"/>
+          <circle cx="49" cy="49" r="5" fill="#2563eb" opacity=".6"/>
+        </g>
+        <!-- Inner ring -->
+        <circle cx="120" cy="120" r="66" fill="none" stroke="#e4e1d8" stroke-width="18"/>
+        <g class="mspin" style="transform-origin:120px 120px;animation:slowspin 30s linear infinite">
+          <circle cx="120" cy="120" r="66" fill="none" stroke="#dcfce7" stroke-width="18" stroke-dasharray="18 62.5" stroke-dashoffset="0"/>
+          <circle cx="120" cy="54" r="4" fill="#16a34a"/>
+          <circle cx="174" cy="78" r="4" fill="#16a34a" opacity=".6"/>
+          <circle cx="186" cy="120" r="4" fill="#16a34a" opacity=".4"/>
+          <circle cx="120" cy="186" r="4" fill="#16a34a" opacity=".4"/>
+          <circle cx="66" cy="78" r="4" fill="#16a34a" opacity=".6"/>
+        </g>
+        <!-- Hub -->
+        <circle cx="120" cy="120" r="34" fill="#f8f7f4" stroke="#e4e1d8" stroke-width="1.5"/>
+        <!-- Tick hand -->
+        <g class="hand" style="transform-origin:120px 120px;animation:spin 1.5s linear infinite">
+          <line x1="120" y1="120" x2="120" y2="28" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="120" cy="120" r="4" fill="#dc2626"/>
+        </g>
+        <text x="120" y="116" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#6b6860" font-weight="500">timing</text>
+        <text x="120" y="128" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#6b6860" font-weight="500">wheel</text>
+        <!-- Legend -->
+        <circle cx="14" cy="226" r="4" fill="#2563eb"/>
+        <text x="22" y="229" font-family="Inter,sans-serif" font-size="9.5" fill="#6b6860">seconds</text>
+        <circle cx="80" cy="226" r="4" fill="#16a34a"/>
+        <text x="88" y="229" font-family="Inter,sans-serif" font-size="9.5" fill="#6b6860">minutes</text>
+        <circle cx="150" cy="226" r="4" fill="#f59e0b"/>
+        <text x="158" y="229" font-family="Inter,sans-serif" font-size="9.5" fill="#6b6860">firing</text>
+      </svg>
+    </div>
+    <!-- Explanation -->
+    <div style="flex:1;min-width:200px">
+      <p class="body" style="margin-bottom:10px"><strong>How it works:</strong> Two concentric rings. The inner ring represents minutes (ticks once per minute). The outer ring represents seconds (ticks once per second). Jobs are stored in the bucket they'll fire in.</p>
+      <p class="body" style="margin-bottom:10px">The red hand advances one tick per second. All jobs in the current bucket fire immediately. Jobs further out wait in their bucket.</p>
+      <p class="body"><strong>Why O(1):</strong> Inserting a job is just <code>bucket[fire_time % wheel_size].append(job)</code>. No sorting, no heap. Firing is <code>bucket[current_tick].drain()</code>.</p>
+    </div>
+  </div>
+
+  <div class="callout purple">
+    <span class="ci">📖</span>
+    <div class="callout-body"><strong>Real-world usage:</strong> Kafka's internal purgatory (for in-flight produce requests), Netty's HashedWheelTimer, Linux's <code>jiffies</code> kernel timer, Nginx's event loop. Twitter/Uber have open-sourced timing wheel implementations for JVM services.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 8 ═══ -->
+<div class="lesson-section" id="s8">
+  <div class="section-eyebrow">Delay tier · 08</div>
+  <h2 class="section-title">Comparing delay options</h2>
+
+  <table class="nt">
+    <thead><tr><th>Option</th><th>Precision</th><th>Max delay</th><th>Scale</th><th>Ops</th><th>Use when</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Redis sorted set</strong></td>
+        <td><span class="tag tg">~1s</span></td>
+        <td>Unlimited</td>
+        <td>~100M jobs in RAM</td>
+        <td><span class="tag ta">Medium</span></td>
+        <td>Primary delay scheduler, arbitrary delays</td>
+      </tr>
+      <tr>
+        <td><strong>SQS delay queue</strong></td>
+        <td><span class="tag ta">~1-2s</span></td>
+        <td><span class="tag tr">15 min</span></td>
+        <td>Unlimited</td>
+        <td><span class="tag tg">Low</span></td>
+        <td>Fallback, overflow, or short delays (&lt;15min)</td>
+      </tr>
+      <tr>
+        <td><strong>SQS FIFO</strong></td>
+        <td><span class="tag ta">~1s</span></td>
+        <td>15 min</td>
+        <td>300 TPS</td>
+        <td><span class="tag tg">Low</span></td>
+        <td>When queue-level dedup is needed</td>
+      </tr>
+      <tr>
+        <td><strong>Timing wheel</strong></td>
+        <td><span class="tag tg">Sub-ms</span></td>
+        <td>Unlimited</td>
+        <td>Millions/sec</td>
+        <td><span class="tag tr">High</span></td>
+        <td>Custom infra, sub-second SLA</td>
+      </tr>
+      <tr>
+        <td><strong>RabbitMQ DLX</strong></td>
+        <td><span class="tag ta">~1s</span></td>
+        <td>Unlimited</td>
+        <td>Medium</td>
+        <td><span class="tag ta">Medium</span></td>
+        <td>Already on RabbitMQ stack</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout success">
+    <span class="ci">✅</span>
+    <div class="callout-body"><strong>Recommended combo for 50s delays at 1B scale:</strong> Redis sorted set as primary (fast, flexible, no delay cap) + SQS FIFO as fallback (resilience if Redis fails). Both fire independently — which creates the deduplication problem solved in the next section.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 9 ═══ -->
+<div class="lesson-section" id="s9">
+  <div class="section-eyebrow">Real-time delivery · 09</div>
+  <h2 class="section-title">WebSocket / SSE at 1B users</h2>
+  <p class="section-desc">The real-time path (stream processor → live clients) is a separate problem from the delay path. It requires stateful connection servers and consistent routing.</p>
+
+  <div class="concept-grid">
+    <div class="concept-card cc-teal">
+      <h4>WebSocket</h4>
+      <ul>
+        <li>Full-duplex persistent TCP connection</li>
+        <li>Best for: chat, live collaboration, gaming</li>
+        <li>~50K connections per server node</li>
+        <li>Connection is stateful — sticky routing required</li>
+        <li>Example: Discord (Elixir), Slack</li>
+      </ul>
+    </div>
+    <div class="concept-card cc-blue">
+      <h4>SSE (Server-Sent Events)</h4>
+      <ul>
+        <li>One-way server → client over HTTP/2</li>
+        <li>Best for: feeds, dashboards, notifications</li>
+        <li>Simpler — reuses HTTP infrastructure</li>
+        <li>Auto-reconnects on drop</li>
+        <li>Example: GitHub live feed, stock tickers</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="sub">Connection server topology</h3>
+  <p class="body">Each connection server holds ~50K open WebSocket connections. For a user to receive an event, the message must reach the connection server holding <em>their</em> socket.</p>
+
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:12px 0">
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center">
+      <div class="abox teal" style="max-width:160px">Kafka<br><small>stream processor output</small></div>
+      <span style="color:var(--text3);font-size:20px">→</span>
+      <div class="abox blue" style="max-width:160px">Pub/Sub mesh<br><small>Redis / internal fan-out</small></div>
+      <span style="color:var(--text3);font-size:20px">→</span>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="abox green" style="font-size:11px;padding:7px 12px">WS server A<small>users 0–50K</small></div>
+        <div class="abox green" style="font-size:11px;padding:7px 12px">WS server B<small>users 50K–100K</small></div>
+        <div class="abox gray" style="font-size:11px;padding:7px 12px">WS server N<small>consistent hash</small></div>
+      </div>
+      <span style="color:var(--text3);font-size:20px">→</span>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <div style="display:flex;gap:3px;flex-wrap:wrap;max-width:80px">
+          <div style="width:9px;height:9px;border-radius:50%;background:var(--teal);opacity:.8"></div>
+          <div style="width:9px;height:9px;border-radius:50%;background:var(--teal);opacity:.8"></div>
+          <div style="width:9px;height:9px;border-radius:50%;background:var(--teal);opacity:.8"></div>
+          <div style="width:9px;height:9px;border-radius:50%;background:var(--teal);opacity:.6"></div>
+          <div style="width:9px;height:9px;border-radius:50%;background:var(--teal);opacity:.6"></div>
+          <div style="width:9px;height:9px;border-radius:50%;background:var(--teal);opacity:.5"></div>
+          <div style="width:9px;height:9px;border-radius:50%;background:var(--teal);opacity:.5"></div>
+          <div style="width:9px;height:9px;border-radius:50%;background:var(--teal);opacity:.4"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text3)">clients</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <span class="ci">🔀</span>
+    <div class="callout-body"><strong>Consistent hashing for routing:</strong> Route <code>user_id</code> to a specific WS server using consistent hashing. When a message arrives for user X, the pub/sub mesh routes it to the correct connection server — not all of them. This prevents N² fan-out.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 10 ═══ -->
+<div class="lesson-section" id="s10">
+  <div class="section-eyebrow">Real-time delivery · 10</div>
+  <h2 class="section-title">Fan-out patterns</h2>
+
+  <table class="nt">
+    <thead><tr><th>Pattern</th><th>When to use</th><th>Risk</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Push fan-out (write time)</strong></td>
+        <td>Mostly active users, low follower count</td>
+        <td>Hot celebrities with 50M followers — O(N) writes on every post</td>
+      </tr>
+      <tr>
+        <td><strong>Pull fan-out (read time)</strong></td>
+        <td>High-follower accounts, many inactive users</td>
+        <td>Slow feed load, requires aggregation at read</td>
+      </tr>
+      <tr>
+        <td><strong>Hybrid</strong></td>
+        <td>Mixed — push for normal users, pull for celebrities</td>
+        <td>More logic to manage but optimal for both extremes</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout purple">
+    <span class="ci">📌</span>
+    <div class="callout-body"><strong>Twitter/X uses hybrid fan-out:</strong> Posts from accounts with &gt;N followers are not pre-written to all follower feeds. Instead, they're fetched and merged at read time. Accounts with &lt;N followers use write-time push. The threshold is dynamic.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 11 ═══ -->
+<div class="lesson-section" id="s11">
+  <div class="section-eyebrow">Deduplication · 11</div>
+  <h2 class="section-title">The deduplication problem</h2>
+  <p class="section-desc">You have Redis sorted set AND SQS both firing for the same job. Add 100 worker pods racing to process. Without a fence, events fire multiple times — guaranteed.</p>
+
+  <div class="callout danger">
+    <span class="ci">🚨</span>
+    <div class="callout-body"><strong>What happens without a fence:</strong> Redis poller fires job_id. SQS also delivers job_id. 3 pods pick them up simultaneously. Webhook fires 3 times. User gets 3 push notifications. Microservice gets 3 calls. At 1B users this is not rare — it's the default.</div>
+  </div>
+
+  <p class="body">SQS's delivery guarantee is <strong>at-least-once</strong> — it will never under-deliver, but it may over-deliver. Redis sorted set with a shared poller is also at-least-once because <code>ZRANGEBYSCORE</code> is not atomic with the processing. Neither queue owns deduplication. A third atomic store must be the arbiter.</p>
+
+  <div class="concept-grid">
+    <div class="concept-card cc-red">
+      <h4>Sources of duplicates</h4>
+      <ul>
+        <li>Redis + SQS both firing same job</li>
+        <li>Multiple pods polling the same sorted set</li>
+        <li>SQS redeliver after visibility timeout</li>
+        <li>Worker crash after acquire, before ack</li>
+        <li>Network retry on the downstream call</li>
+      </ul>
+    </div>
+    <div class="concept-card cc-green">
+      <h4>What we need</h4>
+      <ul>
+        <li>Exactly-one execution across all pods</li>
+        <li>Cross-pod atomic claim mechanism</li>
+        <li>Idempotent downstream calls as backstop</li>
+        <li>Retry eligibility preserved on failure</li>
+        <li>Zero silent job loss</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 12 ═══ -->
+<div class="lesson-section" id="s12">
+  <div class="section-eyebrow">Deduplication · 12</div>
+  <h2 class="section-title">The <code>SET NX EX</code> fence pattern</h2>
+  <p class="section-desc">A single Redis atomic command is the fence. <code>NX</code> = only set if key doesn't exist. Across 100 pods racing on the same job, exactly one gets back 1. All others get nil.</p>
+
+  <!-- Flowchart SVG -->
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px;margin:16px 0;overflow-x:auto">
+    <svg width="100%" viewBox="0 0 660 520" font-family="Inter, sans-serif">
+      <defs>
+        <marker id="mf" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#0d9488" stroke-width="1.5"/></marker>
+        <marker id="mg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#6b7280" stroke-width="1.5"/></marker>
+        <marker id="mh" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#16a34a" stroke-width="1.5"/></marker>
+        <marker id="mi" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#dc2626" stroke-width="1.5"/></marker>
+      </defs>
+      <!-- Sources -->
+      <rect x="40" y="20" width="190" height="50" rx="8" fill="#f0fdfa" stroke="#99f6e4" stroke-width="1.5"/>
+      <text x="135" y="41" text-anchor="middle" font-size="12.5" font-weight="600" fill="#0d9488">Redis sorted set</text>
+      <text x="135" y="58" text-anchor="middle" font-size="11" fill="#0f766e">ZRANGEBYSCORE + ZREM</text>
+      <rect x="430" y="20" width="190" height="50" rx="8" fill="#f0fdfa" stroke="#99f6e4" stroke-width="1.5"/>
+      <text x="525" y="41" text-anchor="middle" font-size="12.5" font-weight="600" fill="#0d9488">SQS queue</text>
+      <text x="525" y="58" text-anchor="middle" font-size="11" fill="#0f766e">at-least-once delivery</text>
+      <!-- Converge -->
+      <path d="M135 70 L135 110 L300 110 L300 124" fill="none" stroke="#0d9488" stroke-width="1.5" marker-end="url(#mf)"/>
+      <path d="M525 70 L525 110 L360 110 L360 124" fill="none" stroke="#0d9488" stroke-width="1.5" marker-end="url(#mf)"/>
+      <!-- Worker -->
+      <rect x="200" y="124" width="260" height="44" rx="8" fill="#f5f3ff" stroke="#ddd6fe" stroke-width="1.5"/>
+      <text x="330" y="146" text-anchor="middle" font-size="13" font-weight="600" fill="#7c3aed">Worker picks up job_id</text>
+      <text x="330" y="159" text-anchor="middle" font-size="10.5" fill="#6d28d9">from either source</text>
+      <line x1="330" y1="168" x2="330" y2="196" stroke="#6b7280" stroke-width="1.5" marker-end="url(#mg)"/>
+      <!-- Fence -->
+      <rect x="100" y="196" width="460" height="56" rx="8" fill="#fffbeb" stroke="#fcd34d" stroke-width="2" style="animation:apulse 2s ease-in-out infinite"/>
+      <text x="330" y="218" text-anchor="middle" font-size="13" font-weight="600" fill="#d97706">SET dedup:{job_id} 1 NX EX 120</text>
+      <text x="330" y="236" text-anchor="middle" font-size="11" fill="#92400e">atomic — only one worker wins this across all pods</text>
+      <line x1="330" y1="252" x2="330" y2="280" stroke="#6b7280" stroke-width="1.5" marker-end="url(#mg)"/>
+      <!-- Decision -->
+      <rect x="215" y="280" width="230" height="44" rx="8" fill="#f8f7f4" stroke="#d1cec8" stroke-width="1.5"/>
+      <text x="330" y="302" text-anchor="middle" font-size="13" font-weight="600" fill="#18181a">SET NX returned 1?</text>
+      <text x="330" y="317" text-anchor="middle" font-size="10.5" fill="#9a9893">(1 = won, nil = duplicate)</text>
+      <!-- No branch -->
+      <path d="M215 302 L100 302 L100 362" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#mg)"/>
+      <text x="155" y="294" text-anchor="middle" font-size="11" fill="#6b6860">no — duplicate</text>
+      <!-- Yes branch -->
+      <path d="M445 302 L560 302 L560 362" fill="none" stroke="#6b7280" stroke-width="1.5" marker-end="url(#mg)"/>
+      <text x="504" y="294" text-anchor="middle" font-size="11" fill="#6b6860">yes — first</text>
+      <!-- Drop -->
+      <rect x="30" y="362" width="140" height="50" rx="8" fill="#f8f7f4" stroke="#d1cec8" stroke-width="1.5"/>
+      <text x="100" y="382" text-anchor="middle" font-size="12.5" font-weight="600" fill="#6b7280">Drop + ack</text>
+      <text x="100" y="398" text-anchor="middle" font-size="11" fill="#9a9893">delete SQS msg</text>
+      <!-- Execute -->
+      <rect x="490" y="362" width="140" height="50" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+      <text x="560" y="382" text-anchor="middle" font-size="12.5" font-weight="600" fill="#16a34a">Execute job</text>
+      <text x="560" y="398" text-anchor="middle" font-size="11" fill="#15803d">webhook / microservice</text>
+      <!-- Execute outcomes -->
+      <line x1="560" y1="412" x2="560" y2="450" stroke="#16a34a" stroke-width="1.5" marker-end="url(#mh)"/>
+      <rect x="458" y="450" width="100" height="42" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+      <text x="508" y="470" text-anchor="middle" font-size="12" font-weight="600" fill="#16a34a">Success</text>
+      <text x="508" y="484" text-anchor="middle" font-size="10.5" fill="#15803d">ack + log</text>
+      <rect x="580" y="450" width="72" height="42" rx="8" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
+      <text x="616" y="467" text-anchor="middle" font-size="12" font-weight="600" fill="#dc2626">Fail:</text>
+      <text x="616" y="481" text-anchor="middle" font-size="11" fill="#b91c1c">DEL key</text>
+      <path d="M560 450 L560 434 L616 434 L616 450" fill="none" stroke="#dc2626" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#mi)"/>
+      <!-- Bottom note -->
+      <rect x="40" y="508" width="580" height="16" rx="4" fill="none" stroke="#e4e1d8" stroke-width="1" stroke-dasharray="4 3"/>
+      <text x="330" y="519" text-anchor="middle" font-size="10.5" fill="#9a9893">TTL must be ≥ SQS visibility timeout + buffer  →  120s is safe for a 50s job</text>
+    </svg>
+  </div>
+
+  <pre><code><span class="kw">def</span> <span class="fn">process_job</span>(job_id: str, source: str):
+    <span class="cm"># Atomic fence — only one worker wins across all pods</span>
+    acquired = redis.<span class="fn">set</span>(
+        <span class="str">f"dedup:{job_id}"</span>, <span class="num">1</span>,
+        nx=<span class="kw">True</span>,
+        ex=<span class="num">120</span>   <span class="cm"># TTL must exceed SQS visibility timeout</span>
+    )
+
+    <span class="kw">if not</span> acquired:
+        <span class="cm"># Duplicate — drop silently, ack to remove from SQS</span>
+        sqs.<span class="fn">delete_message</span>(job_id)
+        <span class="kw">return</span>
+
+    <span class="kw">try</span>:
+        <span class="fn">execute_job</span>(job_id)
+        sqs.<span class="fn">delete_message</span>(job_id)
+        delivery_log.<span class="fn">write</span>(job_id, <span class="str">"delivered"</span>)
+    <span class="kw">except</span> Exception:
+        <span class="cm"># CRITICAL: release fence so job stays retry-eligible</span>
+        redis.<span class="fn">delete</span>(<span class="str">f"dedup:{job_id}"</span>)
+        <span class="kw">raise</span></code></pre>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 13 ═══ -->
+<div class="lesson-section" id="s13">
+  <div class="section-eyebrow">Deduplication · 13</div>
+  <h2 class="section-title">Interactive: race simulation</h2>
+  <p class="section-desc">Five pods all receive the same job_id from Redis and SQS. Only one should win the fence.</p>
+
+  <div class="demo-box">
+    <h4>Workers racing on <code id="demo-jid">job_9f2a4c</code></h4>
+    <div class="pill-row" id="pill-row">
+      <div class="wpill idle" id="p1">Pod-1 · idle</div>
+      <div class="wpill idle" id="p2">Pod-2 · idle</div>
+      <div class="wpill idle" id="p3">Pod-3 · idle</div>
+      <div class="wpill idle" id="p4">Pod-4 · idle</div>
+      <div class="wpill idle" id="p5">Pod-5 · idle</div>
+    </div>
+    <div class="fence-out" id="fence-out"><span style="color:#6c7086"># fence key status</span></div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="dbtn" onclick="runRace()">Run race</button>
+      <button class="dbtn gray" onclick="resetRace()">Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 14 ═══ -->
+<div class="lesson-section" id="s14">
+  <div class="section-eyebrow">Deduplication · 14</div>
+  <h2 class="section-title">Critical failure cases</h2>
+
+  <h3 class="sub">Case 1 — forgetting to <code>DEL</code> the key on failure</h3>
+  <p class="body">Worker acquires the fence, downstream call throws. If you don't <code>DEL dedup:{job_id}</code>, the job is locked until TTL expires. If TTL > retry window — job is silently dead forever.</p>
+  <div class="callout danger">
+    <span class="ci">💣</span>
+    <div class="callout-body">Always release the fence in the exception handler. This is the single most common implementation bug in this pattern.</div>
+  </div>
+
+  <h3 class="sub">Case 2 — TTL shorter than SQS visibility timeout</h3>
+  <p class="body">If fence TTL = 30s and SQS visibility timeout = 60s, the key expires. SQS redelivers. A second worker acquires the fence cleanly — double execution.</p>
+  <div class="callout warn">
+    <span class="ci">⏱</span>
+    <div class="callout-body"><strong>Rule:</strong> <code>TTL ≥ max(SQS_visibility_timeout, Redis_poll_interval) + 20s buffer</code>. For a 50s job with 60s visibility timeout → use TTL = 120s minimum.</div>
+  </div>
+
+  <h3 class="sub">Case 3 — worker crash after acquiring fence but before acking SQS</h3>
+  <p class="body">SQS redelivers after visibility timeout expires. New worker tries fence → gets <code>nil</code> (key still held) → drops it. The job is silently skipped for the TTL window.</p>
+  <p class="body">Fix: use <strong>SQS FIFO with a message deduplication ID</strong> equal to <code>job_id</code>. SQS deduplicates at the queue level for 5 minutes — a second layer before the fence is even checked.</p>
+
+  <h3 class="sub">Case 4 — clock skew between workers</h3>
+  <p class="body">Redis sorted set uses <code>time.time()</code> from the poller's local clock. If two pods have 2-second clock drift, pod A may see a job 2 seconds before pod B — and start processing while pod B's poll hasn't fired yet, leading to ZREM races. Fix: use NTP synchronisation and add a clock skew buffer to TTL.</p>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 15 ═══ -->
+<div class="lesson-section" id="s15">
+  <div class="section-eyebrow">Deduplication · 15</div>
+  <h2 class="section-title">TTL sizing guide</h2>
+
+  <table class="nt">
+    <thead><tr><th>Job delay</th><th>SQS visibility timeout</th><th>Safe fence TTL</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>50s</td><td>60s</td><td><code>120s</code></td><td>Standard — 2× visibility timeout is a safe rule</td></tr>
+      <tr><td>5 min</td><td>10 min</td><td><code>15 min</code></td><td>SQS max is 15 min; chain for longer</td></tr>
+      <tr><td>1 hour</td><td>N/A (chain)</td><td><code>90 min</code></td><td>Redis sorted set only; SQS can't hold 1hr</td></tr>
+      <tr><td>24 hours</td><td>N/A</td><td><code>26 hours</code></td><td>Watch Redis RAM budget; consider RDB snapshots</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 16 ═══ -->
+<div class="lesson-section" id="s16">
+  <div class="section-eyebrow">Reference · 16</div>
+  <h2 class="section-title">The four defence layers</h2>
+  <p class="section-desc">Deduplication is a stack. Any one layer failing alone is survivable. All four failing simultaneously is astronomically unlikely.</p>
+
+  <div class="layers">
+    <div class="layer l1">
+      <div class="lnum">1</div>
+      <div class="lbody">
+        <div class="ltitle">SQS FIFO deduplication ID</div>
+        <div class="ldesc">Queue-level dedup within a 5-minute window. Prevents SQS from re-enqueuing the same job_id twice. Free on FIFO queues — use it.</div>
+      </div>
+    </div>
+    <div class="layer l2">
+      <div class="lnum">2</div>
+      <div class="lbody">
+        <div class="ltitle">ZREM atomic claim (Redis sorted set)</div>
+        <div class="ldesc">Multiple pollers can see a job via ZRANGEBYSCORE — but only the first ZREM returns 1. Free first-pass dedup before the fence.</div>
+      </div>
+    </div>
+    <div class="layer l3">
+      <div class="lnum">3</div>
+      <div class="lbody">
+        <div class="ltitle">Redis <code>SET NX EX</code> fence</div>
+        <div class="ldesc">The real guarantee. Atomic cross-pod lock. Exactly one worker across any number of pods and any number of firing sources can hold this key at a time.</div>
+      </div>
+    </div>
+    <div class="layer l4">
+      <div class="lnum">4</div>
+      <div class="lbody">
+        <div class="ltitle">Idempotent downstream call</div>
+        <div class="ldesc">Pass job_id as the idempotency key to the webhook or microservice. If two calls somehow slip through layers 1–3, the receiver ignores the second. Belt and braces.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ SECTION 17 ═══ -->
+<div class="lesson-section" id="s17">
+  <div class="section-eyebrow">Reference · 17</div>
+  <h2 class="section-title">Full reference code</h2>
+
+  <h3 class="sub">Dual-enqueue (Redis + SQS)</h3>
+  <pre><code><span class="kw">def</span> <span class="fn">schedule_job</span>(job_id: str, delay_seconds: int):
+    fire_at = time.<span class="fn">time</span>() + delay_seconds
+
+    <span class="cm"># Primary: Redis sorted set (unlimited delay, ~1s precision)</span>
+    redis.<span class="fn">zadd</span>(<span class="str">"scheduled_jobs"</span>, {job_id: fire_at})
+
+    <span class="cm"># Fallback: SQS FIFO delay queue (resilience if Redis fails)</span>
+    <span class="kw">if</span> delay_seconds &lt;= <span class="num">900</span>:  <span class="cm"># SQS max = 15 min</span>
+        sqs.<span class="fn">send_message</span>(
+            MessageBody=job_id,
+            DelaySeconds=delay_seconds,
+            MessageDeduplicationId=job_id,  <span class="cm"># layer 1: queue-level dedup</span>
+            MessageGroupId=<span class="str">"delayed-jobs"</span>
+        )</code></pre>
+
+  <h3 class="sub">Redis sorted set poller</h3>
+  <pre><code><span class="kw">def</span> <span class="fn">poll_redis</span>():
+    <span class="kw">while True</span>:
+        now = time.<span class="fn">time</span>()
+        jobs = redis.<span class="fn">zrangebyscore</span>(<span class="str">"scheduled_jobs"</span>, <span class="num">0</span>, now)
+        <span class="kw">for</span> job_id <span class="kw">in</span> jobs:
+            removed = redis.<span class="fn">zrem</span>(<span class="str">"scheduled_jobs"</span>, job_id)
+            <span class="kw">if</span> removed:  <span class="cm"># layer 2: ZREM atomic claim</span>
+                executor.<span class="fn">submit</span>(process_job, job_id, <span class="str">"redis"</span>)
+        time.<span class="fn">sleep</span>(<span class="num">1</span>)</code></pre>
+
+  <h3 class="sub">Worker with full dedup fence</h3>
+  <pre><code><span class="kw">def</span> <span class="fn">process_job</span>(job_id: str, source: str):
+    <span class="cm"># Layer 3: atomic fence across all pods</span>
+    acquired = redis.<span class="fn">set</span>(
+        <span class="str">f"dedup:{job_id}"</span>, <span class="num">1</span>,
+        nx=<span class="kw">True</span>, ex=<span class="num">120</span>
+    )
+    <span class="kw">if not</span> acquired:
+        logger.<span class="fn">info</span>(<span class="str">f"[dedup] drop duplicate job={job_id} src={source}"</span>)
+        <span class="kw">if</span> source == <span class="str">"sqs"</span>:
+            sqs.<span class="fn">delete_message</span>(job_id)  <span class="cm"># always ack — never re-queue</span>
+        <span class="kw">return</span>
+
+    <span class="kw">try</span>:
+        <span class="cm"># Layer 4: idempotency key on downstream call</span>
+        webhook.<span class="fn">call</span>(
+            job_id=job_id,
+            idempotency_key=job_id  <span class="cm"># receiver ignores duplicate calls</span>
+        )
+        <span class="kw">if</span> source == <span class="str">"sqs"</span>:
+            sqs.<span class="fn">delete_message</span>(job_id)
+        delivery_log.<span class="fn">write</span>(
+            job_id=job_id, source=source,
+            delivered_at=time.<span class="fn">time</span>()
+        )
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        <span class="cm"># CRITICAL: release fence → job stays retry-eligible</span>
+        redis.<span class="fn">delete</span>(<span class="str">f"dedup:{job_id}"</span>)
+        metrics.<span class="fn">increment</span>(<span class="str">"job.failed"</span>, tags={<span class="str">"src"</span>: source})
+        <span class="kw">raise</span></code></pre>
+
+  <h3 class="sub">SQS consumer (separate worker)</h3>
+  <pre><code><span class="kw">def</span> <span class="fn">consume_sqs</span>():
+    <span class="kw">while True</span>:
+        msgs = sqs.<span class="fn">receive_messages</span>(
+            MaxNumberOfMessages=<span class="num">10</span>,
+            VisibilityTimeout=<span class="num">90</span>,   <span class="cm"># must be < fence TTL</span>
+            WaitTimeSeconds=<span class="num">20</span>        <span class="cm"># long poll</span>
+        )
+        <span class="kw">for</span> msg <span class="kw">in</span> msgs:
+            executor.<span class="fn">submit</span>(process_job, msg.body, <span class="str">"sqs"</span>)</code></pre>
+</div>
+
+<!-- ═══════════════════════════════ QUIZ ═══ -->
+<div class="lesson-section" id="quiz">
+  <div class="section-eyebrow">Test yourself</div>
+  <h2 class="section-title">Quiz</h2>
+  <p class="section-desc">Six questions covering everything in this session.</p>
+
+  <div class="quiz-block">
+    <div class="quiz-q">Q1. Why can't Kafka guarantee a message is delivered exactly 50 seconds after being produced?</div>
+    <div class="quiz-options" id="q1">
+      <div class="quiz-opt" onclick="answer(this,'q1',false)"><div class="quiz-radio"></div>Kafka doesn't support delayed messages in its API</div>
+      <div class="quiz-opt" onclick="answer(this,'q1',true)"><div class="quiz-radio"></div>Kafka is pull-based — consumers decide when to poll, so delivery timing is not guaranteed</div>
+      <div class="quiz-opt" onclick="answer(this,'q1',false)"><div class="quiz-radio"></div>Kafka uses TCP which adds variable latency</div>
+      <div class="quiz-opt" onclick="answer(this,'q1',false)"><div class="quiz-radio"></div>Kafka partitioning prevents time-based ordering</div>
+    </div>
+    <div class="quiz-result" id="q1-r">Correct. Kafka is a commit log that consumers pull from at their own pace. There is no mechanism in Kafka to say "deliver at t+50s". The delay guarantee must live in a dedicated scheduler (Redis sorted set, SQS, timing wheel).</div>
+  </div>
+
+  <div class="quiz-block">
+    <div class="quiz-q">Q2. You use Redis sorted set AND SQS as your delay queue. Both fire for the same job_id. What is the correct component to prevent duplicate execution?</div>
+    <div class="quiz-options" id="q2">
+      <div class="quiz-opt" onclick="answer(this,'q2',false)"><div class="quiz-radio"></div>Remove one of the two queues — redundancy causes duplicates</div>
+      <div class="quiz-opt" onclick="answer(this,'q2',false)"><div class="quiz-radio"></div>Use SQS FIFO dedup ID — it covers cross-queue deduplication</div>
+      <div class="quiz-opt" onclick="answer(this,'q2',true)"><div class="quiz-radio"></div>A Redis SET NX EX fence — an atomic third store that both paths check before executing</div>
+      <div class="quiz-opt" onclick="answer(this,'q2',false)"><div class="quiz-radio"></div>Set the job status to "processing" in PostgreSQL before executing</div>
+    </div>
+    <div class="quiz-result" id="q2-r">Correct. Neither queue owns deduplication — a third atomic store must arbitrate. Redis SET NX EX is atomic and cross-pod. SQS FIFO dedup only prevents re-enqueue within 5 minutes on the same queue. A database status update is not atomic without a transaction + lock.</div>
+  </div>
+
+  <div class="quiz-block">
+    <div class="quiz-q">Q3. Worker acquires the fence (SET NX succeeds), then the downstream webhook call fails with a 500. What must the worker do?</div>
+    <div class="quiz-options" id="q3">
+      <div class="quiz-opt" onclick="answer(this,'q3',false)"><div class="quiz-radio"></div>Let the fence expire naturally via its TTL — don't touch it</div>
+      <div class="quiz-opt" onclick="answer(this,'q3',true)"><div class="quiz-radio"></div>DEL the fence key before re-raising the exception</div>
+      <div class="quiz-opt" onclick="answer(this,'q3',false)"><div class="quiz-radio"></div>Extend the TTL and retry inline</div>
+      <div class="quiz-opt" onclick="answer(this,'q3',false)"><div class="quiz-radio"></div>Write the failure to DynamoDB and exit</div>
+    </div>
+    <div class="quiz-result" id="q3-r">Correct. If you don't DEL the fence on failure, the job is locked out of retry until the TTL expires. If TTL > retry window, the job dies silently. Always release the fence in the exception handler to keep the job retry-eligible.</div>
+  </div>
+
+  <div class="quiz-block">
+    <div class="quiz-q">Q4. Your fence TTL is 30s. Your SQS visibility timeout is 60s. What goes wrong?</div>
+    <div class="quiz-options" id="q4">
+      <div class="quiz-opt" onclick="answer(this,'q4',false)"><div class="quiz-radio"></div>Nothing — the shorter TTL means jobs process faster</div>
+      <div class="quiz-opt" onclick="answer(this,'q4',false)"><div class="quiz-radio"></div>SQS will refuse to deliver the message</div>
+      <div class="quiz-opt" onclick="answer(this,'q4',true)"><div class="quiz-radio"></div>The fence key expires at 30s, SQS redelivers at 60s, a second worker acquires the fence and executes the job again — double execution</div>
+      <div class="quiz-opt" onclick="answer(this,'q4',false)"><div class="quiz-radio"></div>Redis evicts the key at 30s and the job is lost</div>
+    </div>
+    <div class="quiz-result" id="q4-r">Correct. The fence TTL must always exceed the SQS visibility timeout. If the fence expires before SQS redelivers, the dedup guarantee breaks. Rule of thumb: TTL = max(SQS_visibility_timeout, poll_interval) + 20s buffer. For a 50s job with 60s visibility timeout → TTL = 120s.</div>
+  </div>
+
+  <div class="quiz-block">
+    <div class="quiz-q">Q5. A timing wheel has O(1) insert and fire. Why?</div>
+    <div class="quiz-options" id="q5">
+      <div class="quiz-opt" onclick="answer(this,'q5',false)"><div class="quiz-radio"></div>It uses a min-heap sorted by fire time</div>
+      <div class="quiz-opt" onclick="answer(this,'q5',true)"><div class="quiz-radio"></div>Jobs are inserted into a bucket by fire_time % wheel_size — no sorting needed. Firing drains the current bucket.</div>
+      <div class="quiz-opt" onclick="answer(this,'q5',false)"><div class="quiz-radio"></div>It pre-computes all future fire times at startup</div>
+      <div class="quiz-opt" onclick="answer(this,'q5',false)"><div class="quiz-radio"></div>It uses Redis ZADD which is O(log N)</div>
+    </div>
+    <div class="quiz-result" id="q5-r">Correct. A timing wheel is a ring buffer of buckets. Insert is bucket[time % size].append(job) — O(1). Fire is bucket[tick].drain() — O(K) where K is the number of jobs in that bucket. No heap, no sort. Used by Kafka's internal purgatory and Netty's HashedWheelTimer.</div>
+  </div>
+
+  <div class="quiz-block">
+    <div class="quiz-q">Q6. For WebSocket routing at 1B users, why is consistent hashing important?</div>
+    <div class="quiz-options" id="q6">
+      <div class="quiz-opt" onclick="answer(this,'q6',false)"><div class="quiz-radio"></div>It reduces Kafka partition count</div>
+      <div class="quiz-opt" onclick="answer(this,'q6',false)"><div class="quiz-radio"></div>WebSocket connections need SSL termination at a fixed IP</div>
+      <div class="quiz-opt" onclick="answer(this,'q6',true)"><div class="quiz-radio"></div>Each WebSocket server holds stateful connections. A message for user X must route to the server holding X's socket — not broadcast to all servers.</div>
+      <div class="quiz-opt" onclick="answer(this,'q6',false)"><div class="quiz-radio"></div>SQS requires a consistent hash for message deduplication</div>
+    </div>
+    <div class="quiz-result" id="q6-r">Correct. WebSocket connections are stateful — each server holds open sockets for a subset of users. If you broadcast every message to every server (N² fan-out), it doesn't scale. Consistent hashing routes user X's events to exactly the one server holding X's socket.</div>
+  </div>
+</div>
+
+<div style="margin-top:64px;padding:32px;background:var(--bg2);border-radius:10px;text-align:center;border:1px solid var(--border)">
+  <div style="font-size:24px;margin-bottom:8px">✅</div>
+  <div style="font-weight:600;font-size:16px;color:var(--text)">End of session</div>
+  <div style="font-size:13px;color:var(--text3);margin-top:4px">Covered: Kafka internals · Delay tier (Redis, SQS, timing wheel) · WebSocket fan-out · Deduplication fence · TTL sizing · Defence layers</div>
+</div>
+
+</main>
+
+<script>
+/* Progress bar */
+window.addEventListener('scroll',()=>{
+  const h=document.documentElement.scrollHeight-window.innerHeight;
+  document.getElementById('pb').style.transform=`scaleX(${window.scrollY/h})`;
+},{passive:true});
+
+/* Scrollspy */
+const sbItems=document.querySelectorAll('.sb-item');
+const secs=[...document.querySelectorAll('[id]')];
+window.addEventListener('scroll',()=>{
+  let cur='';
+  secs.forEach(s=>{if(window.scrollY>=s.offsetTop-100)cur=s.id});
+  sbItems.forEach(n=>{
+    n.classList.toggle('active',n.getAttribute('href')==='#'+cur);
+  });
+},{passive:true});
+
+/* Smooth scroll */
+document.querySelectorAll('[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    const t=document.querySelector(a.getAttribute('href'));
+    if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'})}
+  });
+});
+
+/* Race demo */
+const pnames=['Pod-1','Pod-2','Pod-3','Pod-4','Pod-5'];
+const jids=['job_9f2a4c','job_3b7e1d','job_8c4a5f','job_2d9b3e','job_7a1c8f'];
+let racing=false;
+
+function resetRace(){
+  racing=false;
+  pnames.forEach((_,i)=>{
+    const el=document.getElementById('p'+(i+1));
+    el.className='wpill idle';
+    el.textContent=pnames[i]+' · idle';
+  });
+  document.getElementById('fence-out').innerHTML='<span style="color:#6c7086"># fence key status</span>';
+  document.getElementById('demo-jid').textContent=jids[Math.floor(Math.random()*jids.length)];
+}
+
+function runRace(){
+  if(racing)return;
+  racing=true;
+  const winner=Math.floor(Math.random()*5);
+  const jid=document.getElementById('demo-jid').textContent;
+  pnames.forEach((_,i)=>{
+    const el=document.getElementById('p'+(i+1));
+    el.className='wpill race';
+    el.textContent=pnames[i]+' · racing...';
+  });
+  document.getElementById('fence-out').innerHTML=
+    `<span style="color:#fab387">SET dedup:${jid} 1 NX EX 120</span>  <span style="color:#6c7086"># all pods racing simultaneously...</span>`;
+  setTimeout(()=>{
+    pnames.forEach((_,i)=>{
+      const el=document.getElementById('p'+(i+1));
+      if(i===winner){
+        el.className='wpill won';
+        el.textContent=pnames[i]+' · WON — executing';
+      } else {
+        el.className='wpill lost';
+        el.textContent=pnames[i]+' · lost — drop+ack';
+      }
+    });
+    document.getElementById('fence-out').innerHTML=
+      `<span style="color:#a6e3a1">${pnames[winner]} acquired fence → SET NX = 1</span>\n`+
+      `<span style="color:#6c7086">${4} other pods got nil → dropped silently</span>`;
+  },900);
+}
+
+/* Quiz */
+function answer(el,qid,correct){
+  const opts=document.querySelectorAll('#'+qid+' .quiz-opt');
+  opts.forEach(o=>{
+    o.classList.add('reveal');
+    o.classList.remove('correct','wrong');
+  });
+  el.classList.add(correct?'correct':'wrong');
+  if(!correct){
+    opts.forEach(o=>{
+      const handler=o.getAttribute('onclick');
+      if(handler&&handler.includes('true'))o.classList.add('correct');
+    });
+  }
+  const r=document.getElementById(qid+'-r');
+  r.classList.add('show');
+}
+</script>
+</body>
+</html>

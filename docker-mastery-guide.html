@@ -1,0 +1,2468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docker Mastery — Staff/Senior Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0D1117;--s1:#161B22;--s2:#1C2128;--s3:#21262D;
+  --br:#30363D;--br2:#484F58;
+  --t1:#E6EDF3;--t2:#8B949E;--t3:#6E7681;
+  --blue:#58A6FF;--bd:#1F3A5F;
+  --green:#3FB950;--gd:#1A3A1F;
+  --red:#F78166;--rd:#3A1A1A;
+  --amber:#E3B341;--ad:#3A2E10;
+  --purple:#BC8CFF;--pd:#2A1A4A;
+  --teal:#39D353;
+  --mono:'JetBrains Mono',monospace;
+  --body:'Inter',sans-serif;
+  --r:8px;--rl:12px;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--body);background:var(--bg);color:var(--t1);min-height:100vh;display:flex;overflow-x:hidden}
+
+/* ── SIDEBAR ── */
+.sb{width:220px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--br);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:50;overflow-y:auto}
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid var(--br)}
+.sb-logo .mark{font-family:var(--mono);font-size:10px;color:var(--blue);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
+.sb-logo h1{font-size:14px;font-weight:600;color:var(--t1)}
+.sb-logo p{font-size:11px;color:var(--t3);margin-top:2px}
+.sb-nav{padding:10px 8px;flex:1}
+.sb-sec{font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;padding:10px 8px 4px}
+.ni{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:var(--r);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:background .15s;margin-bottom:1px}
+.ni:hover{background:var(--s2)}
+.ni.on{background:var(--bd)}
+.ni .ic{font-size:13px;width:18px;text-align:center;flex-shrink:0}
+.ni .nt{font-size:12px;color:var(--t2);flex:1}
+.ni.on .nt{color:var(--blue);font-weight:500}
+.sb-foot{padding:12px 16px;border-top:1px solid var(--br);font-family:var(--mono);font-size:10px;color:var(--t3)}
+.dot{display:inline-block;width:6px;height:6px;background:var(--green);border-radius:50%;margin-right:5px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── MAIN ── */
+.main{margin-left:220px;flex:1;min-height:100vh}
+.pg{display:none}
+.pg.on{display:block}
+
+/* ── HERO ── */
+.hero{padding:28px 36px 24px;border-bottom:1px solid var(--br);background:linear-gradient(160deg,var(--s1) 0%,var(--bg) 100%)}
+.hero-bc{font-family:var(--mono);font-size:10px;color:var(--t3);margin-bottom:10px;display:flex;align-items:center;gap:5px}
+.hero-bc .sep{color:var(--br2)}
+.hero-bc .act{color:var(--blue)}
+.term{background:var(--s2);border:1px solid var(--br);border-radius:var(--rl);padding:14px 18px;margin-bottom:14px;font-family:var(--mono);font-size:12px;display:flex;align-items:center;gap:8px;min-height:48px}
+.term .pr{color:var(--green)}
+.term .cur{display:inline-block;width:7px;height:14px;background:var(--blue);border-radius:1px;animation:blink 1s step-end infinite;vertical-align:middle;margin-left:1px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.hero h2{font-size:22px;font-weight:600;color:var(--t1);margin-bottom:4px}
+.hero p{font-size:13px;color:var(--t2);line-height:1.6}
+
+/* ── CONTENT ── */
+.ct{padding:28px 36px;max-width:920px}
+.sl{font-family:var(--mono);font-size:9px;font-weight:500;color:var(--t3);text-transform:uppercase;letter-spacing:.12em;margin:28px 0 12px;display:flex;align-items:center;gap:8px}
+.sl::after{content:'';flex:1;height:1px;background:var(--br)}
+.sl:first-child{margin-top:0}
+.prose{font-size:13px;color:var(--t2);line-height:1.8;margin-bottom:14px}
+.prose strong{color:var(--t1);font-weight:500}
+.prose code{font-family:var(--mono);font-size:11px;background:var(--s3);border:1px solid var(--br);border-radius:3px;padding:1px 5px;color:var(--amber)}
+
+/* ── CALLOUTS ── */
+.co{border-radius:var(--r);padding:12px 14px;margin-bottom:12px;font-size:13px;line-height:1.7;border-left:3px solid}
+.co strong{font-weight:500}
+.co.bl{background:var(--bd);border-color:var(--blue);color:var(--t1)}
+.co.gr{background:var(--gd);border-color:var(--green);color:var(--t1)}
+.co.re{background:var(--rd);border-color:var(--red);color:var(--t1)}
+.co.am{background:var(--ad);border-color:var(--amber);color:var(--t1)}
+
+/* ── CODE BLOCKS ── */
+.cb{background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:14px 16px;font-family:var(--mono);font-size:11px;line-height:1.9;margin:10px 0;overflow-x:auto;white-space:pre;position:relative}
+.cb .c{color:var(--t3)}
+.cb .k{color:var(--blue)}
+.cb .s{color:var(--green)}
+.cb .v{color:var(--amber)}
+.cpb{position:absolute;top:8px;right:8px;background:var(--s3);border:1px solid var(--br);border-radius:4px;padding:3px 9px;font-family:var(--mono);font-size:9px;color:var(--t3);cursor:pointer;transition:.15s}
+.cpb:hover{background:var(--bd);color:var(--blue);border-color:var(--blue)}
+
+/* ── CARDS ── */
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.cg.three{grid-template-columns:1fr 1fr 1fr}
+.card{background:var(--s2);border:1px solid var(--br);border-radius:var(--rl);padding:14px;transition:border-color .15s}
+.card:hover{border-color:var(--br2)}
+.card.full{grid-column:span 2}
+.card.full3{grid-column:span 3}
+.ct2{font-size:13px;font-weight:500;color:var(--t1);margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.cb2{font-size:12px;color:var(--t2);line-height:1.7}
+.cb2 strong{color:var(--t1);font-weight:500}
+.cb2 code{font-family:var(--mono);font-size:10px;background:var(--s3);border:1px solid var(--br);border-radius:3px;padding:1px 4px;color:var(--amber)}
+
+/* ── BADGES ── */
+.bg{font-family:var(--mono);font-size:9px;font-weight:500;padding:2px 7px;border-radius:20px;letter-spacing:.04em;flex-shrink:0}
+.bg.bl{background:var(--bd);color:var(--blue)}
+.bg.gr{background:var(--gd);color:var(--green)}
+.bg.re{background:var(--rd);color:var(--red)}
+.bg.am{background:var(--ad);color:var(--amber)}
+.bg.pu{background:var(--pd);color:var(--purple)}
+
+/* ── TABLE ── */
+.tbl{width:100%;border-collapse:collapse;font-size:11px;margin:10px 0}
+.tbl th{text-align:left;padding:8px 10px;background:var(--s3);color:var(--t3);font-family:var(--mono);font-weight:500;font-size:9px;letter-spacing:.07em;text-transform:uppercase;border:1px solid var(--br)}
+.tbl td{padding:8px 10px;border:1px solid var(--br);color:var(--t2);vertical-align:top;line-height:1.5}
+.tbl tr:nth-child(even) td{background:var(--s1)}
+.tbl td strong{color:var(--t1);font-weight:500}
+
+/* ── ACCORDION ── */
+.acc{margin-bottom:5px}
+.acc-h{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--s2);border:1px solid var(--br);border-radius:var(--r);cursor:pointer;transition:.15s;user-select:none}
+.acc-h:hover{background:var(--s3);border-color:var(--br2)}
+.acc.open .acc-h{background:var(--s3);border-color:var(--br2);border-radius:var(--r) var(--r) 0 0}
+.acc-ti{font-size:13px;font-weight:500;color:var(--t1);flex:1}
+.acc-su{font-size:11px;color:var(--t3);margin-top:1px}
+.acc-ar{color:var(--t3);font-size:11px;transition:transform .2s;flex-shrink:0}
+.acc.open .acc-ar{transform:rotate(180deg)}
+.acc-b{background:var(--s1);border:1px solid var(--br2);border-top:none;border-radius:0 0 var(--r) var(--r)}
+/* acc open handled by max-height */
+
+/* ── IQ BOX ── */
+.iq{background:var(--s2);border:1px solid var(--br2);border-radius:var(--r);overflow:hidden;margin:14px 0}
+.iq-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--s3);border-bottom:1px solid var(--br);cursor:pointer}
+.iq-lb{font-family:var(--mono);font-size:9px;color:var(--amber);font-weight:500;letter-spacing:.07em;text-transform:uppercase}
+.iq-tg{font-size:10px;color:var(--t3);font-family:var(--mono)}
+.iq-q{font-size:13px;font-weight:500;color:var(--t1);padding:12px 14px;border-bottom:1px solid var(--br);line-height:1.5}
+.iq-a{font-size:12px;color:var(--t2);padding:12px 14px;line-height:1.7;display:none}
+.iq-a.vis{display:block}
+.iq-a strong{color:var(--t1);font-weight:500}
+
+/* ── GAP CARDS ── */
+.gc{border-radius:var(--rl);padding:16px;margin-bottom:9px;border:1px solid;position:relative;overflow:hidden}
+.gc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.gc.cr{border-color:var(--red);background:var(--rd)}.gc.cr::before{background:var(--red)}
+.gc.im{border-color:var(--amber);background:var(--ad)}.gc.im::before{background:var(--amber)}
+.gc.ok{border-color:var(--green);background:var(--gd)}.gc.ok::before{background:var(--green)}
+.gc.in{border-color:var(--blue);background:var(--bd)}.gc.in::before{background:var(--blue)}
+.gc-ti{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.gc-b{font-size:12px;color:var(--t2);line-height:1.7}
+.gc-b strong{color:var(--t1);font-weight:500}
+.gc-b code{font-family:var(--mono);font-size:10px;background:rgba(0,0,0,.3);border-radius:3px;padding:1px 4px;color:var(--amber)}
+
+/* ── PROGRESS ── */
+.pr-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.pr-lb{font-size:11px;color:var(--t2);width:210px;flex-shrink:0}
+.pr-tr{flex:1;height:5px;background:var(--s3);border-radius:3px;overflow:hidden}
+.pr-fi{height:100%;border-radius:3px;width:0%;transition:width 1.2s ease}
+.pr-pc{font-family:var(--mono);font-size:10px;color:var(--t3);width:32px;text-align:right}
+
+/* ── TIMELINE ── */
+.tl{position:relative;padding-left:26px}
+.tl::before{content:'';position:absolute;left:9px;top:6px;bottom:6px;width:1px;background:var(--br)}
+.tl-it{position:relative;margin-bottom:20px}
+.tl-d{position:absolute;left:-22px;top:4px;width:11px;height:11px;border-radius:50%;border:2px solid var(--br);background:var(--bg)}
+.tl-d.done{background:var(--green);border-color:var(--green)}
+.tl-d.now{background:var(--blue);border-color:var(--blue);animation:pulse 2s infinite}
+.tl-d.soon{background:var(--s3);border-color:var(--amber)}
+.tl-wk{font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.tl-ti{font-size:13px;font-weight:500;color:var(--t1);margin-bottom:3px}
+.tl-b{font-size:12px;color:var(--t2);line-height:1.6}
+.tl-b strong{color:var(--t1);font-weight:500}
+
+/* ── QUICK REVISION ── */
+.qr-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.qr-card{background:var(--s2);border:1px solid var(--br);border-radius:var(--rl);padding:16px 18px;border-top:2px solid}
+.qr-card.bl{border-top-color:var(--blue)}
+.qr-card.gr{border-top-color:var(--green)}
+.qr-card.am{border-top-color:var(--amber)}
+.qr-card.re{border-top-color:var(--red)}
+.qr-card.pu{border-top-color:var(--purple)}
+.qr-ti{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.qr-item{display:block;margin-bottom:7px;font-size:12px;color:var(--t2);line-height:1.65;padding-left:18px;position:relative}
+.qr-item::before{content:"→";color:var(--blue);font-family:var(--mono);font-size:11px;position:absolute;left:0;top:1px}
+.qr-item strong{color:var(--t1);font-weight:500}
+
+/* ── SVG DIAGRAMS ── */
+.diag{background:var(--s2);border:1px solid var(--br);border-radius:var(--rl);padding:12px;margin:12px 0}.diag svg{width:100%;height:auto;display:block;max-width:100%}.diag svg{width:100%;height:auto;display:block}
+.diag svg{display:block;margin:0 auto;max-width:100%}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.pg.on .ct>*{animation:fadeUp .3s ease both}
+.pg.on .ct>*:nth-child(1){animation-delay:.02s}
+.pg.on .ct>*:nth-child(2){animation-delay:.06s}
+.pg.on .ct>*:nth-child(3){animation-delay:.10s}
+.pg.on .ct>*:nth-child(4){animation-delay:.14s}
+.pg.on .ct>*:nth-child(5){animation-delay:.18s}
+.pg.on .ct>*:nth-child(n+6){animation-delay:.22s}
+
+@media(max-width:700px){
+  .sb{display:none}.sb.mob{display:flex;position:fixed;inset:0;width:100%;z-index:200}
+  .main{margin-left:0}.cg,.cg.three,.qr-grid{grid-template-columns:1fr}
+  .card.full,.card.full3{grid-column:span 1}.ct{padding:20px 16px}.hero{padding:20px 16px}
+}
+.qr-item strong{color:var(--t1);font-weight:600}.qr-item code{font-family:var(--mono);font-size:10px;background:var(--s3);border:1px solid var(--br);border-radius:3px;padding:1px 4px;color:var(--amber)}
+.mob-btn{display:none;position:fixed;top:12px;right:12px;z-index:300;background:var(--s2);border:1px solid var(--br);border-radius:var(--r);padding:7px 11px;color:var(--t2);font-size:17px;cursor:pointer}
+@media(max-width:700px){.mob-btn{display:block}}
+
+/* ── ENHANCED ANIMATIONS ────────────────────────────── */
+
+/* Scroll-triggered reveal */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease}
+.reveal.in{opacity:1;transform:translateY(0)}
+.reveal-left{opacity:0;transform:translateX(-24px);transition:opacity .5s ease,transform .5s ease}
+.reveal-left.in{opacity:1;transform:translateX(0)}
+.reveal-right{opacity:0;transform:translateX(24px);transition:opacity .5s ease,transform .5s ease}
+.reveal-right.in{opacity:1;transform:translateX(0)}
+.reveal-scale{opacity:0;transform:scale(.94);transition:opacity .45s ease,transform .45s ease}
+.reveal-scale.in{opacity:1;transform:scale(1)}
+
+/* Staggered children */
+.stagger>*{opacity:0;transform:translateY(16px);transition:opacity .4s ease,transform .4s ease}
+.stagger.in>*:nth-child(1){opacity:1;transform:none;transition-delay:.05s}
+.stagger.in>*:nth-child(2){opacity:1;transform:none;transition-delay:.12s}
+.stagger.in>*:nth-child(3){opacity:1;transform:none;transition-delay:.19s}
+.stagger.in>*:nth-child(4){opacity:1;transform:none;transition-delay:.26s}
+.stagger.in>*:nth-child(5){opacity:1;transform:none;transition-delay:.33s}
+.stagger.in>*:nth-child(6){opacity:1;transform:none;transition-delay:.40s}
+.stagger.in>*:nth-child(n+7){opacity:1;transform:none;transition-delay:.45s}
+
+/* Card hover — lift + glow */
+.card{transition:border-color .2s,transform .2s,box-shadow .2s}
+.card:hover{border-color:var(--br2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.qr-card{transition:border-color .2s,transform .2s,box-shadow .2s}
+.qr-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.gc{transition:border-color .2s,transform .2s,box-shadow .2s}
+.gc:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.3)}
+
+/* Nav item indicator bar */
+.ni{position:relative;overflow:hidden}
+.ni::after{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%) scaleY(0);width:2px;height:60%;background:var(--blue);border-radius:1px;transition:transform .2s ease}
+.ni.on::after{transform:translateY(-50%) scaleY(1)}
+
+/* Accordion smooth open */
+.acc-b{max-height:0;overflow:hidden;display:block !important;transition:max-height .35s ease,padding .2s ease;padding-top:0;padding-bottom:0}
+.acc.open .acc-b{max-height:600px;padding-top:16px;padding-bottom:16px}
+
+/* SVG diagram hover */
+.diag{transition:box-shadow .2s,border-color .2s}
+.diag:hover{border-color:var(--br2);box-shadow:0 4px 20px rgba(0,0,0,.3)}
+
+/* Hero terminal glow pulse */
+.term{transition:box-shadow .4s}
+.term:hover{box-shadow:0 0 0 1px var(--blue),0 0 20px rgba(88,166,255,.12)}
+
+/* Active nav item shimmer */
+@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+.ni.on .nt{
+  background:linear-gradient(90deg,var(--blue) 25%,#a5d0ff 50%,var(--blue) 75%);
+  background-size:200% auto;
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+  animation:shimmer 3s linear infinite;
+}
+
+/* Progress bar shine */
+@keyframes shine{0%{background-position:-200% center}100%{background-position:200% center}}
+.pr-fi::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.25) 50%,transparent 100%);background-size:200% 100%;animation:shine 2s linear infinite;border-radius:3px}
+.pr-fi{position:relative;overflow:hidden}
+
+/* Timeline dot pulse — "now" item */
+@keyframes dotpulse{0%,100%{box-shadow:0 0 0 0 rgba(88,166,255,.5)}70%{box-shadow:0 0 0 6px rgba(88,166,255,0)}}
+.tl-d.now{animation:dotpulse 2s ease infinite}
+
+/* IQ box hover */
+.iq{transition:border-color .2s,box-shadow .2s}
+.iq:hover{border-color:var(--amber);box-shadow:0 4px 16px rgba(227,179,65,.1)}
+
+/* Section label line draw */
+@keyframes drawLine{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.sl::after{transform-origin:left;animation:drawLine .6s ease forwards}
+
+/* Badge bounce on hover */
+.bg{transition:transform .15s}
+.bg:hover{transform:scale(1.08)}
+
+/* Sidebar footer dot */
+@keyframes breathe{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.status-dot{animation:breathe 2.5s ease infinite}
+
+/* Code block hover */
+.cb{transition:border-color .2s}
+.cb:hover{border-color:var(--br2)}
+.cpb{transition:background .15s,color .15s,transform .1s}
+.cpb:active{transform:scale(.95)}
+
+/* Gap card top bar grow */
+.gc::before{transform:scaleX(0);transform-origin:left;transition:transform .4s ease}
+.gc.in::before{transform:scaleX(1)}
+
+/* Typing cursor blink already exists — add faster blink on active page */
+@keyframes blink{0%,100%{opacity:1}49%{opacity:1}50%{opacity:0}}
+
+/* Smooth page transition */
+.pg{animation:none}
+.pg.on{animation:pgIn .25s ease both}
+@keyframes pgIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}
+
+/* SVG arrow pulse for diagrams */
+@keyframes arrowPulse{0%,100%{opacity:.6}50%{opacity:1}}
+
+/* Number counter glow */
+@keyframes countGlow{from{text-shadow:0 0 0 rgba(88,166,255,0)}to{text-shadow:0 0 12px rgba(88,166,255,.4)}}
+
+</style>
+</head>
+<body>
+<button class="mob-btn" onclick="document.querySelector('.sb').classList.toggle('mob')">☰</button>
+
+<!-- SIDEBAR -->
+<aside class="sb" id="sb">
+  <div class="sb-logo">
+    <div class="mark">$ docker study</div>
+    <h1>Docker Mastery</h1>
+    <p>Staff / Senior · Uber prep</p>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">Foundations</div>
+    <button class="ni on" onclick="go('p1',this)"><span class="ic">🧱</span><span class="nt">OS, Kernel & Processes</span></button>
+    <button class="ni" onclick="go('p2',this)"><span class="ic">🐳</span><span class="nt">What Docker Actually Is</span></button>
+    <button class="ni" onclick="go('p3',this)"><span class="ic">📦</span><span class="nt">Images, Layers & Builds</span></button>
+    <div class="sb-sec">Deep Internals</div>
+    <button class="ni" onclick="go('p4',this)"><span class="ic">🔬</span><span class="nt">Namespaces & cgroups</span></button>
+    <button class="ni" onclick="go('p5',this)"><span class="ic">🌐</span><span class="nt">Networking & Storage</span></button>
+    <div class="sb-sec">Production</div>
+    <button class="ni" onclick="go('p6',this)"><span class="ic">🔒</span><span class="nt">Security & Hardening</span></button>
+    <button class="ni" onclick="go('p7',this)"><span class="ic">🚀</span><span class="nt">CI/CD & Deployment</span></button>
+    <div class="sb-sec">Interview Prep</div>
+    <button class="ni" onclick="go('p8',this)"><span class="ic">⚡</span><span class="nt">Quick Revision</span></button>
+    <button class="ni" onclick="go('p9',this)"><span class="ic">🎯</span><span class="nt">Gaps & What's Next</span></button>
+    <button class="ni" onclick="go('p10',this)"><span class="ic">🕹️</span><span class="nt">Incident Lab</span></button>
+  </nav>
+  <div class="sb-foot"><span class="dot"></span>Uber Staff prep · 2025</div>
+</aside>
+
+<main class="main">
+
+<!-- ═══════════════════════════════════════════
+     PAGE 1 — OS, KERNEL & PROCESSES
+════════════════════════════════════════════ -->
+<div class="pg on" id="p1">
+<div class="hero">
+  <div class="hero-bc"><span>docker-mastery</span><span class="sep">/</span><span class="act">os-kernel-processes</span></div>
+  <div class="term"><span class="pr">~/docker $</span><span id="hc1"></span><span class="cur"></span></div>
+  <h2>OS, Kernel &amp; Processes</h2>
+  <p>The foundation everything sits on. You can't understand Docker without first understanding what a kernel is and what a process actually means.</p>
+</div>
+<div class="ct">
+
+<div class="sl">what is the kernel</div>
+<p class="prose">Your <strong>Operating System</strong> (macOS, Windows, Linux) has two layers. The part you see — apps, desktop — and the part you never see: the <strong>kernel</strong>. The kernel is the only software that speaks directly to physical hardware. Every single app must ask the kernel for whatever it needs. No app ever touches hardware directly.</p>
+
+<!-- DIAGRAM: OS layers -->
+<div class="diag reveal">
+<svg viewBox="0 0 800 310" width="100%" xmlns="http://www.w3.org/2000/svg" style="font-family:'JetBrains Mono',monospace;display:block">
+<defs>
+  <marker id="a1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2L8 5L1 8" fill="none" stroke="#58A6FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  <marker id="a1g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2L8 5L1 8" fill="none" stroke="#3FB950" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text x="400" y="18" text-anchor="middle" fill="#6E7681" font-size="11">All apps ask the kernel — kernel is the only layer that touches hardware directly</text>
+<rect x="20" y="252" width="760" height="46" rx="8" fill="#21262D" stroke="#484F58" stroke-width="1"/>
+<text x="400" y="272" text-anchor="middle" fill="#8B949E" font-size="13" font-weight="500">Physical Hardware</text>
+<text x="400" y="288" text-anchor="middle" fill="#6E7681" font-size="11">CPU  ·  RAM  ·  Disk  ·  Network card  ·  GPU</text>
+<rect x="20" y="162" width="760" height="74" rx="8" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1.5"/>
+<text x="400" y="188" text-anchor="middle" fill="#E6EDF3" font-size="14" font-weight="600">Kernel</text>
+<text x="400" y="208" text-anchor="middle" fill="#8B949E" font-size="11">Manages memory, CPU scheduling, network I/O, files, devices</text>
+<text x="400" y="226" text-anchor="middle" fill="#6E7681" font-size="11">The ONLY layer that speaks directly to hardware — no app bypasses it</text>
+<line x1="400" y1="240" x2="400" y2="250" stroke="#58A6FF" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a1)"/>
+<rect x="20" y="30" width="168" height="118" rx="8" fill="#1A3A1F" stroke="#3FB950" stroke-width="1"/>
+<text x="104" y="55" text-anchor="middle" fill="#E6EDF3" font-size="12" font-weight="500">Chrome</text>
+<text x="104" y="74" text-anchor="middle" fill="#6E7681" font-size="10">→ needs network card</text>
+<text x="104" y="90" text-anchor="middle" fill="#6E7681" font-size="10">→ needs RAM</text>
+<text x="104" y="106" text-anchor="middle" fill="#6E7681" font-size="10">→ needs disk</text>
+<text x="104" y="136" text-anchor="middle" fill="#3FB950" font-size="10">asks kernel for all of it</text>
+<rect x="206" y="30" width="168" height="118" rx="8" fill="#1A3A1F" stroke="#3FB950" stroke-width="1"/>
+<text x="290" y="55" text-anchor="middle" fill="#E6EDF3" font-size="12" font-weight="500">Zomato</text>
+<text x="290" y="74" text-anchor="middle" fill="#6E7681" font-size="10">→ needs network</text>
+<text x="290" y="90" text-anchor="middle" fill="#6E7681" font-size="10">→ needs RAM</text>
+<text x="290" y="106" text-anchor="middle" fill="#6E7681" font-size="10">→ needs disk</text>
+<text x="290" y="136" text-anchor="middle" fill="#3FB950" font-size="10">asks kernel for all of it</text>
+<rect x="392" y="30" width="168" height="118" rx="8" fill="#1A3A1F" stroke="#3FB950" stroke-width="1"/>
+<text x="476" y="55" text-anchor="middle" fill="#E6EDF3" font-size="12" font-weight="500">VS Code</text>
+<text x="476" y="74" text-anchor="middle" fill="#6E7681" font-size="10">→ needs disk read/write</text>
+<text x="476" y="90" text-anchor="middle" fill="#6E7681" font-size="10">→ needs RAM</text>
+<text x="476" y="106" text-anchor="middle" fill="#6E7681" font-size="10">→ needs CPU time</text>
+<text x="476" y="136" text-anchor="middle" fill="#3FB950" font-size="10">asks kernel for all of it</text>
+<rect x="578" y="30" width="202" height="118" rx="8" fill="#1A3A1F" stroke="#3FB950" stroke-width="1"/>
+<text x="679" y="55" text-anchor="middle" fill="#E6EDF3" font-size="12" font-weight="500">Spotify</text>
+<text x="679" y="74" text-anchor="middle" fill="#6E7681" font-size="10">→ needs audio (speaker)</text>
+<text x="679" y="90" text-anchor="middle" fill="#6E7681" font-size="10">→ needs network</text>
+<text x="679" y="106" text-anchor="middle" fill="#6E7681" font-size="10">→ needs RAM</text>
+<text x="679" y="136" text-anchor="middle" fill="#3FB950" font-size="10">asks kernel for all of it</text>
+<line x1="104" y1="150" x2="210" y2="162" stroke="#3FB950" stroke-width="1" marker-end="url(#a1g)" opacity=".8"/>
+<line x1="290" y1="150" x2="300" y2="162" stroke="#3FB950" stroke-width="1" marker-end="url(#a1g)" opacity=".8"/>
+<line x1="476" y1="150" x2="440" y2="162" stroke="#3FB950" stroke-width="1" marker-end="url(#a1g)" opacity=".8"/>
+<line x1="679" y1="150" x2="620" y2="162" stroke="#3FB950" stroke-width="1" marker-end="url(#a1g)" opacity=".8"/>
+</svg>
+</div>
+
+<div class="sl">what is a process</div>
+<p class="prose">When you open Zomato, the OS loads the app's code from disk into RAM and starts executing it. That <strong>running instance is called a process</strong>. The kernel gives it a PID (process ID), carves out a private slice of RAM, schedules CPU time — and enforces that it cannot see into Chrome's memory or touch Spotify's files.</p>
+
+<!-- DIAGRAM: Process isolation -->
+<div class="diag reveal">
+<svg viewBox="0 0 800 240" width="100%" xmlns="http://www.w3.org/2000/svg" style="font-family:'JetBrains Mono',monospace;display:block">
+<defs>
+  <marker id="a2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2L8 5L1 8" fill="none" stroke="#58A6FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text x="400" y="16" text-anchor="middle" fill="#6E7681" font-size="11">Each process gets its own private RAM slice — the kernel enforces these walls</text>
+<rect x="20" y="28" width="230" height="164" rx="10" fill="#161B22" stroke="#3FB950" stroke-width="1.5"/>
+<text x="135" y="52" text-anchor="middle" fill="#3FB950" font-size="12" font-weight="600">Chrome  (PID 1023)</text>
+<rect x="36" y="62" width="198" height="24" rx="4" fill="#21262D" stroke="#30363D" stroke-width="1"/>
+<text x="135" y="78" text-anchor="middle" fill="#8B949E" font-size="10">RAM: 800 MB  (completely private)</text>
+<rect x="36" y="92" width="198" height="24" rx="4" fill="#21262D" stroke="#30363D" stroke-width="1"/>
+<text x="135" y="108" text-anchor="middle" fill="#8B949E" font-size="10">CPU share: 12%</text>
+<rect x="36" y="122" width="198" height="24" rx="4" fill="#21262D" stroke="#30363D" stroke-width="1"/>
+<text x="135" y="138" text-anchor="middle" fill="#8B949E" font-size="10">Files: cache, cookies, tabs</text>
+<rect x="36" y="152" width="198" height="26" rx="4" fill="#1A3A1F" stroke="#3FB950" stroke-width="1"/>
+<text x="135" y="169" text-anchor="middle" fill="#3FB950" font-size="10">Cannot see Zomato's RAM  ✗</text>
+<rect x="285" y="28" width="230" height="164" rx="10" fill="#161B22" stroke="#BC8CFF" stroke-width="1.5"/>
+<text x="400" y="52" text-anchor="middle" fill="#BC8CFF" font-size="12" font-weight="600">Zomato  (PID 2847)</text>
+<rect x="301" y="62" width="198" height="24" rx="4" fill="#21262D" stroke="#30363D" stroke-width="1"/>
+<text x="400" y="78" text-anchor="middle" fill="#8B949E" font-size="10">RAM: 200 MB  (completely private)</text>
+<rect x="301" y="92" width="198" height="24" rx="4" fill="#21262D" stroke="#30363D" stroke-width="1"/>
+<text x="400" y="108" text-anchor="middle" fill="#8B949E" font-size="10">CPU share: 3%</text>
+<rect x="301" y="122" width="198" height="24" rx="4" fill="#21262D" stroke="#30363D" stroke-width="1"/>
+<text x="400" y="138" text-anchor="middle" fill="#8B949E" font-size="10">Files: orders, session, menu</text>
+<rect x="301" y="152" width="198" height="26" rx="4" fill="#2A1A4A" stroke="#BC8CFF" stroke-width="1"/>
+<text x="400" y="169" text-anchor="middle" fill="#BC8CFF" font-size="10">Cannot see Chrome's RAM  ✗</text>
+<rect x="550" y="28" width="230" height="164" rx="10" fill="#161B22" stroke="#E3B341" stroke-width="1.5"/>
+<text x="665" y="52" text-anchor="middle" fill="#E3B341" font-size="12" font-weight="600">Spotify  (PID 3312)</text>
+<rect x="566" y="62" width="198" height="24" rx="4" fill="#21262D" stroke="#30363D" stroke-width="1"/>
+<text x="665" y="78" text-anchor="middle" fill="#8B949E" font-size="10">RAM: 300 MB  (completely private)</text>
+<rect x="566" y="92" width="198" height="24" rx="4" fill="#21262D" stroke="#30363D" stroke-width="1"/>
+<text x="665" y="108" text-anchor="middle" fill="#8B949E" font-size="10">CPU share: 5%</text>
+<rect x="566" y="122" width="198" height="24" rx="4" fill="#21262D" stroke="#30363D" stroke-width="1"/>
+<text x="665" y="138" text-anchor="middle" fill="#8B949E" font-size="10">Files: music cache, playlists</text>
+<rect x="566" y="152" width="198" height="26" rx="4" fill="#3A2E10" stroke="#E3B341" stroke-width="1"/>
+<text x="665" y="169" text-anchor="middle" fill="#E3B341" font-size="10">Cannot see others' RAM  ✗</text>
+<rect x="20" y="206" width="760" height="28" rx="6" fill="#21262D" stroke="#484F58" stroke-width="1"/>
+<text x="400" y="224" text-anchor="middle" fill="#6E7681" font-size="11">Kernel — schedules CPU turns, enforces RAM isolation, owns all hardware access</text>
+<line x1="260" y1="28" x2="260" y2="195" stroke="#F78166" stroke-width="1" stroke-dasharray="5,3" opacity=".7"/>
+<text x="260" y="22" text-anchor="middle" fill="#F78166" font-size="9">hard wall</text>
+<line x1="527" y1="28" x2="527" y2="195" stroke="#F78166" stroke-width="1" stroke-dasharray="5,3" opacity=".7"/>
+<text x="527" y="22" text-anchor="middle" fill="#F78166" font-size="9">hard wall</text>
+</svg>
+</div>
+
+<div class="sl">process vs thread</div>
+<p class="prose">A process is a walled apartment with its own RAM. A <strong>thread</strong> is a worker inside that apartment. All threads in the same process share the same RAM — fast to communicate, but dangerous (race conditions). Threads in different processes cannot touch each other at all.</p>
+
+<!-- DIAGRAM: Thread inside process -->
+<div class="diag reveal">
+<svg viewBox="0 0 800 220" width="100%" xmlns="http://www.w3.org/2000/svg" style="font-family:'JetBrains Mono',monospace;display:block">
+<defs>
+  <marker id="a3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2L8 5L1 8" fill="none" stroke="#58A6FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text x="240" y="16" text-anchor="middle" fill="#BC8CFF" font-size="11">Zomato Process — all threads share the SAME RAM space</text>
+<rect x="20" y="26" width="440" height="180" rx="10" fill="#161B22" stroke="#BC8CFF" stroke-width="1.5"/>
+<rect x="36" y="46" width="408" height="30" rx="5" fill="#2A1A4A" stroke="#BC8CFF" stroke-width="1"/>
+<text x="240" y="65" text-anchor="middle" fill="#BC8CFF" font-size="11">Shared RAM: order state, user session, API response cache</text>
+<rect x="36" y="90" width="122" height="100" rx="6" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="97" y="114" text-anchor="middle" fill="#58A6FF" font-size="11" font-weight="500">Thread 1</text>
+<text x="97" y="132" text-anchor="middle" fill="#8B949E" font-size="10">UI rendering</text>
+<text x="97" y="150" text-anchor="middle" fill="#6E7681" font-size="9">own call stack</text>
+<text x="97" y="168" text-anchor="middle" fill="#6E7681" font-size="9">reads shared RAM</text>
+<rect x="174" y="90" width="122" height="100" rx="6" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="235" y="114" text-anchor="middle" fill="#58A6FF" font-size="11" font-weight="500">Thread 2</text>
+<text x="235" y="132" text-anchor="middle" fill="#8B949E" font-size="10">API calls</text>
+<text x="235" y="150" text-anchor="middle" fill="#6E7681" font-size="9">own call stack</text>
+<text x="235" y="168" text-anchor="middle" fill="#6E7681" font-size="9">reads shared RAM</text>
+<rect x="312" y="90" width="132" height="100" rx="6" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="378" y="114" text-anchor="middle" fill="#58A6FF" font-size="11" font-weight="500">Thread 3</text>
+<text x="378" y="132" text-anchor="middle" fill="#8B949E" font-size="10">location tracking</text>
+<text x="378" y="150" text-anchor="middle" fill="#6E7681" font-size="9">own call stack</text>
+<text x="378" y="168" text-anchor="middle" fill="#6E7681" font-size="9">reads shared RAM</text>
+<line x1="97" y1="88" x2="130" y2="78" stroke="#58A6FF" stroke-width="1" marker-end="url(#a3)" opacity=".7"/>
+<line x1="235" y1="88" x2="235" y2="78" stroke="#58A6FF" stroke-width="1" marker-end="url(#a3)" opacity=".7"/>
+<line x1="378" y1="88" x2="330" y2="78" stroke="#58A6FF" stroke-width="1" marker-end="url(#a3)" opacity=".7"/>
+<text x="632" y="16" text-anchor="middle" fill="#E3B341" font-size="11">32-core CPU reality</text>
+<rect x="480" y="26" width="300" height="180" rx="10" fill="#161B22" stroke="#E3B341" stroke-width="1.5"/>
+<text x="630" y="50" text-anchor="middle" fill="#6E7681" font-size="10">Only 32 threads run at the exact same instant</text>
+<rect x="496" y="62" width="124" height="40" rx="5" fill="#3A2E10" stroke="#E3B341" stroke-width="1"/>
+<text x="558" y="79" text-anchor="middle" fill="#E3B341" font-size="11" font-weight="500">Core 1</text>
+<text x="558" y="94" text-anchor="middle" fill="#8B949E" font-size="9">Zomato Thread 1 now</text>
+<rect x="640" y="62" width="124" height="40" rx="5" fill="#3A2E10" stroke="#E3B341" stroke-width="1"/>
+<text x="702" y="79" text-anchor="middle" fill="#E3B341" font-size="11" font-weight="500">Core 2</text>
+<text x="702" y="94" text-anchor="middle" fill="#8B949E" font-size="9">Chrome Thread 1 now</text>
+<rect x="496" y="112" width="124" height="40" rx="5" fill="#3A2E10" stroke="#E3B341" stroke-width="1"/>
+<text x="558" y="129" text-anchor="middle" fill="#E3B341" font-size="11" font-weight="500">Core 3</text>
+<text x="558" y="144" text-anchor="middle" fill="#8B949E" font-size="9">Spotify Thread 2 now</text>
+<rect x="640" y="112" width="124" height="40" rx="5" fill="#3A2E10" stroke="#E3B341" stroke-width="1"/>
+<text x="702" y="129" text-anchor="middle" fill="#E3B341" font-size="11" font-weight="500">Core 4–32</text>
+<text x="702" y="144" text-anchor="middle" fill="#8B949E" font-size="9">other threads waiting</text>
+<text x="630" y="168" text-anchor="middle" fill="#6E7681" font-size="10">320 threads can exist in RAM at once</text>
+<text x="630" y="184" text-anchor="middle" fill="#E3B341" font-size="11" font-weight="500">only 32 run simultaneously</text>
+<text x="630" y="198" text-anchor="middle" fill="#6E7681" font-size="9">kernel rotates every ~1ms  (context switch)</text>
+</svg>
+</div>
+
+<div class="co am"><strong>Your thread math — corrected:</strong> 32 cores = 32 threads running at the exact same instant. But you can create thousands of threads — the kernel rapidly switches which one runs on which core every ~1ms (context switching). So 10 processes × 32 threads = 320 threads exist in memory, only 32 execute at any given moment. The rest wait their turn.</div>
+
+<div class="iq">
+  <div class="iq-hd" onclick="toggleIQ(this)"><span class="iq-lb">🎯 Interview Q — L5 / Staff</span><span class="iq-tg">show answer ▾</span></div>
+  <div class="iq-q">"Your Node.js service has 1 CPU core allocated and handles 500 concurrent requests. How is that possible with a single thread?"</div>
+  <div class="iq-a"><strong>Event loop + non-blocking I/O.</strong> Node never blocks waiting for DB/network. When a request needs a DB query, Node registers a callback and immediately moves to the next request. The OS signals Node when DB responds. 500 "concurrent" requests are 500 requests in various I/O-waiting stages — one thread handles whoever is ready at each tick. Great for I/O-heavy work; terrible for CPU-heavy (one heavy computation blocks the whole loop).</div>
+</div>
+</div></div>
+
+<!-- PAGE 2 — WHAT DOCKER ACTUALLY IS -->
+<div class="pg" id="p2">
+<div class="hero">
+  <div class="hero-bc"><span>docker-mastery</span><span class="sep">/</span><span class="act">what-docker-is</span></div>
+  <div class="term"><span class="pr">~/docker $</span><span id="hc2"></span><span class="cur"></span></div>
+  <h2>What Docker Actually Is</h2>
+  <p>VMs vs containers side-by-side, the shared kernel model, images vs containers, and why "works on my machine" is finally solved.</p>
+</div>
+<div class="ct">
+
+<div class="sl">VMs vs containers — the architecture difference</div>
+
+<!-- DIAGRAM: VM vs Container stacks -->
+<div class="diag reveal">
+<svg viewBox="0 0 800 330" width="100%" xmlns="http://www.w3.org/2000/svg" style="font-family:'JetBrains Mono',monospace;display:block">
+<defs>
+  <marker id="a4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2L8 5L1 8" fill="none" stroke="#58A6FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text x="200" y="16" text-anchor="middle" fill="#8B949E" font-size="12" font-weight="600">Virtual Machine</text>
+<text x="600" y="16" text-anchor="middle" fill="#8B949E" font-size="12" font-weight="600">Docker Container</text>
+<rect x="20" y="28" width="360" height="42" rx="7" fill="#1A3A1F" stroke="#3FB950" stroke-width="1"/>
+<text x="200" y="47" text-anchor="middle" fill="#3FB950" font-size="12" font-weight="500">App A</text>
+<text x="200" y="63" text-anchor="middle" fill="#6E7681" font-size="10">your application code</text>
+<rect x="20" y="78" width="360" height="52" rx="7" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="200" y="100" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="500">Guest OS  (full kernel)</text>
+<text x="200" y="118" text-anchor="middle" fill="#6E7681" font-size="10">Linux / Windows — entire OS must boot  (~45 seconds)</text>
+<rect x="20" y="138" width="360" height="42" rx="7" fill="#3A2E10" stroke="#E3B341" stroke-width="1"/>
+<text x="200" y="157" text-anchor="middle" fill="#E3B341" font-size="12" font-weight="500">Hypervisor  (VMware / KVM)</text>
+<text x="200" y="173" text-anchor="middle" fill="#6E7681" font-size="10">virtualises hardware for each VM</text>
+<rect x="20" y="188" width="360" height="38" rx="7" fill="#21262D" stroke="#484F58" stroke-width="1"/>
+<text x="200" y="210" text-anchor="middle" fill="#8B949E" font-size="12">Host OS Kernel</text>
+<rect x="20" y="234" width="360" height="34" rx="7" fill="#21262D" stroke="#484F58" stroke-width="1"/>
+<text x="200" y="254" text-anchor="middle" fill="#6E7681" font-size="11">Physical Hardware</text>
+<text x="200" y="284" text-anchor="middle" fill="#F78166" font-size="11">Boot: 30–60s  ·  RAM overhead: 512MB–2GB  ·  Disk: 5–20GB</text>
+<text x="200" y="302" text-anchor="middle" fill="#8B949E" font-size="10">Security: strong  —  hypervisor exploit needed to escape</text>
+<text x="200" y="320" text-anchor="middle" fill="#6E7681" font-size="10">Each VM has its own kernel  →  full isolation</text>
+<line x1="400" y1="20" x2="400" y2="326" stroke="#30363D" stroke-width="1" stroke-dasharray="5,3"/>
+<rect x="420" y="28" width="360" height="42" rx="7" fill="#1A3A1F" stroke="#3FB950" stroke-width="1"/>
+<text x="600" y="47" text-anchor="middle" fill="#3FB950" font-size="12" font-weight="500">App A  ·  App B  ·  App C</text>
+<text x="600" y="63" text-anchor="middle" fill="#6E7681" font-size="10">multiple containers on the same host</text>
+<rect x="420" y="78" width="360" height="28" rx="5" fill="#21262D" stroke="#484F58" stroke-width="1" stroke-dasharray="4,2"/>
+<text x="600" y="96" text-anchor="middle" fill="#6E7681" font-size="10">namespaces + cgroups create isolation boundaries</text>
+<rect x="420" y="114" width="360" height="52" rx="7" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="600" y="137" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="500">Docker Engine  (containerd + runc)</text>
+<text x="600" y="155" text-anchor="middle" fill="#6E7681" font-size="10">manages container lifecycle, image storage, networking</text>
+<rect x="420" y="174" width="360" height="48" rx="7" fill="#2A1A4A" stroke="#BC8CFF" stroke-width="2"/>
+<text x="600" y="196" text-anchor="middle" fill="#BC8CFF" font-size="12" font-weight="600">Host OS Kernel  —  SHARED by ALL containers</text>
+<text x="600" y="214" text-anchor="middle" fill="#8B949E" font-size="10">containers do NOT have their own kernel</text>
+<rect x="420" y="230" width="360" height="34" rx="7" fill="#21262D" stroke="#484F58" stroke-width="1"/>
+<text x="600" y="250" text-anchor="middle" fill="#6E7681" font-size="11">Physical Hardware</text>
+<text x="600" y="284" text-anchor="middle" fill="#3FB950" font-size="11">Boot: ~200ms  ·  RAM: 5–50MB  ·  Disk: 50–500MB</text>
+<text x="600" y="302" text-anchor="middle" fill="#F78166" font-size="10">Security: weaker  —  shared kernel = shared blast radius</text>
+<text x="600" y="320" text-anchor="middle" fill="#6E7681" font-size="10">Kernel exploit in one container can affect the host</text>
+</svg>
+</div>
+
+<div class="co re"><strong>Common misconception:</strong> containers are NOT more secure than VMs. The shared kernel means a kernel exploit in any container can compromise the host. VMs require breaking the hypervisor — a far harder target.</div>
+
+<div class="sl">image vs container — the most important distinction</div>
+
+<!-- DIAGRAM: Image to containers -->
+<div class="diag reveal">
+<svg viewBox="0 0 800 200" width="100%" xmlns="http://www.w3.org/2000/svg" style="font-family:'JetBrains Mono',monospace;display:block">
+<defs>
+  <marker id="a5" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2L8 5L1 8" fill="none" stroke="#E3B341" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text x="170" y="14" text-anchor="middle" fill="#E3B341" font-size="10">Like a class — the blueprint</text>
+<text x="570" y="14" text-anchor="middle" fill="#3FB950" font-size="10">Like objects instantiated from the class — the running things</text>
+<rect x="20" y="24" width="278" height="132" rx="10" fill="#3A2E10" stroke="#E3B341" stroke-width="2"/>
+<text x="159" y="50" text-anchor="middle" fill="#E3B341" font-size="13" font-weight="600">IMAGE  :  zomato-app:v1</text>
+<text x="159" y="72" text-anchor="middle" fill="#8B949E" font-size="11">Frozen blueprint sitting on disk</text>
+<text x="159" y="90" text-anchor="middle" fill="#6E7681" font-size="10">Contains: code + Node 20 + npm packages</text>
+<text x="159" y="108" text-anchor="middle" fill="#6E7681" font-size="10">+ config files + base OS layer</text>
+<text x="159" y="130" text-anchor="middle" fill="#6E7681" font-size="11">NOT running  ·  just bytes on disk</text>
+<text x="358" y="76" text-anchor="middle" fill="#6E7681" font-size="10">docker run</text>
+<text x="358" y="92" text-anchor="middle" fill="#6E7681" font-size="10">(3 times)</text>
+<line x1="300" y1="60" x2="408" y2="42" stroke="#E3B341" stroke-width="1.5" marker-end="url(#a5)"/>
+<line x1="300" y1="90" x2="408" y2="100" stroke="#E3B341" stroke-width="1.5" marker-end="url(#a5)"/>
+<line x1="300" y1="112" x2="408" y2="155" stroke="#E3B341" stroke-width="1.5" marker-end="url(#a5)"/>
+<rect x="410" y="22" width="202" height="60" rx="8" fill="#1A3A1F" stroke="#3FB950" stroke-width="1.5"/>
+<text x="511" y="46" text-anchor="middle" fill="#3FB950" font-size="12" font-weight="500">Container 1</text>
+<text x="511" y="64" text-anchor="middle" fill="#8B949E" font-size="10">running  ·  port 8081  ·  200MB RAM</text>
+<rect x="410" y="90" width="202" height="60" rx="8" fill="#1A3A1F" stroke="#3FB950" stroke-width="1.5"/>
+<text x="511" y="114" text-anchor="middle" fill="#3FB950" font-size="12" font-weight="500">Container 2</text>
+<text x="511" y="132" text-anchor="middle" fill="#8B949E" font-size="10">running  ·  port 8082  ·  200MB RAM</text>
+<rect x="410" y="158" width="202" height="34" rx="8" fill="#21262D" stroke="#484F58" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="511" y="178" text-anchor="middle" fill="#6E7681" font-size="11">Container 3  (stopped)</text>
+<text x="640" y="56" text-anchor="start" fill="#6E7681" font-size="9">same image,</text>
+<text x="640" y="72" text-anchor="start" fill="#6E7681" font-size="9">different instances</text>
+</svg>
+</div>
+
+<div class="sl">local laptop → prod EC2 — same image, identical result</div>
+
+<!-- DIAGRAM: local to prod -->
+<div class="diag reveal">
+<svg viewBox="0 0 800 170" width="100%" xmlns="http://www.w3.org/2000/svg" style="font-family:'JetBrains Mono',monospace;display:block">
+<defs>
+  <marker id="a6" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2L8 5L1 8" fill="none" stroke="#58A6FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text x="400" y="14" text-anchor="middle" fill="#3FB950" font-size="11">Same image SHA = same layers = same code = identical behaviour everywhere</text>
+<rect x="20" y="24" width="210" height="132" rx="10" fill="#161B22" stroke="#3FB950" stroke-width="1.5"/>
+<text x="125" y="48" text-anchor="middle" fill="#3FB950" font-size="12" font-weight="600">Your Laptop</text>
+<rect x="36" y="58" width="178" height="26" rx="5" fill="#3A2E10" stroke="#E3B341" stroke-width="1"/>
+<text x="125" y="75" text-anchor="middle" fill="#E3B341" font-size="11">image: app:abc1234</text>
+<text x="125" y="102" text-anchor="middle" fill="#8B949E" font-size="10">docker build -t app:abc1234 .</text>
+<text x="125" y="118" text-anchor="middle" fill="#8B949E" font-size="10">docker run -p 8080:3000 ...</text>
+<text x="125" y="144" text-anchor="middle" fill="#3FB950" font-size="10">✓ works on your machine</text>
+<line x1="232" y1="90" x2="282" y2="90" stroke="#58A6FF" stroke-width="1.5" marker-end="url(#a6)"/>
+<text x="257" y="83" text-anchor="middle" fill="#6E7681" font-size="9">docker push</text>
+<rect x="284" y="56" width="232" height="68" rx="10" fill="#161B22" stroke="#58A6FF" stroke-width="1.5"/>
+<text x="400" y="80" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="600">Registry</text>
+<text x="400" y="98" text-anchor="middle" fill="#6E7681" font-size="10">Docker Hub  /  AWS ECR  /  GCR</text>
+<rect x="300" y="108" width="200" height="10" rx="3" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="400" y="116" text-anchor="middle" fill="#58A6FF" font-size="8">sha256:abc1234...  (immutable)</text>
+<line x1="518" y1="90" x2="568" y2="90" stroke="#58A6FF" stroke-width="1.5" marker-end="url(#a6)"/>
+<text x="543" y="83" text-anchor="middle" fill="#6E7681" font-size="9">docker pull</text>
+<rect x="570" y="24" width="210" height="132" rx="10" fill="#161B22" stroke="#BC8CFF" stroke-width="1.5"/>
+<text x="675" y="48" text-anchor="middle" fill="#BC8CFF" font-size="12" font-weight="600">EC2 Instance  (prod)</text>
+<rect x="586" y="58" width="178" height="26" rx="5" fill="#3A2E10" stroke="#E3B341" stroke-width="1"/>
+<text x="675" y="75" text-anchor="middle" fill="#E3B341" font-size="11">image: app:abc1234</text>
+<text x="675" y="102" text-anchor="middle" fill="#8B949E" font-size="10">docker pull app:abc1234</text>
+<text x="675" y="118" text-anchor="middle" fill="#8B949E" font-size="10">docker run -p 80:3000 ...</text>
+<text x="675" y="144" text-anchor="middle" fill="#BC8CFF" font-size="10">✓ identical behaviour guaranteed</text>
+</svg>
+</div>
+
+<div class="iq">
+  <div class="iq-hd" onclick="toggleIQ(this)"><span class="iq-lb">🎯 Interview Q — Senior</span><span class="iq-tg">show answer ▾</span></div>
+  <div class="iq-q">"App works on your laptop but crashes on prod EC2 immediately. Same image. What are the possible causes?"</div>
+  <div class="iq-a"><strong>1. Missing env vars.</strong> Secrets on laptop (via .env) aren't baked into images. Fix: inject via K8s Secret or AWS Secrets Manager.<br><br><strong>2. Architecture mismatch.</strong> Built on Apple Silicon (ARM), running on x86 EC2. Fix: build with --platform linux/amd64.<br><br><strong>3. OOMKill.</strong> EC2 has less RAM. Check docker inspect for OOMKilled:true, exit code 137.<br><br><strong>Debug sequence:</strong> docker logs &lt;container_id&gt; → docker inspect for OOMKilled → check env vars → check arch.</div>
+</div>
+</div></div>
+
+<!-- PAGE 3 — IMAGES, LAYERS & BUILDS -->
+<div class="pg" id="p3">
+<div class="hero">
+  <div class="hero-bc"><span>docker-mastery</span><span class="sep">/</span><span class="act">images-layers-builds</span></div>
+  <div class="term"><span class="pr">~/docker $</span><span id="hc3"></span><span class="cur"></span></div>
+  <h2>Images, Layers &amp; Builds</h2>
+  <p>How images are structured as layers, why cache order is everything, the delete trap, and multi-stage builds.</p>
+</div>
+<div class="ct">
+
+<div class="sl">image layers — how OverlayFS stacks them</div>
+<p class="prose">A Docker image is not a single file. It is a <strong>stack of read-only layers</strong>, each one a diff from the previous — exactly like Git commits. Linux's OverlayFS merges them into a single view. Each RUN/COPY/ADD in your Dockerfile creates a new layer.</p>
+
+<!-- DIAGRAM: Layer stack -->
+<div class="diag reveal">
+<svg viewBox="0 0 800 310" width="100%" xmlns="http://www.w3.org/2000/svg" style="font-family:'JetBrains Mono',monospace;display:block">
+<defs>
+  <marker id="a7" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2L8 5L1 8" fill="none" stroke="#6E7681" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text x="400" y="14" text-anchor="middle" fill="#6E7681" font-size="11">Once a layer changes → ALL layers below it must rebuild — ordering is everything</text>
+<rect x="50" y="22" width="680" height="44" rx="7" fill="#3A2E10" stroke="#E3B341" stroke-width="2"/>
+<text x="390" y="41" text-anchor="middle" fill="#E3B341" font-size="13" font-weight="600">Container Layer  —  read / write</text>
+<text x="390" y="59" text-anchor="middle" fill="#6E7681" font-size="10">your writes go here  ·  destroyed when container is removed  ·  not part of the image</text>
+<text x="390" y="80" text-anchor="middle" fill="#6E7681" font-size="10">↑  OverlayFS merges ALL layers into one unified view  ↑</text>
+<rect x="50" y="90" width="680" height="44" rx="7" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="390" y="109" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="500">Layer 4  —  COPY . /app</text>
+<text x="390" y="127" text-anchor="middle" fill="#6E7681" font-size="10">your source code  (changes every commit  →  cache miss every build)</text>
+<text x="22" y="114" text-anchor="middle" fill="#F78166" font-size="10" font-weight="600">MISS</text>
+<rect x="50" y="142" width="680" height="44" rx="7" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="390" y="161" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="500">Layer 3  —  RUN npm ci</text>
+<text x="390" y="179" text-anchor="middle" fill="#6E7681" font-size="10">all node_modules installed  (~2 min if cache miss  —  put this BEFORE your COPY . .)</text>
+<text x="22" y="166" text-anchor="middle" fill="#F78166" font-size="10" font-weight="600">MISS</text>
+<rect x="50" y="194" width="680" height="44" rx="7" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="390" y="213" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="500">Layer 2  —  RUN apt-get install curl</text>
+<text x="390" y="231" text-anchor="middle" fill="#6E7681" font-size="10">system tools  (rarely changes  →  almost always a cache hit)</text>
+<text x="22" y="218" text-anchor="middle" fill="#3FB950" font-size="10" font-weight="600">HIT</text>
+<rect x="50" y="246" width="680" height="44" rx="7" fill="#2A1A4A" stroke="#BC8CFF" stroke-width="1"/>
+<text x="390" y="265" text-anchor="middle" fill="#BC8CFF" font-size="12" font-weight="500">Layer 1  —  FROM node:20-alpine</text>
+<text x="390" y="283" text-anchor="middle" fill="#6E7681" font-size="10">base OS + Node runtime  (downloaded once, cached, shared across all images)</text>
+<text x="22" y="270" text-anchor="middle" fill="#3FB950" font-size="10" font-weight="600">HIT</text>
+<rect x="50" y="298" width="680" height="8" rx="3" fill="#161B22" stroke="#30363D" stroke-width="1"/>
+<text x="390" y="306" text-anchor="middle" fill="#8B949E" font-size="8">Stable layers first  →  base OS  →  system tools  →  npm deps  →  source code (most changing last)</text>
+</svg>
+</div>
+
+<div class="sl">the cache ordering trick — 8 min build → 30 sec</div>
+<div class="cg stagger">
+  <div class="card">
+    <div class="ct2"><span class="bg re">❌ Bad</span>COPY all code first</div>
+    <div class="cb2">
+<div class="cb"><span class="k">COPY</span> . .          <span class="c"># cache miss every commit</span>
+<span class="k">RUN</span> npm ci        <span class="c"># reruns every build = 3 min</span></div>
+      npm install reruns on every single code change because COPY . . always changes.
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct2"><span class="bg gr">✅ Good</span>Package files first</div>
+    <div class="cb2">
+<div class="cb"><span class="k">COPY</span> package*.json ./  <span class="c"># stable layer</span>
+<span class="k">RUN</span> npm ci             <span class="c"># cached 99% of time</span>
+<span class="k">COPY</span> . .               <span class="c"># code here</span></div>
+      npm install only reruns when package.json changes. Code changes = skip directly to COPY.
+    </div>
+  </div>
+</div>
+
+<div class="co re"><strong>The delete trap:</strong> Add a 500MB file in one RUN, delete it in the next RUN — image still 500MB heavier. The file exists in layer N. OverlayFS marks it deleted in layer N+1 but doesn't remove it from the previous layer. Fix: everything in a single RUN command.</div>
+
+<div class="sl">multi-stage builds — the image diet</div>
+<p class="prose">To compile code you need compilers. To <em>run</em> code you need only the binary. Multi-stage builds let you use multiple FROM stages — compile in a fat stage, copy only the output to a minimal final stage.</p>
+
+<!-- DIAGRAM: Multi-stage -->
+<div class="diag reveal">
+<svg viewBox="0 0 800 200" width="100%" xmlns="http://www.w3.org/2000/svg" style="font-family:'JetBrains Mono',monospace;display:block">
+<defs>
+  <marker id="a8" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2L8 5L1 8" fill="none" stroke="#3FB950" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text x="400" y="14" text-anchor="middle" fill="#6E7681" font-size="11">Build in a fat stage → copy only the output binary → final image is tiny</text>
+<rect x="20" y="24" width="334" height="164" rx="10" fill="#161B22" stroke="#E3B341" stroke-width="1.5"/>
+<text x="187" y="48" text-anchor="middle" fill="#E3B341" font-size="12" font-weight="600">Stage 1: Builder</text>
+<text x="187" y="64" text-anchor="middle" fill="#6E7681" font-size="10">FROM golang:1.22-alpine AS builder</text>
+<rect x="36" y="74" width="302" height="22" rx="4" fill="#3A2E10" stroke="#30363D" stroke-width="1"/>
+<text x="187" y="89" text-anchor="middle" fill="#E3B341" font-size="10">Go compiler + toolchain  (~350MB total)</text>
+<rect x="36" y="102" width="302" height="22" rx="4" fill="#3A2E10" stroke="#30363D" stroke-width="1"/>
+<text x="187" y="117" text-anchor="middle" fill="#E3B341" font-size="10">go mod download  (all dependencies)</text>
+<rect x="36" y="130" width="302" height="22" rx="4" fill="#1A3A1F" stroke="#3FB950" stroke-width="1.5"/>
+<text x="187" y="145" text-anchor="middle" fill="#3FB950" font-size="10">→  /bin/server  (compiled static binary ~8MB)</text>
+<text x="187" y="174" text-anchor="middle" fill="#F78166" font-size="11" font-weight="500">This entire stage is THROWN AWAY after</text>
+<line x1="356" y1="138" x2="430" y2="138" stroke="#3FB950" stroke-width="2.5" marker-end="url(#a8)"/>
+<text x="394" y="128" text-anchor="middle" fill="#3FB950" font-size="10">COPY</text>
+<text x="394" y="142" text-anchor="middle" fill="#6E7681" font-size="9">--from=builder</text>
+<text x="394" y="156" text-anchor="middle" fill="#6E7681" font-size="9">binary only</text>
+<rect x="432" y="24" width="348" height="164" rx="10" fill="#161B22" stroke="#3FB950" stroke-width="2"/>
+<text x="606" y="48" text-anchor="middle" fill="#3FB950" font-size="12" font-weight="600">Stage 2: Production</text>
+<text x="606" y="64" text-anchor="middle" fill="#6E7681" font-size="10">FROM gcr.io/distroless/static-debian12</text>
+<rect x="448" y="74" width="316" height="22" rx="4" fill="#1A3A1F" stroke="#3FB950" stroke-width="1"/>
+<text x="606" y="89" text-anchor="middle" fill="#3FB950" font-size="10">distroless base:  ~2MB  ·  no shell  ·  no apt  ·  no curl</text>
+<rect x="448" y="102" width="316" height="22" rx="4" fill="#1A3A1F" stroke="#3FB950" stroke-width="1"/>
+<text x="606" y="117" text-anchor="middle" fill="#3FB950" font-size="10">/server binary:  ~8MB  (copied from stage 1)</text>
+<rect x="448" y="130" width="316" height="22" rx="4" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="606" y="145" text-anchor="middle" fill="#58A6FF" font-size="10">USER 65534  (nobody  ·  never run as root)</text>
+<text x="606" y="174" text-anchor="middle" fill="#3FB950" font-size="13" font-weight="600">Final image:  ~10MB  ✓  vs  ~350MB  without</text>
+</svg>
+</div>
+
+<div class="iq">
+  <div class="iq-hd" onclick="toggleIQ(this)"><span class="iq-lb">🎯 Interview Q — Staff level</span><span class="iq-tg">show answer ▾</span></div>
+  <div class="iq-q">"Your Go microservice image is 1.1GB. Walk me through getting it under 20MB."</div>
+  <div class="iq-a"><strong>Step 1 — Multi-stage build:</strong> compile in golang:alpine, copy only the binary.<br><strong>Step 2 — Static binary:</strong> CGO_ENABLED=0 GOOS=linux gives a statically-linked binary, no glibc dependency.<br><strong>Step 3 — Minimal base:</strong> distroless/static (2MB) or scratch (0MB).<br><strong>Result:</strong> binary ~8MB + base ~2MB = ~10MB.<br><strong>Bonus:</strong> -ldflags="-s -w" strips debug symbols (30% smaller).</div>
+</div>
+</div></div>
+
+<!-- PAGE 4 — NAMESPACES & CGROUPS -->
+<div class="pg" id="p4">
+<div class="hero">
+  <div class="hero-bc"><span>docker-mastery</span><span class="sep">/</span><span class="act">namespaces-cgroups</span></div>
+  <div class="term"><span class="pr">~/docker $</span><span id="hc4"></span><span class="cur"></span></div>
+  <h2>Namespaces &amp; cgroups</h2>
+  <p>The two Linux kernel primitives that make containers real. Docker does nothing more than configure these correctly.</p>
+</div>
+<div class="ct">
+
+<div class="sl">namespaces — making a process think it is alone</div>
+<p class="prose">A namespace gives a process a <strong>private view of a system resource</strong>. The resource exists on the host, but each namespace sees its own isolated copy. Docker creates 7 namespaces per container at startup.</p>
+
+<!-- DIAGRAM: 7 namespaces -->
+<div class="diag reveal">
+<svg viewBox="0 0 800 280" width="100%" xmlns="http://www.w3.org/2000/svg" style="font-family:'JetBrains Mono',monospace;display:block">
+<text x="400" y="16" text-anchor="middle" fill="#8B949E" font-size="12">Docker creates all 7 namespaces for each container at startup  (run: ls /proc/1/ns/ inside a container)</text>
+<rect x="20" y="28" width="240" height="74" rx="7" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="140" y="52" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="600">pid  namespace</text>
+<text x="140" y="70" text-anchor="middle" fill="#8B949E" font-size="10">Own process tree.</text>
+<text x="140" y="88" text-anchor="middle" fill="#8B949E" font-size="10">Container PID 1  ≠  host PID 1</text>
+<rect x="280" y="28" width="240" height="74" rx="7" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="400" y="52" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="600">net  namespace</text>
+<text x="400" y="70" text-anchor="middle" fill="#8B949E" font-size="10">Own eth0, ports, routing, iptables.</text>
+<text x="400" y="88" text-anchor="middle" fill="#8B949E" font-size="10">Two containers can both use port 8080</text>
+<rect x="540" y="28" width="240" height="74" rx="7" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="660" y="52" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="600">mnt  namespace</text>
+<text x="660" y="70" text-anchor="middle" fill="#8B949E" font-size="10">Own filesystem from the image.</text>
+<text x="660" y="88" text-anchor="middle" fill="#8B949E" font-size="10">Host /home invisible to container</text>
+<rect x="20" y="116" width="240" height="74" rx="7" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="140" y="140" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="600">uts  namespace</text>
+<text x="140" y="158" text-anchor="middle" fill="#8B949E" font-size="10">Own hostname.</text>
+<text x="140" y="176" text-anchor="middle" fill="#8B949E" font-size="10">Container can be called "api-server"</text>
+<rect x="280" y="116" width="240" height="74" rx="7" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="400" y="140" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="600">ipc  namespace</text>
+<text x="400" y="158" text-anchor="middle" fill="#8B949E" font-size="10">Own shared memory segments,</text>
+<text x="400" y="176" text-anchor="middle" fill="#8B949E" font-size="10">semaphores, and message queues</text>
+<rect x="540" y="116" width="240" height="74" rx="7" fill="#2A1A4A" stroke="#BC8CFF" stroke-width="2"/>
+<text x="660" y="140" text-anchor="middle" fill="#BC8CFF" font-size="12" font-weight="600">user  namespace  ⭐</text>
+<text x="660" y="158" text-anchor="middle" fill="#8B949E" font-size="10">root inside  =  UID 100000 on host.</text>
+<text x="660" y="176" text-anchor="middle" fill="#BC8CFF" font-size="10">Security holy grail  (NOT default)</text>
+<rect x="160" y="204" width="480" height="62" rx="7" fill="#1A3A1F" stroke="#3FB950" stroke-width="1"/>
+<text x="400" y="228" text-anchor="middle" fill="#3FB950" font-size="12" font-weight="600">cgroup  namespace</text>
+<text x="400" y="248" text-anchor="middle" fill="#8B949E" font-size="10">Container cannot see or escape the host's cgroup hierarchy.</text>
+<text x="400" y="264" text-anchor="middle" fill="#6E7681" font-size="10">Isolates the resource limits view  —  container only sees its own limits</text>
+</svg>
+</div>
+
+<div class="co am"><strong>user namespace is the security holy grail — but NOT enabled by default.</strong> With it: root inside container maps to unprivileged UID 100000 on host. Attacker escapes container — they're nobody on the host. Without it: root inside = root on host. Enable rootless Docker to get this.</div>
+
+<div class="sl">cgroups — resource limits the kernel enforces</div>
+
+<!-- DIAGRAM: cgroup limits -->
+<div class="diag reveal">
+<svg viewBox="0 0 800 220" width="100%" xmlns="http://www.w3.org/2000/svg" style="font-family:'JetBrains Mono',monospace;display:block">
+<rect x="20" y="20" width="368" height="190" rx="10" fill="#161B22" stroke="#F78166" stroke-width="1.5"/>
+<text x="204" y="46" text-anchor="middle" fill="#F78166" font-size="13" font-weight="600">Memory limit hit  →  OOMKill</text>
+<text x="204" y="64" text-anchor="middle" fill="#6E7681" font-size="10">--memory=512m  sets a hard cgroup ceiling</text>
+<rect x="36" y="76" width="336" height="26" rx="5" fill="#21262D" stroke="#30363D" stroke-width="1"/>
+<text x="204" y="93" text-anchor="middle" fill="#8B949E" font-size="11">Container RAM usage approaches 512MB</text>
+<rect x="36" y="110" width="336" height="26" rx="5" fill="#3A1A1A" stroke="#F78166" stroke-width="1"/>
+<text x="204" y="127" text-anchor="middle" fill="#F78166" font-size="11">512MB limit crossed  →  kernel OOM killer fires</text>
+<rect x="36" y="144" width="336" height="26" rx="5" fill="#3A1A1A" stroke="#F78166" stroke-width="1"/>
+<text x="204" y="161" text-anchor="middle" fill="#F78166" font-size="11">Container killed with exit code 137  (SIGKILL)</text>
+<text x="204" y="186" text-anchor="middle" fill="#F78166" font-size="12" font-weight="500">docker inspect → OOMKilled: true</text>
+<text x="204" y="202" text-anchor="middle" fill="#6E7681" font-size="10">Immediate death  ·  no cleanup  ·  data in writable layer lost</text>
+<rect x="412" y="20" width="368" height="190" rx="10" fill="#161B22" stroke="#E3B341" stroke-width="1.5"/>
+<text x="596" y="46" text-anchor="middle" fill="#E3B341" font-size="13" font-weight="600">CPU limit hit  →  Throttling  (not death)</text>
+<text x="596" y="64" text-anchor="middle" fill="#6E7681" font-size="10">--cpus=1.5  =  1.5 cores quota per 100ms window</text>
+<rect x="428" y="76" width="336" height="26" rx="5" fill="#21262D" stroke="#30363D" stroke-width="1"/>
+<text x="596" y="93" text-anchor="middle" fill="#8B949E" font-size="11">CPU quota exhausted within the period</text>
+<rect x="428" y="110" width="336" height="26" rx="5" fill="#3A2E10" stroke="#E3B341" stroke-width="1"/>
+<text x="596" y="127" text-anchor="middle" fill="#E3B341" font-size="11">Kernel PAUSES the process until next window</text>
+<rect x="428" y="144" width="336" height="26" rx="5" fill="#3A2E10" stroke="#E3B341" stroke-width="1"/>
+<text x="596" y="161" text-anchor="middle" fill="#E3B341" font-size="11">App slows down  ·  NOT killed  ·  invisible to CPU % avg</text>
+<text x="596" y="186" text-anchor="middle" fill="#E3B341" font-size="12" font-weight="500">Check: cpu.stat  →  throttled_time</text>
+<text x="596" y="202" text-anchor="middle" fill="#6E7681" font-size="10">Dashboard shows time-averaged CPU  —  burst throttles are hidden</text>
+</svg>
+</div>
+
+<div class="sl">the runtime stack — what runs when you type docker run</div>
+
+<!-- DIAGRAM: Runtime stack flow -->
+<div class="diag reveal">
+<svg viewBox="0 0 800 240" width="100%" xmlns="http://www.w3.org/2000/svg" style="font-family:'JetBrains Mono',monospace;display:block">
+<defs>
+  <marker id="a11" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2L8 5L1 8" fill="none" stroke="#58A6FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text x="400" y="14" text-anchor="middle" fill="#6E7681" font-size="11">What actually runs when you type:  docker run ...</text>
+<rect x="20" y="28" width="152" height="46" rx="7" fill="#3A2E10" stroke="#E3B341" stroke-width="1"/>
+<text x="96" y="48" text-anchor="middle" fill="#E3B341" font-size="12" font-weight="500">docker CLI</text>
+<text x="96" y="65" text-anchor="middle" fill="#6E7681" font-size="10">your command</text>
+<line x1="174" y1="51" x2="200" y2="51" stroke="#58A6FF" stroke-width="1.5" marker-end="url(#a11)"/>
+<text x="187" y="45" text-anchor="middle" fill="#6E7681" font-size="8">REST</text>
+<rect x="202" y="28" width="158" height="46" rx="7" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="281" y="48" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="500">dockerd</text>
+<text x="281" y="65" text-anchor="middle" fill="#6E7681" font-size="10">images, network, volumes</text>
+<line x1="362" y1="51" x2="388" y2="51" stroke="#58A6FF" stroke-width="1.5" marker-end="url(#a11)"/>
+<text x="375" y="45" text-anchor="middle" fill="#6E7681" font-size="8">gRPC</text>
+<rect x="390" y="28" width="158" height="46" rx="7" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="469" y="48" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="500">containerd</text>
+<text x="469" y="65" text-anchor="middle" fill="#6E7681" font-size="10">lifecycle, snapshots</text>
+<line x1="550" y1="51" x2="576" y2="51" stroke="#58A6FF" stroke-width="1.5" marker-end="url(#a11)"/>
+<text x="563" y="45" text-anchor="middle" fill="#6E7681" font-size="8">OCI</text>
+<rect x="578" y="28" width="202" height="46" rx="7" fill="#1A3A1F" stroke="#3FB950" stroke-width="1.5"/>
+<text x="679" y="48" text-anchor="middle" fill="#3FB950" font-size="12" font-weight="500">runc</text>
+<text x="679" y="65" text-anchor="middle" fill="#6E7681" font-size="10">calls clone() + exec()</text>
+<rect x="390" y="92" width="390" height="130" rx="8" fill="#161B22" stroke="#3FB950" stroke-width="1"/>
+<text x="585" y="114" text-anchor="middle" fill="#3FB950" font-size="11" font-weight="600">What runc does step by step</text>
+<text x="585" y="133" text-anchor="middle" fill="#8B949E" font-size="10">1.  clone() syscall with namespace flags  →  creates all 7 namespaces</text>
+<text x="585" y="151" text-anchor="middle" fill="#8B949E" font-size="10">2.  writes to /sys/fs/cgroup  →  sets memory + cpu limits</text>
+<text x="585" y="169" text-anchor="middle" fill="#8B949E" font-size="10">3.  mounts image layers via OverlayFS  →  container filesystem ready</text>
+<text x="585" y="187" text-anchor="middle" fill="#3FB950" font-size="10">4.  exec()  →  your process starts as PID 1 inside the container</text>
+<text x="585" y="210" text-anchor="middle" fill="#6E7681" font-size="9">runc is ~100 lines of C. Everything else in the chain is scaffolding around it.</text>
+<rect x="20" y="92" width="358" height="72" rx="8" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1" stroke-dasharray="4,2"/>
+<text x="199" y="114" text-anchor="middle" fill="#58A6FF" font-size="11" font-weight="500">K8s dropped dockerd  (kubelet now → containerd)</text>
+<text x="199" y="132" text-anchor="middle" fill="#6E7681" font-size="10">kubelet talks to containerd directly — skips dockerd entirely</text>
+<text x="199" y="150" text-anchor="middle" fill="#6E7681" font-size="10">Your images still work — OCI format is the same. Only the manager changed.</text>
+</svg>
+</div>
+
+<div class="iq">
+  <div class="iq-hd" onclick="toggleIQ(this)"><span class="iq-lb">🎯 Interview Q — Staff · very common at Uber</span><span class="iq-tg">show answer ▾</span></div>
+  <div class="iq-q">"p99 latency spikes to 800ms during peak. No OOMKill. CPU dashboards show 30% average. What's happening?"</div>
+  <div class="iq-a"><strong>CPU throttling.</strong> Container hits its cgroup CPU quota and gets paused by the kernel. Dashboards show time-window averages — which look low even during burst throttles.<br><br><strong>Confirm:</strong> cat /sys/fs/cgroup/cpu/cpu.stat — check throttled_time. If non-zero and growing, that's it.<br><br><strong>Fix:</strong> raise --cpus limit, or switch to --cpu-shares (soft limit, allows bursting when host has spare). In Kubernetes: resources.limits.cpu set too low is the most common cause of mystery latency at Uber scale.</div>
+</div>
+</div></div>
+
+<!-- PAGE 5 — NETWORKING & STORAGE -->
+<div class="pg" id="p5">
+<div class="hero">
+  <div class="hero-bc"><span>docker-mastery</span><span class="sep">/</span><span class="act">networking-storage</span></div>
+  <div class="term"><span class="pr">~/docker $</span><span id="hc5"></span><span class="cur"></span></div>
+  <h2>Networking &amp; Storage</h2>
+  <p>How containers find each other, the DNS trap every engineer hits once, and why data disappears when containers stop.</p>
+</div>
+<div class="ct">
+
+<div class="sl">bridge networking — the physical path packets take</div>
+
+<!-- DIAGRAM: Bridge network -->
+<div class="diag reveal">
+<svg viewBox="0 0 800 260" width="100%" xmlns="http://www.w3.org/2000/svg" style="font-family:'JetBrains Mono',monospace;display:block">
+<defs>
+  <marker id="a12" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2L8 5L1 8" fill="none" stroke="#58A6FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  <marker id="a12g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2L8 5L1 8" fill="none" stroke="#3FB950" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text x="400" y="14" text-anchor="middle" fill="#6E7681" font-size="11">Each container gets a veth pair — one end inside it, one end plugged into docker0 switch</text>
+<rect x="20" y="28" width="194" height="66" rx="8" fill="#1A3A1F" stroke="#3FB950" stroke-width="1.5"/>
+<text x="117" y="52" text-anchor="middle" fill="#3FB950" font-size="12" font-weight="500">Container A</text>
+<text x="117" y="70" text-anchor="middle" fill="#6E7681" font-size="10">eth0: 172.17.0.2  ·  port 3000</text>
+<rect x="234" y="28" width="194" height="66" rx="8" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1.5"/>
+<text x="331" y="52" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="500">Container B</text>
+<text x="331" y="70" text-anchor="middle" fill="#6E7681" font-size="10">eth0: 172.17.0.3  ·  port 5432</text>
+<line x1="117" y1="96" x2="117" y2="118" stroke="#E3B341" stroke-width="1.5" stroke-dasharray="3,2"/>
+<line x1="331" y1="96" x2="331" y2="118" stroke="#E3B341" stroke-width="1.5" stroke-dasharray="3,2"/>
+<text x="66" y="112" fill="#E3B341" font-size="9">veth pair</text>
+<text x="340" y="112" fill="#E3B341" font-size="9">veth pair</text>
+<rect x="20" y="120" width="508" height="38" rx="7" fill="#3A2E10" stroke="#E3B341" stroke-width="1.5"/>
+<text x="274" y="137" text-anchor="middle" fill="#E3B341" font-size="12" font-weight="500">docker0  virtual switch  (172.17.0.1)</text>
+<text x="274" y="153" text-anchor="middle" fill="#6E7681" font-size="10">Docker creates this switch on install  ·  all containers on bridge plug into it</text>
+<rect x="20" y="166" width="508" height="30" rx="6" fill="#2A1A4A" stroke="#BC8CFF" stroke-width="1"/>
+<text x="274" y="185" text-anchor="middle" fill="#BC8CFF" font-size="11">iptables NAT  —  port mapping  (-p 8080:3000)  is an iptables rule added here</text>
+<rect x="20" y="204" width="508" height="28" rx="5" fill="#21262D" stroke="#484F58" stroke-width="1"/>
+<text x="274" y="221" text-anchor="middle" fill="#6E7681" font-size="11">Host Network Interface (eth0)  →  Internet</text>
+<rect x="548" y="28" width="232" height="102" rx="8" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1.5"/>
+<text x="664" y="50" text-anchor="middle" fill="#58A6FF" font-size="11" font-weight="600">Docker DNS  (127.0.0.11)</text>
+<text x="664" y="68" text-anchor="middle" fill="#8B949E" font-size="10">Only on user-defined networks</text>
+<text x="664" y="84" text-anchor="middle" fill="#3FB950" font-size="10">connect("postgres:5432")  →  works ✓</text>
+<text x="664" y="100" text-anchor="middle" fill="#F78166" font-size="10">Default bridge:  NO DNS  →  fails ✗</text>
+<text x="664" y="118" text-anchor="middle" fill="#6E7681" font-size="9">Fix: docker network create mynet</text>
+<rect x="548" y="144" width="232" height="94" rx="8" fill="#3A1A1A" stroke="#F78166" stroke-width="1.5"/>
+<text x="664" y="164" text-anchor="middle" fill="#F78166" font-size="11" font-weight="600">The DNS Trap</text>
+<text x="664" y="182" text-anchor="middle" fill="#8B949E" font-size="10">Default bridge = no name resolution</text>
+<text x="664" y="198" text-anchor="middle" fill="#8B949E" font-size="10">connect("kafka") → hostname not found</text>
+<text x="664" y="214" text-anchor="middle" fill="#3FB950" font-size="10">User-defined network fixes this</text>
+<text x="664" y="230" text-anchor="middle" fill="#3FB950" font-size="9">Compose auto-creates one → names always work</text>
+</svg>
+</div>
+
+<table class="tbl">
+<tr><th>Mode</th><th>How it works</th><th>Performance</th><th>Use case</th></tr>
+<tr><td><strong>bridge</strong></td><td>Virtual switch + veth pairs + NAT</td><td>~2-5% NAT overhead</td><td>Default — most containers</td></tr>
+<tr><td><strong>host</strong></td><td>Shares host's network namespace directly</td><td>Zero overhead — native speed</td><td>Latency-sensitive services</td></tr>
+<tr><td><strong>overlay</strong></td><td>VXLAN tunnel across physical network</td><td>~10-15% overhead</td><td>Containers on different hosts</td></tr>
+<tr><td><strong>none</strong></td><td>Only loopback — fully isolated</td><td>N/A</td><td>Batch jobs, security-critical</td></tr>
+</table>
+
+<div class="sl">volumes — why data vanishes and how to fix it</div>
+<p class="prose">Writes inside a container go into the container's writable layer on top of image layers. When the container is deleted, that layer is gone. Databases, uploads, logs — all lost. A <strong>volume</strong> mounts storage from outside the container layer — writes go to the host disk, survive container deletion.</p>
+
+<!-- DIAGRAM: Volumes -->
+<div class="diag reveal">
+<svg viewBox="0 0 800 190" width="100%" xmlns="http://www.w3.org/2000/svg" style="font-family:'JetBrains Mono',monospace;display:block">
+<text x="400" y="14" text-anchor="middle" fill="#F78166" font-size="11">Writes inside the container are lost on docker rm  ·  use volumes to persist data outside</text>
+<rect x="20" y="24" width="240" height="158" rx="8" fill="#3A1A1A" stroke="#F78166" stroke-width="1.5"/>
+<text x="140" y="48" text-anchor="middle" fill="#F78166" font-size="12" font-weight="600">Without Volume  ❌</text>
+<rect x="36" y="58" width="208" height="30" rx="5" fill="#21262D" stroke="#30363D" stroke-width="1"/>
+<text x="140" y="73" text-anchor="middle" fill="#8B949E" font-size="10">Container writable layer</text>
+<text x="140" y="87" text-anchor="middle" fill="#6E7681" font-size="9">/var/lib/postgresql/data</text>
+<text x="140" y="116" text-anchor="middle" fill="#F78166" font-size="12" font-weight="500">docker rm  →  ALL DATA GONE</text>
+<text x="140" y="134" text-anchor="middle" fill="#6E7681" font-size="10">layer is destroyed with the container</text>
+<text x="140" y="166" text-anchor="middle" fill="#6E7681" font-size="9">even DB data vanishes permanently</text>
+<rect x="284" y="24" width="240" height="158" rx="8" fill="#1A3A1F" stroke="#3FB950" stroke-width="1.5"/>
+<text x="404" y="48" text-anchor="middle" fill="#3FB950" font-size="12" font-weight="600">Named Volume  ✓</text>
+<rect x="300" y="58" width="208" height="30" rx="5" fill="#1A3A1F" stroke="#3FB950" stroke-width="1"/>
+<text x="404" y="73" text-anchor="middle" fill="#3FB950" font-size="10">/var/lib/docker/volumes/pgdata</text>
+<text x="404" y="87" text-anchor="middle" fill="#6E7681" font-size="9">on host disk, managed by Docker</text>
+<text x="404" y="116" text-anchor="middle" fill="#3FB950" font-size="12" font-weight="500">docker rm  →  data survives  ✓</text>
+<text x="404" y="134" text-anchor="middle" fill="#6E7681" font-size="10">explicit: docker volume rm pgdata to delete</text>
+<text x="404" y="166" text-anchor="middle" fill="#6E7681" font-size="9">bypasses OverlayFS → better I/O than inside</text>
+<rect x="548" y="24" width="232" height="158" rx="8" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1.5"/>
+<text x="664" y="48" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="600">Bind Mount  (dev use)</text>
+<rect x="564" y="58" width="200" height="30" rx="5" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1"/>
+<text x="664" y="73" text-anchor="middle" fill="#58A6FF" font-size="10">/host/code  →  /app</text>
+<text x="664" y="87" text-anchor="middle" fill="#6E7681" font-size="9">any host path you choose</text>
+<text x="664" y="116" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="500">hot reload  ✓</text>
+<text x="664" y="134" text-anchor="middle" fill="#6E7681" font-size="10">edit on host → instant in container</text>
+<text x="664" y="166" text-anchor="middle" fill="#6E7681" font-size="9">bad for prod: host-path dependent</text>
+</svg>
+</div>
+
+<div class="iq">
+  <div class="iq-hd" onclick="toggleIQ(this)"><span class="iq-lb">🎯 Interview Q — Senior</span><span class="iq-tg">show answer ▾</span></div>
+  <div class="iq-q">"High-frequency trading service in Docker shows 2ms higher p99 latency than the same binary on the host. What causes this?"</div>
+  <div class="iq-a">Bridge network's NAT path: each packet traverses the veth pair, docker0 virtual switch, and iptables NAT rules — microseconds per packet that compound to 2ms at HFT frequency.<br><br><strong>Fix:</strong> --network host. Container uses host's network interface directly. Zero NAT overhead. Container port = host port (no mapping needed). Downside: two containers can't share the same port number.</div>
+</div>
+</div></div>
+
+<!-- PAGE 6 — SECURITY -->
+<div class="pg" id="p6">
+<div class="hero">
+  <div class="hero-bc"><span>docker-mastery</span><span class="sep">/</span><span class="act">security-hardening</span></div>
+  <div class="term"><span class="pr">~/docker $</span><span id="hc6"></span><span class="cur"></span></div>
+  <h2>Security &amp; Hardening</h2>
+  <p>Linux capabilities, seccomp, the SIGTERM trap, and health checks. What it takes to run containers safely at Uber scale.</p>
+</div>
+<div class="ct">
+
+<div class="sl">the fundamental limit</div>
+<div class="co re"><strong>Containers share the kernel.</strong> A kernel-level exploit in any container can compromise the host. Everything below reduces blast radius — nothing eliminates this root risk. VMs remain fundamentally stronger for hostile workloads.</div>
+
+<div class="sl">linux capabilities — root split into 40 fine-grained permissions</div>
+<p class="prose">Old Linux: you're either root (do anything) or not (very limited). Modern Linux splits root into ~40 individual <strong>capabilities</strong>. Docker containers get a subset by default. The move: drop all, add only what your app actually needs.</p>
+
+<table class="tbl">
+<tr><th>Capability</th><th>What it allows</th><th>Need it?</th></tr>
+<tr><td><strong>CAP_NET_BIND_SERVICE</strong></td><td>Bind to ports below 1024</td><td>Only if binding port 80/443</td></tr>
+<tr><td><strong>CAP_SYS_PTRACE</strong></td><td>Debug processes with strace/gdb</td><td>Never in prod</td></tr>
+<tr><td><strong>CAP_SYS_ADMIN</strong></td><td>"God mode" — mount, change namespaces</td><td>Never. Red flag if requested.</td></tr>
+<tr><td><strong>CAP_NET_ADMIN</strong></td><td>Modify network interfaces, iptables</td><td>Only for network-level tools</td></tr>
+</table>
+
+<div class="cb"><button class="cpb" onclick="cp(this)">copy</button><span class="c"># Hardened container — production standard</span>
+<span class="k">docker run</span> \
+  <span class="v">--cap-drop=</span>ALL \                     <span class="c"># remove every capability</span>
+  <span class="v">--cap-add=</span>NET_BIND_SERVICE \         <span class="c"># add back only what's needed</span>
+  <span class="v">--security-opt</span> no-new-privileges \  <span class="c"># cannot sudo or setuid escalate</span>
+  <span class="v">--read-only</span> \                         <span class="c"># immutable filesystem</span>
+  <span class="v">--tmpfs</span> /tmp:size=50m \              <span class="c"># writable scratch in RAM</span>
+  <span class="v">--user</span> 1000:1000 \                   <span class="c"># non-root user</span>
+  myapp</div>
+
+<div class="co re"><strong>The #1 Docker security mistake:</strong> <code>-v /var/run/docker.sock:/var/run/docker.sock</code>. The Docker socket gives full control of dockerd — spin up privileged containers, mount host filesystem. It hands the container root access to your entire host.</div>
+
+<div class="sl">the SIGTERM trap — why rolling deploys drop requests</div>
+
+<!-- DIAGRAM: SIGTERM flow -->
+<div class="diag reveal">
+<svg viewBox="0 0 800 224" width="100%" xmlns="http://www.w3.org/2000/svg" style="font-family:'JetBrains Mono',monospace;display:block">
+<defs>
+  <marker id="aS" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2L8 5L1 8" fill="none" stroke="#58A6FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  <marker id="aR" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2L8 5L1 8" fill="none" stroke="#F78166" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+  <marker id="aG" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2L8 5L1 8" fill="none" stroke="#3FB950" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text x="200" y="18" text-anchor="middle" fill="#F78166" font-size="12" font-weight="600">❌  Shell form:  ENTRYPOINT "./server"</text>
+<text x="600" y="18" text-anchor="middle" fill="#3FB950" font-size="12" font-weight="600">✅  Exec form:  ENTRYPOINT ["./server"]</text>
+<line x1="400" y1="12" x2="400" y2="212" stroke="#30363D" stroke-width="1"/>
+<!-- BAD: docker stop → sh PID1 (ignores SIGTERM) → server child (never gets it) -->
+<rect x="20" y="32" width="130" height="40" rx="6" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1.5"/>
+<text x="85" y="56" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="500">docker stop</text>
+<line x1="152" y1="52" x2="178" y2="52" stroke="#58A6FF" stroke-width="2" marker-end="url(#aS)"/>
+<text x="165" y="44" text-anchor="middle" fill="#8B949E" font-size="9">SIGTERM</text>
+<rect x="180" y="32" width="130" height="40" rx="6" fill="#3A1A1A" stroke="#F78166" stroke-width="2"/>
+<text x="245" y="52" text-anchor="middle" fill="#F78166" font-size="12" font-weight="600">/bin/sh  PID1</text>
+<line x1="312" y1="52" x2="338" y2="52" stroke="#F78166" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#aR)"/>
+<text x="325" y="44" text-anchor="middle" fill="#F78166" font-size="9">ignored!</text>
+<rect x="340" y="32" width="52" height="40" rx="6" fill="#21262D" stroke="#484F58" stroke-width="1"/>
+<text x="366" y="56" text-anchor="middle" fill="#6E7681" font-size="11">server</text>
+<text x="200" y="90" text-anchor="middle" fill="#6E7681" font-size="10">shell is PID1  ·  shells do NOT forward signals to children</text>
+<rect x="20" y="104" width="372" height="38" rx="7" fill="#3A1A1A" stroke="#F78166" stroke-width="1.5"/>
+<text x="206" y="121" text-anchor="middle" fill="#F78166" font-size="12" font-weight="500">10 seconds later  →  SIGKILL</text>
+<text x="206" y="136" text-anchor="middle" fill="#F78166" font-size="10">in-flight requests DROPPED  ·  DB connections not closed</text>
+<!-- GOOD: docker stop → server PID1 (gets SIGTERM) → drains gracefully -->
+<rect x="420" y="32" width="130" height="40" rx="6" fill="#1F3A5F" stroke="#58A6FF" stroke-width="1.5"/>
+<text x="485" y="56" text-anchor="middle" fill="#58A6FF" font-size="12" font-weight="500">docker stop</text>
+<line x1="552" y1="52" x2="578" y2="52" stroke="#58A6FF" stroke-width="2" marker-end="url(#aS)"/>
+<text x="565" y="44" text-anchor="middle" fill="#8B949E" font-size="9">SIGTERM</text>
+<rect x="580" y="32" width="200" height="40" rx="6" fill="#1A3A1F" stroke="#3FB950" stroke-width="2"/>
+<text x="680" y="56" text-anchor="middle" fill="#3FB950" font-size="12" font-weight="600">./server  IS  PID1</text>
+<text x="600" y="90" text-anchor="middle" fill="#3FB950" font-size="10">server IS PID1  ·  receives SIGTERM directly</text>
+<rect x="420" y="104" width="360" height="38" rx="7" fill="#1A3A1F" stroke="#3FB950" stroke-width="1.5"/>
+<text x="600" y="121" text-anchor="middle" fill="#3FB950" font-size="12" font-weight="500">Drains connections, closes DB, exits cleanly</text>
+<text x="600" y="136" text-anchor="middle" fill="#3FB950" font-size="10">zero dropped requests  ·  zero data loss</text>
+<!-- tini note -->
+<rect x="20" y="158" width="760" height="54" rx="8" fill="#21262D" stroke="#30363D" stroke-width="1"/>
+<text x="400" y="178" text-anchor="middle" fill="#8B949E" font-size="12" font-weight="500">If your app does not handle zombie child processes:  use tini as PID1</text>
+<text x="400" y="198" text-anchor="middle" fill="#6E7681" font-size="10">ENTRYPOINT ["tini", "--", "./server"]  —  tini forwards signals correctly + reaps zombie child processes automatically</text>
+</svg>
+</div>
+
+<div class="sl">health checks — running ≠ ready</div>
+<p class="prose">A container can be "running" (process alive) but completely broken (DB failed, stuck in a loop). Without a health check the orchestrator thinks it's fine and keeps sending traffic. A health check tells K8s: call this endpoint every 30s — 3 failures = restart and stop routing.</p>
+
+<div class="cb"><button class="cpb" onclick="cp(this)">copy</button><span class="k">HEALTHCHECK</span> <span class="v">--interval=</span>30s <span class="v">--timeout=</span>5s <span class="v">--start-period=</span>15s <span class="v">--retries=</span>3 \
+  <span class="k">CMD</span> curl <span class="v">-f</span> http://localhost:8080/health || exit 1
+
+<span class="c"># /health must return 200 only when truly ready:</span>
+<span class="c"># ✓ database connection working</span>
+<span class="c"># ✓ cache loaded</span>
+<span class="c"># NOT just "process is running"</span></div>
+
+<div class="iq">
+  <div class="iq-hd" onclick="toggleIQ(this)"><span class="iq-lb">🎯 Interview Q — Staff / Principal</span><span class="iq-tg">show answer ▾</span></div>
+  <div class="iq-q">"Attacker gets RCE in a container running as root. Which isolation mechanisms prevent host takeover? Which don't help?"</div>
+  <div class="iq-a"><strong>What helps:</strong> mnt namespace (can't see host filesystem), net namespace (can't sniff host traffic), seccomp (dangerous syscalls blocked), AppArmor/SELinux MAC policies, distroless image (no shell or tools to use post-RCE).<br><br><strong>What doesn't help:</strong> Running as root = all default capabilities. Without user namespaces, root inside = root on host. Kernel vulnerability = all namespace isolation breaks — shared kernel is the fundamental limit.<br><br><strong>Full hardening:</strong> non-root + user namespaces + seccomp + cap-drop=ALL + distroless + read-only filesystem. Even then a kernel 0-day beats everything.</div>
+</div>
+</div></div>
+
+<!-- PAGE 7 — CI/CD -->
+<div class="pg" id="p7">
+<div class="hero">
+  <div class="hero-bc"><span>docker-mastery</span><span class="sep">/</span><span class="act">cicd-deployment</span></div>
+  <div class="term"><span class="pr">~/docker $</span><span id="hc7"></span><span class="cur"></span></div>
+  <h2>CI/CD &amp; Deployment</h2>
+  <p>Build pipelines, image tagging, BuildKit cache mounts. What 100,000 deploys per week looks like at Uber.</p>
+</div>
+<div class="ct">
+
+<div class="co bl"><strong>Uber context:</strong> 4,500 microservices on K8s (migrated from Mesos July 2024). 100,000+ deploys/week. The deployment pipeline design IS the system design question at staff level.</div>
+
+<div class="sl">build once, deploy many — the golden rule</div>
+<div class="co re"><strong>Never rebuild for different environments. Never use :latest in prod.</strong> Tag with git commit SHA. Same image SHA promoted through dev → staging → prod by retagging. Same SHA = same code = provably identical behaviour everywhere. Rollback = re-tag to previous SHA. 30 seconds, no rebuild.</div>
+
+<div class="sl">the full pipeline — 5 stages</div>
+
+<!-- DIAGRAM: CI/CD pipeline -->
+<div class="diag reveal">
+<svg viewBox="0 0 800 204" width="100%" xmlns="http://www.w3.org/2000/svg" style="font-family:'JetBrains Mono',monospace;display:block">
+<defs>
+  <marker id="a15" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2L8 5L1 8" fill="none" stroke="#58A6FF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text x="400" y="14" text-anchor="middle" fill="#6E7681" font-size="11">Build once per SHA  →  same image promoted through all envs  →  rollback = retag, not rebuild</text>
+<rect x="10" y="26" width="140" height="106" rx="8" fill="#161B22" stroke="#3FB950" stroke-width="1.5"/>
+<text x="80" y="48" text-anchor="middle" fill="#3FB950" font-size="11" font-weight="600">1. BUILD</text>
+<text x="80" y="66" text-anchor="middle" fill="#6E7681" font-size="9">Kaniko  (no DinD)</text>
+<text x="80" y="82" text-anchor="middle" fill="#6E7681" font-size="9">BuildKit cache mounts</text>
+<text x="80" y="98" text-anchor="middle" fill="#6E7681" font-size="9">Tag: app:abc1234</text>
+<text x="80" y="114" text-anchor="middle" fill="#E3B341" font-size="9">git SHA  not :latest</text>
+<line x1="152" y1="79" x2="172" y2="79" stroke="#58A6FF" stroke-width="1.5" marker-end="url(#a15)"/>
+
+<rect x="174" y="26" width="140" height="106" rx="8" fill="#161B22" stroke="#F78166" stroke-width="1.5"/>
+<text x="244" y="48" text-anchor="middle" fill="#F78166" font-size="11" font-weight="600">2. SCAN</text>
+<text x="244" y="66" text-anchor="middle" fill="#6E7681" font-size="9">Trivy CVE scan</text>
+<text x="244" y="82" text-anchor="middle" fill="#6E7681" font-size="9">Block on CRITICAL</text>
+<text x="244" y="98" text-anchor="middle" fill="#6E7681" font-size="9">cosign image signing</text>
+<text x="244" y="114" text-anchor="middle" fill="#6E7681" font-size="9">runs parallel with tests</text>
+<line x1="316" y1="79" x2="336" y2="79" stroke="#58A6FF" stroke-width="1.5" marker-end="url(#a15)"/>
+
+<rect x="338" y="26" width="140" height="106" rx="8" fill="#161B22" stroke="#58A6FF" stroke-width="1.5"/>
+<text x="408" y="48" text-anchor="middle" fill="#58A6FF" font-size="11" font-weight="600">3. PROMOTE</text>
+<text x="408" y="66" text-anchor="middle" fill="#6E7681" font-size="9">Same SHA: dev→stg</text>
+<text x="408" y="82" text-anchor="middle" fill="#6E7681" font-size="9">→ prod  (retag only)</text>
+<text x="408" y="98" text-anchor="middle" fill="#3FB950" font-size="9">Never rebuild for envs</text>
+<text x="408" y="114" text-anchor="middle" fill="#6E7681" font-size="9">Config via K8s Secret</text>
+<line x1="480" y1="79" x2="500" y2="79" stroke="#58A6FF" stroke-width="1.5" marker-end="url(#a15)"/>
+
+<rect x="502" y="26" width="140" height="106" rx="8" fill="#161B22" stroke="#E3B341" stroke-width="1.5"/>
+<text x="572" y="48" text-anchor="middle" fill="#E3B341" font-size="11" font-weight="600">4. ROLLOUT</text>
+<text x="572" y="66" text-anchor="middle" fill="#6E7681" font-size="9">Canary: 5% traffic</text>
+<text x="572" y="82" text-anchor="middle" fill="#6E7681" font-size="9">Watch 10 minutes</text>
+<text x="572" y="98" text-anchor="middle" fill="#6E7681" font-size="9">Auto-rollback on errors</text>
+<text x="572" y="114" text-anchor="middle" fill="#6E7681" font-size="9">Rolling update to 100%</text>
+<line x1="644" y1="79" x2="664" y2="79" stroke="#58A6FF" stroke-width="1.5" marker-end="url(#a15)"/>
+
+<rect x="666" y="26" width="122" height="106" rx="8" fill="#161B22" stroke="#BC8CFF" stroke-width="1.5"/>
+<text x="727" y="48" text-anchor="middle" fill="#BC8CFF" font-size="11" font-weight="600">5. ROLLBACK</text>
+<text x="727" y="66" text-anchor="middle" fill="#6E7681" font-size="9">Retag to prev SHA</text>
+<text x="727" y="82" text-anchor="middle" fill="#3FB950" font-size="9">30 seconds total</text>
+<text x="727" y="98" text-anchor="middle" fill="#6E7681" font-size="9">kubectl rollout undo</text>
+<text x="727" y="114" text-anchor="middle" fill="#6E7681" font-size="9">image still in registry</text>
+
+<rect x="10" y="146" width="388" height="46" rx="6" fill="#21262D" stroke="#30363D" stroke-width="1"/>
+<text x="204" y="165" text-anchor="middle" fill="#8B949E" font-size="10">BuildKit cache mounts: pip/npm persists between CI builds</text>
+<text x="204" y="183" text-anchor="middle" fill="#3FB950" font-size="10">8 min build  →  15 sec  ·  cache never enters image layer</text>
+
+<rect x="402" y="146" width="386" height="46" rx="6" fill="#21262D" stroke="#30363D" stroke-width="1"/>
+<text x="595" y="165" text-anchor="middle" fill="#8B949E" font-size="10">Uber uses P2P registry  (Kraken, open-sourced)</text>
+<text x="595" y="183" text-anchor="middle" fill="#6E7681" font-size="10">Hosts seed image layers to neighbours — avoids central registry bottleneck</text>
+</svg>
+</div>
+
+<div class="sl">buildkit cache mounts — the biggest practical speedup</div>
+<div class="cb"><button class="cpb" onclick="cp(this)">copy</button><span class="c"># Without — downloads everything every build (~3 min)</span>
+<span class="k">RUN</span> pip install <span class="v">-r</span> requirements.txt
+
+<span class="c"># With cache mount — reuses downloads (~15 sec) · NEVER in image layer</span>
+<span class="k">RUN</span> <span class="v">--mount=</span>type=cache,target=/root/.cache/pip \
+    pip install <span class="v">-r</span> requirements.txt
+
+<span class="c"># Secret mount — token available at build time, NEVER appears in any layer</span>
+<span class="c"># (ARG/ENV for secrets = visible in docker history forever = don't do it)</span>
+<span class="k">RUN</span> <span class="v">--mount=</span>type=secret,id=gh_token \
+    pip install <span class="v">--index-url</span> $(cat /run/secrets/gh_token) private-pkg</div>
+
+<div class="iq">
+  <div class="iq-hd" onclick="toggleIQ(this)"><span class="iq-lb">🎯 System design Q — Staff level (Uber)</span><span class="iq-tg">show answer ▾</span></div>
+  <div class="iq-q">"Design a container image build and promotion pipeline for 4,500 microservices, 100,000 deploys/week."</div>
+  <div class="iq-a"><strong>Build:</strong> Kaniko in K8s pods (no privileged access). BuildKit cache mounts on CI runner. One build per commit SHA. Parallel builds for independent services.<br><br><strong>Registry:</strong> At this scale central pull saturates bandwidth. P2P registry (Uber open-sourced Kraken) — hosts seed image layers to neighbours after first pull.<br><br><strong>Security gate:</strong> Trivy CVE scan + cosign signing. Prod registry only accepts signed images. Block on CRITICAL.<br><br><strong>Promote:</strong> Same sha256 digest through all envs. Config via K8s ConfigMap/Secret — never baked into image.<br><br><strong>Rollback:</strong> kubectl rollout undo or re-tag to previous SHA. 30 seconds. Keep last 10 versions in registry at all times.</div>
+</div>
+</div></div>
+
+<!-- PAGE 8 — QUICK REVISION -->
+<div class="pg" id="p8">
+<div class="hero">
+  <div class="hero-bc"><span>docker-mastery</span><span class="sep">/</span><span class="act">quick-revision</span></div>
+  <div class="term"><span class="pr">~/docker $</span><span id="hc8"></span><span class="cur"></span></div>
+  <h2>Quick Revision</h2>
+  <p>Everything Uber interviews will test — key facts, common traps, and one-liner answers. Read this the day before your interview.</p>
+</div>
+<div class="ct">
+
+<div class="sl">kernel &amp; process fundamentals</div>
+<div class="qr-grid stagger">
+<div class="qr-card bl">
+  <div class="qr-ti">🧱 OS &amp; Kernel</div>
+  <div class="qr-item"><strong>Kernel</strong> is the only software that talks to hardware directly. Every app — Chrome, Spotify, Zomato — must ask the kernel for CPU, RAM, disk, and network.</div>
+  <div class="qr-item">macOS / Windows / Linux = <strong>kernel + apps on top</strong>. The kernel IS the core OS. The desktop GUI is just another app.</div>
+  <div class="qr-item"><strong>Process</strong> = a running instance of a program. The kernel gives it its own PID, a private RAM slice, and CPU time.</div>
+  <div class="qr-item">Processes are <strong>isolated by the kernel</strong> — Chrome cannot read Zomato's memory. One process crashing doesn't kill others.</div>
+  <div class="qr-item"><strong>Thread</strong> = a worker inside a process. All threads in the same process share the same RAM — fast to communicate, but race conditions are possible.</div>
+  <div class="qr-item">32 cores = <strong>32 threads running simultaneously at any instant</strong>. Thousands of threads can exist in RAM — the kernel rotates them onto cores every ~1ms (context switching).</div>
+</div>
+<div class="qr-card gr">
+  <div class="qr-ti">🐳 Docker Basics</div>
+  <div class="qr-item"><strong>Image</strong> = frozen blueprint on disk. <strong>Container</strong> = live running process created from that image. Same image → run 10 times → 10 containers.</div>
+  <div class="qr-item">Containers share the host kernel. VMs have their own. Containers boot in ~200ms vs ~45s for VMs.</div>
+  <div class="qr-item">Container is <strong>NOT more secure than a VM</strong>. Shared kernel = shared blast radius. A kernel exploit in any container can hit the host.</div>
+  <div class="qr-item">Image layers are <strong>content-addressed by SHA256</strong>. Unchanged layers reuse cache instantly — no rebuild, no download.</div>
+  <div class="qr-item">Once a layer changes, <strong>all layers below it must rebuild</strong>. Put stable things first: base OS → system tools → npm deps → source code.</div>
+  <div class="qr-item">Deleting a file in the next RUN still bloats the image — it exists in the previous layer. Fix: <strong>everything in one RUN command</strong>.</div>
+</div>
+</div>
+
+<div class="sl">internals — namespaces &amp; cgroups</div>
+<div class="qr-grid stagger">
+<div class="qr-card am">
+  <div class="qr-ti">🔬 Namespaces  (7 types)</div>
+  <div class="qr-item"><strong>pid</strong> — container gets its own process tree. Container PID 1 ≠ host PID 1.</div>
+  <div class="qr-item"><strong>net</strong> — own eth0, ports, routing, iptables. Two containers can both claim port 8080 internally.</div>
+  <div class="qr-item"><strong>mnt</strong> — own filesystem from the image. Host /home is invisible to the container.</div>
+  <div class="qr-item"><strong>user</strong> — root inside container maps to UID 100000 on host. <strong>Not enabled by default</strong> — need rootless Docker.</div>
+  <div class="qr-item">K8s Pod: containers in the same Pod <strong>share the net namespace</strong> — they have the same IP and talk via localhost.</div>
+  <div class="qr-item">K8s dropped dockerd in v1.24. kubelet now talks to containerd directly. Your images still work — OCI format is identical.</div>
+</div>
+<div class="qr-card re">
+  <div class="qr-ti">📊 cgroups</div>
+  <div class="qr-item">Memory limit hit → <strong>OOMKill</strong>. Container exits code 137. Immediate death, no cleanup. Check: <code>docker inspect --format '{{.State.OOMKilled}}'</code></div>
+  <div class="qr-item">CPU limit hit → <strong>Throttling, not death</strong>. Kernel pauses the process until the next quota window. App slows, doesn't die.</div>
+  <div class="qr-item"><strong>Dashboard shows CPU averages</strong> — throttling spikes during bursts are invisible to averages. Check: <code>cpu.stat → throttled_time</code></div>
+  <div class="qr-item">K8s: <strong>requests</strong> = scheduling guarantee (what node needs to fit the pod). <strong>limits</strong> = hard cgroup ceiling (enforcement).</div>
+  <div class="qr-item">CPU throttle + low average CPU on dashboard = the most common mystery latency bug at Uber scale.</div>
+</div>
+</div>
+
+<div class="sl">networking traps</div>
+<div class="qr-grid stagger">
+<div class="qr-card bl">
+  <div class="qr-ti">🌐 The DNS Trap</div>
+  <div class="qr-item"><strong>Default bridge = no DNS</strong>. <code>connect("kafka")</code> fails — containers only know each other by IP, which changes on restart.</div>
+  <div class="qr-item"><strong>User-defined bridge = Docker embeds DNS at 127.0.0.11</strong>. Container names resolve automatically — no IPs needed.</div>
+  <div class="qr-item"><strong>Docker Compose always creates a user-defined network</strong> — that's exactly why service names just work.</div>
+  <div class="qr-item"><strong>host mode</strong>: zero NAT overhead. Container port = host port. Best for latency-sensitive services.</div>
+  <div class="qr-item"><strong>overlay</strong>: VXLAN tunnel across physical hosts. ~10-15% overhead. Used by K8s multi-node networking.</div>
+</div>
+<div class="qr-card gr">
+  <div class="qr-ti">💾 Storage</div>
+  <div class="qr-item">Writes inside a container go into its writable layer — <strong>destroyed on docker rm</strong>. Database data, uploads, logs — all lost.</div>
+  <div class="qr-item"><strong>Named volume</strong>: Docker manages the path. Survives container deletion. Use for databases and any persistent state.</div>
+  <div class="qr-item"><strong>Bind mount</strong>: any host path mapped into container. Perfect for local dev hot-reload. Bad for prod (host-path dependent).</div>
+  <div class="qr-item"><strong>tmpfs</strong>: RAM only, never written to disk. Use for secrets that must never touch disk, or temp scratch space.</div>
+  <div class="qr-item">Volumes bypass OverlayFS — <strong>better I/O performance</strong> than writing inside the container layer.</div>
+</div>
+</div>
+
+<div class="sl">production traps</div>
+<div class="qr-grid stagger">
+<div class="qr-card am">
+  <div class="qr-ti">🔒 Security must-knows</div>
+  <div class="qr-item"><strong>Never mount /var/run/docker.sock</strong> into a container — it gives full root access to the host daemon.</div>
+  <div class="qr-item"><strong>--cap-drop=ALL</strong> then add back only what the service actually needs. Most web services need zero capabilities.</div>
+  <div class="qr-item"><strong>Distroless base image</strong>: no shell, no apt, no curl. Attacker gets RCE but has nothing to work with.</div>
+  <div class="qr-item">Secrets in ARG or ENV are <strong>visible in docker history forever</strong>. Use <code>--mount=type=secret</code> in BuildKit instead.</div>
+  <div class="qr-item">A kernel exploit breaks all container isolation. Shared kernel = shared risk ceiling — VMs remain stronger for hostile workloads.</div>
+</div>
+<div class="qr-card pu">
+  <div class="qr-ti">🚨 The SIGTERM Trap</div>
+  <div class="qr-item">Shell form <code>ENTRYPOINT "./server"</code>: shell becomes PID1, <strong>SIGTERM never reaches your server</strong>. After 10s → SIGKILL → requests dropped.</div>
+  <div class="qr-item">Exec form <code>ENTRYPOINT ["./server"]</code>: your server IS PID1, <strong>receives SIGTERM directly</strong>, can drain connections and exit cleanly.</div>
+  <div class="qr-item">Use <strong>tini</strong> as PID1 if your app spawns child processes — it forwards signals and reaps zombies automatically.</div>
+  <div class="qr-item">K8s: <strong>preStop hook</strong> + sleep 5 gives the load balancer time to drain before SIGTERM is sent. Pair with terminationGracePeriodSeconds.</div>
+</div>
+</div>
+
+<div class="sl">CI/CD &amp; deployment must-knows</div>
+<div class="qr-grid stagger">
+<div class="qr-card gr">
+  <div class="qr-ti">🚀 Deployment rules</div>
+  <div class="qr-item"><strong>Never use :latest in production</strong>. Tag with git commit SHA. Rollback = retag to the previous SHA, not a rebuild.</div>
+  <div class="qr-item"><strong>Build once per SHA</strong>. Promote the same image through dev → staging → prod by retagging. Never rebuild for different environments.</div>
+  <div class="qr-item">Config (env vars, secrets) is injected by K8s at runtime. <strong>Never bake config into the image</strong>.</div>
+  <div class="qr-item">BuildKit <strong>cache mounts</strong>: pip/npm package cache persists between CI builds without ever entering an image layer.</div>
+  <div class="qr-item"><strong>Kaniko / Buildah</strong> for CI builds: daemonless, no privileged pods, safer than DinD (Docker-in-Docker).</div>
+</div>
+<div class="qr-card re">
+  <div class="qr-ti">⚡ Multi-stage builds</div>
+  <div class="qr-item"><strong>Go example</strong>: compile in golang:alpine (~350MB), copy only the binary to distroless/static (~2MB). Final image: ~10MB.</div>
+  <div class="qr-item"><code>CGO_ENABLED=0</code> produces a statically linked binary — no glibc dependency, runs in distroless or scratch.</div>
+  <div class="qr-item">Cache order: <strong>COPY package.json → RUN npm install → COPY . .</strong> — npm install only reruns when dependencies change, not on every code edit.</div>
+  <div class="qr-item"><strong>Pin base images to sha256 digest</strong>, not a tag. Tags are mutable and can change under you — digests are immutable.</div>
+</div>
+</div>
+
+<div class="sl">K8s concepts — your biggest gap right now</div>
+<div class="qr-grid stagger">
+<div class="qr-card bl">
+  <div class="qr-ti">☸️ K8s = Docker concepts at cluster scale</div>
+  <div class="qr-item"><strong>Pod</strong> = the smallest deployable unit. Usually 1 container. Containers in the same Pod share the net namespace and can talk via localhost.</div>
+  <div class="qr-item"><strong>Deployment</strong> = manages N pod replicas. Handles rolling updates, rollback, and self-healing when pods crash.</div>
+  <div class="qr-item"><strong>Service</strong> = stable DNS name + load balancer across all pods. Survives pod restarts — clients always have a fixed address.</div>
+  <div class="qr-item"><strong>ConfigMap / Secret</strong> = inject config at runtime without baking it into the image. Secret is base64 encoded (not encrypted — use Vault for real secrets).</div>
+  <div class="qr-item"><strong>resources.requests</strong> = scheduling guarantee (node needs this much free). <strong>resources.limits</strong> = cgroup ceiling (enforcement, throttle or kill).</div>
+</div>
+<div class="qr-card am">
+  <div class="qr-ti">🔍 readinessProbe vs livenessProbe</div>
+  <div class="qr-item"><strong>readinessProbe</strong>: "should I send traffic here?" Fails → removed from the load balancer. Container keeps running. Use for: warming up, upstream dependency down.</div>
+  <div class="qr-item"><strong>livenessProbe</strong>: "is this container beyond self-recovery?" Fails → container is killed and restarted. Use for: deadlock, infinite loop, corrupted state.</div>
+  <div class="qr-item">Making liveness <strong>too sensitive is dangerous</strong>: if it fails during a DB slowdown, K8s restarts the container — turning a partial outage into a total one.</div>
+  <div class="qr-item">Liveness should only fail on things that genuinely require a restart to fix — not temporary slowness or upstream unavailability.</div>
+</div>
+</div>
+
+<div class="sl">the 5 debugging scenarios — narrate these out loud without notes</div>
+<div class="acc reveal">
+  <div class="acc-h" onclick="toggleAcc(this)"><span class="bg re">1</span><div><div class="acc-ti">OOMKill — container keeps dying</div><div class="acc-su">exit code 137 · OOMKilled: true</div></div><span class="acc-ar">▾</span></div>
+  <div class="acc-b">
+    <div class="qr-item"><strong>Confirm:</strong> <code>docker inspect &lt;c&gt; --format '{{.State.OOMKilled}}'</code> → true. Exit code 137 = 128 + SIGKILL (9).</div>
+    <div class="qr-item"><strong>Leak or spike?</strong> Check memory over time from metrics. Leak = steady upward climb. Spike = sudden jump at a specific event.</div>
+    <div class="qr-item"><strong>If leak:</strong> heap dump / pprof to find what's accumulating and not being freed.</div>
+    <div class="qr-item"><strong>If spike:</strong> is the limit too low for the actual workload? Raise it. Add alerting at 80% threshold before the ceiling is hit.</div>
+    <div class="qr-item"><strong>Long-term fix:</strong> should this service be stateless? Offload state to Redis or DB to reduce working set size.</div>
+  </div>
+</div>
+<div class="acc reveal">
+  <div class="acc-h" onclick="toggleAcc(this)"><span class="bg am">2</span><div><div class="acc-ti">p99 latency spike — no OOMKill, CPU looks fine</div><div class="acc-su">CPU throttling hiding in the average</div></div><span class="acc-ar">▾</span></div>
+  <div class="acc-b">
+    <div class="qr-item">This is <strong>CPU throttling</strong>. Dashboards show time-averaged CPU — throttle events last milliseconds and disappear in the average.</div>
+    <div class="qr-item"><strong>Confirm:</strong> <code>cat /sys/fs/cgroup/cpu/cpu.stat</code> — if <code>throttled_time</code> is non-zero and growing, that's the culprit.</div>
+    <div class="qr-item"><strong>Fix:</strong> raise <code>--cpus</code> limit, or switch to <code>--cpu-shares</code> (soft limit that allows bursting when the host has spare capacity).</div>
+    <div class="qr-item">In K8s: <code>resources.limits.cpu</code> set too low is the most common cause of mystery latency at Uber scale.</div>
+  </div>
+</div>
+<div class="acc reveal">
+  <div class="acc-h" onclick="toggleAcc(this)"><span class="bg bl">3</span><div><div class="acc-ti">Rolling deploy causes 502 errors for ~10 seconds</div><div class="acc-su">SIGTERM trap or readiness probe missing</div></div><span class="acc-ar">▾</span></div>
+  <div class="acc-b">
+    <div class="qr-item"><strong>Traffic too early:</strong> readinessProbe not configured or too lenient — traffic hits the container before it's ready. Fix: only pass /health when DB is connected and caches are loaded.</div>
+    <div class="qr-item"><strong>Dropped requests:</strong> shell form ENTRYPOINT means SIGTERM never reaches the server. Fix: exec form ENTRYPOINT.</div>
+    <div class="qr-item"><strong>LB drain:</strong> add a preStop hook with sleep 5 — gives the load balancer time to stop routing before SIGTERM is sent.</div>
+  </div>
+</div>
+<div class="acc reveal">
+  <div class="acc-h" onclick="toggleAcc(this)"><span class="bg pu">4</span><div><div class="acc-ti">Works on laptop, crashes immediately on prod EC2</div><div class="acc-su">Same image, different environment</div></div><span class="acc-ar">▾</span></div>
+  <div class="acc-b">
+    <div class="qr-item"><strong>Step 1:</strong> <code>docker logs &lt;container_id&gt;</code> — what does the error message actually say?</div>
+    <div class="qr-item"><strong>Missing env vars?</strong> Secrets on your laptop (via .env file) are not baked into images. Inject via K8s Secret or AWS Secrets Manager.</div>
+    <div class="qr-item"><strong>Architecture mismatch?</strong> Built on Apple Silicon (ARM), running on x86 EC2. Fix: rebuild with <code>--platform linux/amd64</code>.</div>
+    <div class="qr-item"><strong>OOMKill?</strong> <code>docker inspect</code> for OOMKilled:true and exit code 137. Increase memory limit.</div>
+  </div>
+</div>
+
+</div></div>
+
+<div class="pg" id="p9">
+<div class="hero">
+  <div class="hero-bc"><span>docker-mastery</span><span class="sep">/</span><span class="act">gaps-and-next-level</span></div>
+  <div class="term"><span class="pr">~/docker $</span><span id="hc9"></span><span class="cur"></span></div>
+  <h2>Gaps &amp; What's Next</h2>
+  <p>Honest assessment. What you've nailed, what's missing, and the exact study order to close the gap for Uber Staff/Senior.</p>
+</div>
+<div class="ct">
+
+<div class="sl">knowledge coverage — current state</div>
+<div id="prog">
+  <div class="pr-row"><span class="pr-lb">OS / Kernel / Processes</span><div class="pr-tr"><div class="pr-fi" style="background:var(--green)" data-w="92"></div></div><span class="pr-pc">92%</span></div>
+  <div class="pr-row"><span class="pr-lb">Image layers &amp; Dockerfile</span><div class="pr-tr"><div class="pr-fi" style="background:var(--green)" data-w="88"></div></div><span class="pr-pc">88%</span></div>
+  <div class="pr-row"><span class="pr-lb">Namespaces &amp; cgroups</span><div class="pr-tr"><div class="pr-fi" style="background:var(--green)" data-w="82"></div></div><span class="pr-pc">82%</span></div>
+  <div class="pr-row"><span class="pr-lb">Networking &amp; Storage</span><div class="pr-tr"><div class="pr-fi" style="background:var(--amber)" data-w="72"></div></div><span class="pr-pc">72%</span></div>
+  <div class="pr-row"><span class="pr-lb">Security &amp; Hardening</span><div class="pr-tr"><div class="pr-fi" style="background:var(--amber)" data-w="65"></div></div><span class="pr-pc">65%</span></div>
+  <div class="pr-row"><span class="pr-lb">CI/CD pipeline design</span><div class="pr-tr"><div class="pr-fi" style="background:var(--amber)" data-w="52"></div></div><span class="pr-pc">52%</span></div>
+  <div class="pr-row"><span class="pr-lb">Kubernetes fundamentals</span><div class="pr-tr"><div class="pr-fi" style="background:var(--red)" data-w="18"></div></div><span class="pr-pc">18%</span></div>
+  <div class="pr-row"><span class="pr-lb">Observability (logs/metrics/traces)</span><div class="pr-tr"><div class="pr-fi" style="background:var(--red)" data-w="22"></div></div><span class="pr-pc">22%</span></div>
+  <div class="pr-row"><span class="pr-lb">Container-aware system design</span><div class="pr-tr"><div class="pr-fi" style="background:var(--red)" data-w="28"></div></div><span class="pr-pc">28%</span></div>
+</div>
+
+<div class="sl">what you've nailed — don't re-study</div>
+<div class="gc ok reveal-scale">
+  <div class="gc-ti"><span class="bg gr">solid</span> Docker fundamentals — internals, images, networking, security</div>
+  <div class="gc-b">You can explain namespaces, cgroups, OverlayFS, multi-stage builds, SIGTERM trap, and health checks from first principles. Most candidates memorise the what without the why. You have both. Genuinely rare.</div>
+</div>
+<div class="gc ok reveal-scale">
+  <div class="gc-ti"><span class="bg gr">solid</span> Process / Thread mental model</div>
+  <div class="gc-b">Strong. You understand race conditions, the thread/core math, how the event loop fits in. Comes up in system design and in the technical retrospective on past projects.</div>
+</div>
+
+<div class="sl">critical gaps — these will come up at Uber</div>
+<div class="gc cr reveal-scale">
+  <div class="gc-ti"><span class="bg re">critical gap</span> Kubernetes — Uber is 100% on K8s as of July 2024</div>
+  <div class="gc-b">
+    Uber completed Mesos → K8s migration in 2024. Every backend engineer touches K8s daily. Docker without K8s is knowing how to build an engine but never having driven a car.<br><br>
+    <strong>What you need (as a user, not an operator):</strong><br>
+    Pod — smallest unit. Usually 1 container + optional sidecars.<br>
+    Deployment — manages N replicas, rolling updates, rollback.<br>
+    Service — stable DNS name + LB across pods. Survives pod restarts.<br>
+    ConfigMap / Secret — inject config without baking into the image.<br>
+    resources.requests vs limits — requests = scheduling, limits = cgroup enforcement.<br>
+    readinessProbe vs livenessProbe — traffic routing vs restart trigger.<br><br>
+    <strong>Resource:</strong> official K8s docs Concepts section. 3-4 days focused.
+  </div>
+</div>
+<div class="gc cr reveal-scale">
+  <div class="gc-ti"><span class="bg re">critical gap</span> Observability — the three pillars</div>
+  <div class="gc-b">
+    At Uber scale (millions RPS, 4,500 services) you can't docker exec into a container. You need:<br><br>
+    <strong>Logs:</strong> Structured JSON to stdout only. Never write to files inside containers. Fluentd/Vector ships to Elasticsearch/Loki.<br>
+    <strong>Metrics:</strong> Prometheus scrapes /metrics endpoint every 15s. Grafana visualises. Golden signals: latency, traffic, errors, saturation.<br>
+    <strong>Traces:</strong> OpenTelemetry. One request hits 5 services — distributed trace shows which service is slow.<br><br>
+    <strong>Key question you must answer:</strong> "a request is slow — how do you find which of the 5 services is the bottleneck?" Answer: distributed trace, find the fat span.
+  </div>
+</div>
+
+<div class="sl">important gaps — close these after Kubernetes</div>
+<div class="gc im reveal-scale">
+  <div class="gc-ti"><span class="bg am">important</span> readinessProbe vs livenessProbe — trips most candidates</div>
+  <div class="gc-b">
+    <strong>Readiness:</strong> "send traffic here?" Fails → removed from LB. Container lives. Use for: warming up, upstream dependency down.<br>
+    <strong>Liveness:</strong> "beyond recovery?" Fails → container restarted. Use for: deadlock, infinite loop, state requiring restart.<br><br>
+    <strong>Expensive mistake:</strong> liveness too sensitive. Fails on slow DB query → restarts container during DB slowdown → turns partial outage into total one. Liveness should only fail on things that genuinely require a restart to fix.
+  </div>
+</div>
+<div class="gc im reveal-scale">
+  <div class="gc-ti"><span class="bg am">important</span> Container-aware architecture patterns</div>
+  <div class="gc-b">
+    <strong>Sidecar:</strong> logging agent or mTLS proxy as second container in same Pod. Your app doesn't need to know about it.<br>
+    <strong>Init container:</strong> runs before main container. DB migration, wait-for-dependency, config setup.<br>
+    <strong>Stateless containers:</strong> push state to Redis/DB/S3. Enables instant scaling and rollback.<br>
+    <strong>Service mesh:</strong> Istio/Envoy handles auth between services — your app code doesn't change.
+  </div>
+</div>
+<div class="gc in reveal-scale">
+  <div class="gc-ti"><span class="bg bl">skip</span> Docker Swarm — do not study this</div>
+  <div class="gc-b">82% of enterprises use K8s in production. Swarm will not come up in a Uber staff interview. Time here = time not spent on K8s. Skip entirely.</div>
+</div>
+
+<div class="sl">the honest reality check</div>
+<div class="gc in reveal-scale">
+  <div class="gc-ti"><span class="bg bl">context</span> Docker alone won't get you through a Uber Staff interview</div>
+  <div class="gc-b">Uber's interview is DSA coding (2 rounds) + system design (1 round) + behavioural (1 round). Docker comes up inside system design — "how would you deploy this?", "what happens when a pod dies?", "how do you do zero-downtime deploys?" Not knowing K8s basics when designing a system at Uber scale is a red flag. The Docker internals you have is what separates senior from staff — it lets you make principled decisions. Now build the K8s layer on top.</div>
+</div>
+
+<div class="sl">exact study order</div>
+<div class="tl stagger">
+  <div class="tl-it"><div class="tl-d done"></div><div class="tl-wk">Complete ✓</div><div class="tl-ti">Docker fundamentals + internals</div><div class="tl-b">Namespaces, cgroups, image layers, networking, security, SIGTERM, health checks. Solid.</div></div>
+  <div class="tl-it"><div class="tl-d now"></div><div class="tl-wk">Week 1 — start now</div><div class="tl-ti">Kubernetes as a user (not an operator)</div><div class="tl-b">Pod, Deployment, Service, ConfigMap, Secret, readiness/liveness probes, requests vs limits. K8s docs Concepts section. 3-4 days focused. <strong>The single most important thing to study next.</strong></div></div>
+  <div class="tl-it"><div class="tl-d soon"></div><div class="tl-wk">Week 2</div><div class="tl-ti">Observability — three pillars</div><div class="tl-b">Structured logs (stdout → Fluentd), Prometheus metrics (/metrics endpoint), OpenTelemetry traces. Answer out loud: "a request is slow — how do you find which service is the bottleneck?"</div></div>
+  <div class="tl-it"><div class="tl-d soon"></div><div class="tl-wk">Week 2-3</div><div class="tl-ti">Practice 5 debugging scenarios out loud</div><div class="tl-b">OOMKill, CPU throttle, rolling deploy 502s, works-locally-not-prod, container not receiving traffic. Each one narrated step-by-step without notes.</div></div>
+  <div class="tl-it"><div class="tl-d soon"></div><div class="tl-wk">Ongoing</div><div class="tl-ti">Read Uber engineering blog</div><div class="tl-b">K8s migration post, "Up" platform post, Kraken P2P registry post. Real context to reference in system design answers — signals you understand container infra at actual scale.</div></div>
+</div>
+
+</div></div>
+
+<!-- ═════════════════════════════════════
+     JAVASCRIPT
+═════════════════════════════════════ -->
+<script>
+const cmds = {
+  p1:'man 7 namespaces  # the two primitives behind Docker',
+  p2:'docker run -d --name zomato -p 8080:3000 zomato-app:v1',
+  p3:'docker build -t myapp:v1 --target production .',
+  p4:'cat /sys/fs/cgroup/cpu/cpu.stat | grep throttled_time',
+  p5:'docker network create mynet && docker run --network mynet --name kafka kafka:latest',
+  p6:'docker run --cap-drop=ALL --read-only --user 1000:1000 myapp',
+  p7:'docker buildx build --platform linux/amd64,linux/arm64 --push -t myrepo/app:$(git rev-parse HEAD) .',
+  p8:'grep -rn "OOMKilled\\|throttled_time" /sys/fs/cgroup',
+  p9:'kubectl get pods -n production | grep -v Running',
+  p10:'# Welcome to Incident Lab — fix prod before your on-call shift ends'
+};
+
+// ── PAGE NAVIGATION ────────────────────────────────────────────────────
+function go(id, btn) {
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(n => n.classList.remove('on'));
+  const page = document.getElementById(id);
+  page.classList.add('on');
+  btn.classList.add('on');
+  document.getElementById('sb').classList.remove('mob');
+
+  // Type terminal command
+  const el = page.querySelector('.term span:nth-child(2)');
+  if (el && cmds[id]) typeText(el, cmds[id]);
+
+  // Trigger scroll animations for newly visible page
+  setTimeout(() => {
+    observeElements(page);
+    animateBars();
+  }, 80);
+
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// ── TYPEWRITER ─────────────────────────────────────────────────────────
+function typeText(el, text, speed=16) {
+  el.textContent = '';
+  let i = 0;
+  // Add a small delay before starting
+  setTimeout(() => {
+    const t = setInterval(() => {
+      el.textContent += text[i++];
+      if (i >= text.length) clearInterval(t);
+    }, speed);
+  }, 150);
+}
+
+// ── SMOOTH ACCORDION ──────────────────────────────────────────────────
+function toggleAcc(head) {
+  const acc = head.parentElement;
+  const isOpen = acc.classList.contains('open');
+  // Close all siblings first
+  acc.closest('.ct').querySelectorAll('.acc.open').forEach(a => {
+    if (a !== acc) {
+      a.classList.remove('open');
+      a.querySelector('.acc-b').style.maxHeight = '0';
+    }
+  });
+  if (isOpen) {
+    acc.classList.remove('open');
+    acc.querySelector('.acc-b').style.maxHeight = '0';
+  } else {
+    acc.classList.add('open');
+    const body = acc.querySelector('.acc-b');
+    body.style.maxHeight = body.scrollHeight + 40 + 'px';
+    // Animate items inside when opened
+    body.querySelectorAll('.qr-item').forEach((item, i) => {
+      item.style.opacity = '0';
+      item.style.transform = 'translateX(-8px)';
+      setTimeout(() => {
+        item.style.transition = 'opacity .3s ease, transform .3s ease';
+        item.style.opacity = '1';
+        item.style.transform = 'none';
+      }, i * 60 + 50);
+    });
+  }
+}
+
+// ── INTERVIEW Q TOGGLE ───────────────────────────────────────────────
+function toggleIQ(header) {
+  const iq = header.closest('.iq');
+  const ans = iq.querySelector('.iq-a');
+  const tog = header.querySelector('.iq-tg');
+  const vis = ans.classList.toggle('vis');
+  tog.textContent = vis ? 'hide answer ▴' : 'show answer ▾';
+  // Animate answer in
+  if (vis) {
+    ans.style.opacity = '0';
+    ans.style.transform = 'translateY(-6px)';
+    requestAnimationFrame(() => {
+      ans.style.transition = 'opacity .3s ease, transform .3s ease';
+      ans.style.opacity = '1';
+      ans.style.transform = 'none';
+    });
+  }
+}
+
+// ── COPY CODE ─────────────────────────────────────────────────────────
+function cp(btn) {
+  const block = btn.closest('.cb');
+  const clone = block.cloneNode(true);
+  clone.querySelector('.cpb')?.remove();
+  navigator.clipboard.writeText(clone.innerText.trim()).then(() => {
+    btn.textContent = '✓ copied';
+    btn.style.color = 'var(--green)';
+    btn.style.borderColor = 'var(--green)';
+    setTimeout(() => {
+      btn.textContent = 'copy';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+    }, 2000);
+  });
+}
+
+// ── PROGRESS BARS with count-up ────────────────────────────────────────
+function animateBars() {
+  document.querySelectorAll('.pr-fi[data-w]').forEach(bar => {
+    const target = parseInt(bar.dataset.w);
+    bar.style.width = '0%';
+    let current = 0;
+    const pct = bar.closest('.pr-row')?.querySelector('.pr-pc');
+    setTimeout(() => {
+      const interval = setInterval(() => {
+        current = Math.min(current + 2, target);
+        bar.style.width = current + '%';
+        if (pct) pct.textContent = current + '%';
+        if (current >= target) clearInterval(interval);
+      }, 18);
+    }, 300);
+  });
+}
+
+// ── INTERSECTION OBSERVER for scroll reveals ──────────────────────────
+function observeElements(root) {
+  const targets = (root || document).querySelectorAll(
+    '.reveal, .reveal-left, .reveal-right, .reveal-scale, .stagger, .gc'
+  );
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        // Stagger delay based on position in parent
+        const siblings = el.parentElement?.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+        let delay = 0;
+        if (siblings) {
+          Array.from(siblings).forEach((s, i) => { if (s === el) delay = i * 60; });
+        }
+        setTimeout(() => el.classList.add('in'), delay);
+        observer.unobserve(el);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+  targets.forEach(t => observer.observe(t));
+}
+
+// ── SVG DIAGRAM — animated arrow drawing ──────────────────────────────
+function animateSVGArrows(svgEl) {
+  if (!svgEl) return;
+  svgEl.querySelectorAll('line, path[marker-end]').forEach((el, i) => {
+    if (el.tagName === 'line') {
+      const len = Math.sqrt(
+        Math.pow(el.x2.baseVal.value - el.x1.baseVal.value, 2) +
+        Math.pow(el.y2.baseVal.value - el.y1.baseVal.value, 2)
+      );
+      el.style.strokeDasharray = len;
+      el.style.strokeDashoffset = len;
+      el.style.transition = `stroke-dashoffset 0.4s ease ${i * 80}ms`;
+      setTimeout(() => el.style.strokeDashoffset = '0', 100);
+    }
+  });
+}
+
+// ── DIAGRAM HOVER — draw arrows on hover ─────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Init first page
+  const firstCmd = document.querySelector('#p1 .term span:nth-child(2)');
+  if (firstCmd) typeText(firstCmd, cmds.p1);
+
+  // Set up scroll observer for initial page
+  setTimeout(() => observeElements(document.getElementById('p1')), 200);
+  animateBars();
+
+  // Diagram hover → animate SVG lines
+  document.querySelectorAll('.diag').forEach(diag => {
+    let animated = false;
+    diag.addEventListener('mouseenter', () => {
+      if (animated) return;
+      animated = true;
+      animateSVGArrows(diag.querySelector('svg'));
+    });
+  });
+
+  // Mobile menu
+  document.querySelector('.mob-btn')?.addEventListener('click', () => {
+    document.getElementById('sb').classList.toggle('mob');
+  });
+
+  // Close mobile menu on nav click
+  document.querySelectorAll('.ni').forEach(ni => {
+    ni.addEventListener('click', () => {
+      document.getElementById('sb').classList.remove('mob');
+    });
+  });
+
+  // Add ripple effect to nav items
+  document.querySelectorAll('.ni').forEach(ni => {
+    ni.addEventListener('click', function(e) {
+      const ripple = document.createElement('span');
+      const rect = this.getBoundingClientRect();
+      ripple.style.cssText = `
+        position:absolute;border-radius:50%;
+        width:80px;height:80px;
+        left:${e.clientX - rect.left - 40}px;
+        top:${e.clientY - rect.top - 40}px;
+        background:rgba(88,166,255,.15);
+        transform:scale(0);animation:ripple .5s ease forwards;
+        pointer-events:none;
+      `;
+      this.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 500);
+    });
+  });
+
+  // Smooth progress bar re-trigger when gaps page is opened
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.ni[onclick*="p9"]')) {
+      setTimeout(animateBars, 300);
+    }
+  });
+});
+
+// Add ripple keyframe dynamically
+const style = document.createElement('style');
+style.textContent = '@keyframes ripple{to{transform:scale(1.5);opacity:0}}';
+document.head.appendChild(style);
+
+// ── SIDEBAR SCROLL HIGHLIGHT ──────────────────────────────────────────
+// Highlight nav item based on scroll position within page
+function updateNavOnScroll() {
+  // Simple: already handled by page switching
+}
+
+// ── KEYBOARD NAVIGATION ───────────────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  const pages = ['p1','p2','p3','p4','p5','p6','p7','p8','p9','p10'];
+  const active = document.querySelector('.pg.on');
+  const idx = pages.indexOf(active?.id);
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    if (idx < pages.length - 1) {
+      const btn = document.querySelector(`.ni[onclick*="${pages[idx+1]}"]`);
+      if (btn) btn.click();
+    }
+  }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    if (idx > 0) {
+      const btn = document.querySelector(`.ni[onclick*="${pages[idx-1]}"]`);
+      if (btn) btn.click();
+    }
+  }
+});
+</script>
+<!-- ═══════════════════════════════════════════
+     PAGE 10 — INCIDENT LAB (INTERACTIVE GAME)
+═══════════════════════════════════════════ -->
+<div class="pg" id="p10">
+<div class="hero">
+  <div class="hero-bc"><span>docker-mastery</span><span class="sep">/</span><span class="act">incident-lab</span></div>
+  <div class="term"><span class="pr">~/docker $</span><span id="hc10"></span><span class="cur"></span></div>
+  <h2>Incident Lab 🕹️</h2>
+  <p>Prod is on fire. Debug and fix each incident using the right Docker command. Score points. Build muscle memory.</p>
+</div>
+<div class="ct">
+
+<!-- SCOREBOARD -->
+<div id="lab-hud" style="display:flex;align-items:center;gap:16px;padding:12px 16px;background:var(--s2);border:1px solid var(--br);border-radius:var(--rl);margin-bottom:20px">
+  <div style="flex:1">
+    <div style="font-family:var(--mono);font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px">Incident</div>
+    <div id="lab-progress-bar" style="height:4px;background:var(--s3);border-radius:2px;overflow:hidden">
+      <div id="lab-progress-fill" style="height:100%;background:var(--blue);border-radius:2px;width:0%;transition:width .4s ease"></div>
+    </div>
+  </div>
+  <div style="text-align:center;min-width:60px">
+    <div style="font-family:var(--mono);font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em">Score</div>
+    <div id="lab-score" style="font-family:var(--mono);font-size:22px;font-weight:600;color:var(--green)">0</div>
+  </div>
+  <div style="text-align:center;min-width:60px">
+    <div style="font-family:var(--mono);font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em">Streak</div>
+    <div id="lab-streak" style="font-family:var(--mono);font-size:22px;font-weight:600;color:var(--amber)">0🔥</div>
+  </div>
+  <div style="text-align:center;min-width:80px">
+    <div style="font-family:var(--mono);font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em">Level</div>
+    <div id="lab-level" style="font-family:var(--mono);font-size:14px;font-weight:600;color:var(--purple)">Junior</div>
+  </div>
+  <button onclick="labReset()" style="background:none;border:1px solid var(--br);border-radius:var(--r);padding:6px 12px;font-family:var(--mono);font-size:11px;color:var(--t3);cursor:pointer;transition:.15s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--br)';this.style.color='var(--t3)'">restart</button>
+</div>
+
+<!-- INCIDENT TERMINAL -->
+<div id="lab-incident-box" style="background:var(--s2);border:1px solid var(--br);border-radius:var(--rl);overflow:hidden;margin-bottom:14px">
+
+  <!-- Incident header -->
+  <div id="lab-incident-header" style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--s3);border-bottom:1px solid var(--br)">
+    <span id="lab-badge" style="font-family:var(--mono);font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;background:var(--rd);color:var(--red)">🚨 INCIDENT</span>
+    <span id="lab-incident-num" style="font-family:var(--mono);font-size:11px;color:var(--t3)">1 / 10</span>
+    <span id="lab-difficulty" style="font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:20px;margin-left:auto"></span>
+  </div>
+
+  <!-- Pager / alert box -->
+  <div id="lab-alert" style="padding:16px 18px;border-bottom:1px solid var(--br)">
+    <div style="font-family:var(--mono);font-size:10px;color:var(--t3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">📟 PagerDuty Alert</div>
+    <div id="lab-alert-text" style="font-size:14px;color:var(--red);font-weight:500;line-height:1.6"></div>
+  </div>
+
+  <!-- System state / logs -->
+  <div id="lab-logs" style="padding:14px 18px;border-bottom:1px solid var(--br);font-family:var(--mono);font-size:11px;color:var(--t2);line-height:1.8;min-height:80px;background:var(--bg)">
+  </div>
+
+  <!-- Hint area -->
+  <div id="lab-hint-area" style="padding:10px 18px;border-bottom:1px solid var(--br);display:flex;align-items:center;gap:10px">
+    <button id="lab-hint-btn" onclick="labShowHint()" style="font-family:var(--mono);font-size:10px;padding:4px 12px;border:1px solid var(--br);border-radius:20px;background:none;color:var(--t3);cursor:pointer;transition:.15s" onmouseover="this.style.borderColor='var(--amber)';this.style.color='var(--amber)'" onmouseout="this.style.borderColor='var(--br)';this.style.color='var(--t3)'">💡 hint (-5 pts)</button>
+    <span id="lab-hint-text" style="font-size:12px;color:var(--amber);display:none"></span>
+  </div>
+
+  <!-- Command input -->
+  <div style="padding:14px 18px;display:flex;align-items:center;gap:10px">
+    <span style="font-family:var(--mono);font-size:13px;color:var(--green);flex-shrink:0">prod $</span>
+    <input id="lab-input" type="text" spellcheck="false" autocomplete="off"
+      placeholder="type your fix command..."
+      style="flex:1;background:none;border:none;outline:none;font-family:var(--mono);font-size:13px;color:var(--t1);caret-color:var(--blue)"
+      onkeydown="if(event.key==='Enter')labSubmit();if(event.key==='Tab'){event.preventDefault();labAutocomplete()}"
+    />
+    <button onclick="labSubmit()" style="background:var(--blue);border:none;border-radius:var(--r);padding:6px 16px;font-family:var(--mono);font-size:12px;color:#fff;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#7bbcff'" onmouseout="this.style.background='var(--blue)'">run ↵</button>
+  </div>
+</div>
+
+<!-- FEEDBACK / RESULT PANEL -->
+<div id="lab-result" style="display:none;border-radius:var(--rl);padding:16px 18px;margin-bottom:14px;border:1px solid">
+  <div id="lab-result-icon" style="font-size:24px;margin-bottom:8px"></div>
+  <div id="lab-result-title" style="font-size:15px;font-weight:600;color:var(--t1);margin-bottom:6px"></div>
+  <div id="lab-result-explain" style="font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:12px"></div>
+  <div id="lab-result-learn" style="font-family:var(--mono);font-size:11px;padding:10px 12px;background:var(--bg);border-radius:var(--r);color:var(--t2);line-height:1.8"></div>
+  <div style="margin-top:12px;display:flex;gap:10px">
+    <button id="lab-next-btn" onclick="labNext()" style="background:var(--green);border:none;border-radius:var(--r);padding:8px 20px;font-family:var(--mono);font-size:12px;font-weight:500;color:var(--bg);cursor:pointer;transition:all .15s" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='none'">next incident →</button>
+    <button onclick="labRetry()" style="background:none;border:1px solid var(--br);border-radius:var(--r);padding:8px 20px;font-family:var(--mono);font-size:12px;color:var(--t3);cursor:pointer">retry</button>
+  </div>
+</div>
+
+<!-- COMPLETION SCREEN -->
+<div id="lab-complete" style="display:none;text-align:center;padding:40px 20px;background:var(--s2);border:1px solid var(--br);border-radius:var(--rl)">
+  <div style="font-size:48px;margin-bottom:16px">🎯</div>
+  <div style="font-size:22px;font-weight:600;color:var(--t1);margin-bottom:8px">All Incidents Resolved!</div>
+  <div id="lab-final-score-text" style="font-size:14px;color:var(--t2);margin-bottom:24px"></div>
+  <div id="lab-rank-badge" style="display:inline-block;font-family:var(--mono);font-size:14px;padding:8px 20px;border-radius:20px;margin-bottom:24px"></div>
+  <div id="lab-missed" style="text-align:left;max-width:500px;margin:0 auto 24px"></div>
+  <button onclick="labReset()" style="background:var(--blue);border:none;border-radius:var(--r);padding:10px 24px;font-family:var(--mono);font-size:13px;color:#fff;cursor:pointer">play again</button>
+</div>
+
+</div><!-- end ct -->
+</div><!-- end pg p10 -->
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  INCIDENT LAB — GAME ENGINE
+// ══════════════════════════════════════════════════════════════
+
+const INCIDENTS = [
+  {
+    id: 1,
+    difficulty: 'easy',
+    alert: 'Container "api" exited with code 137. Restarts every 60s. Customers cannot checkout.',
+    logs: `$ docker ps
+CONTAINER ID   IMAGE       STATUS
+a1b2c3d4       api:v2      Exited (137) 2 minutes ago
+
+$ docker events --since 10m | grep die
+container die a1b2c3d4 (exitCode=137, image=api:v2)`,
+    question: 'Confirm whether this container was OOMKilled',
+    hint: 'docker inspect with --format flag can extract specific fields from JSON',
+    answer: ['docker inspect a1b2c3d4 --format \'{{.State.OOMKilled}}\'',
+             'docker inspect a1b2c3d4 --format "{{.State.OOMKilled}}"',
+             'docker inspect a1b2c3d4 --format={{.State.OOMKilled}}'],
+    keywords: ['docker inspect', 'OOMKilled'],
+    successLog: `$ docker inspect a1b2c3d4 --format '{{.State.OOMKilled}}'
+true
+
+✓ Confirmed: OOMKilled=true. Exit code 137 = 128 + SIGKILL(9).
+  The kernel's OOM killer fired because the container hit its memory limit.`,
+    explain: 'Exit code 137 = 128 + signal 9 (SIGKILL). OOMKilled:true means the kernel\'s Out-of-Memory killer fired because the container exceeded its --memory limit.',
+    learn: `Next step: docker stats → see memory usage\nThen: raise --memory limit OR find the leak with heap profiling\ndocker inspect a1b2c3d4 | grep -i memory → see current limits`,
+    points: 10,
+  },
+  {
+    id: 2,
+    difficulty: 'easy',
+    alert: 'Service "zomato-api" is running but p99 latency = 800ms. CPU shows only 28% average on dashboard.',
+    logs: `$ docker stats zomato-api --no-stream
+CONTAINER   CPU %   MEM USAGE   NET I/O
+zomato-api  28.4%   180M/512M   2.1GB/890MB
+
+$ kubectl top pod zomato-api-7d8f9
+NAME               CPU(cores)  MEMORY
+zomato-api-7d8f9   142m/200m   180Mi/512Mi`,
+    question: 'Check if the container is being CPU throttled (not killed, just slowed)',
+    hint: 'The answer is in the cgroup cpu stats file inside the container',
+    answer: ['cat /sys/fs/cgroup/cpu/cpu.stat',
+             'cat /sys/fs/cgroup/cpu.stat',
+             'docker exec zomato-api cat /sys/fs/cgroup/cpu/cpu.stat'],
+    keywords: ['cpu.stat', 'throttled'],
+    successLog: `$ cat /sys/fs/cgroup/cpu/cpu.stat
+nr_periods 3847
+nr_throttled 1923
+throttled_time 4827000000
+
+✓ throttled_time = 4.8 seconds! Nearly 50% of periods throttled.
+  This explains the p99 latency spike — the app is being PAUSED by the kernel.`,
+    explain: 'CPU dashboards show time-averaged utilisation. Throttling happens in millisecond bursts that average out to look normal. throttled_time in cpu.stat is the ground truth.',
+    learn: `Fix: raise resources.limits.cpu in K8s, OR use cpu-shares (soft limit)\nRule: if throttled_time grows → CPU limit too low\nBurst traffic hits quota → kernel pauses app → p99 spike`,
+    points: 15,
+  },
+  {
+    id: 3,
+    difficulty: 'easy',
+    alert: '"kafka" container can\'t be reached from "zomato" container. connect("kafka:9092") → hostname not found.',
+    logs: `$ docker ps
+CONTAINER   IMAGE   NAMES    NETWORK
+a1b2c3d4    kafka   kafka    bridge (default)
+e5f6g7h8    api     zomato   bridge (default)
+
+$ docker exec zomato ping kafka
+ping: kafka: Name or service not known`,
+    question: 'Fix the network so zomato can reach kafka by hostname',
+    hint: 'The default bridge has no DNS. Create a user-defined network.',
+    answer: ['docker network create mynet',
+             'docker network create backend',
+             'docker network create app-network',
+             'docker network create prod-net'],
+    keywords: ['docker network create'],
+    successLog: `$ docker network create mynet
+8f3a2b1c4d5e...
+
+✓ User-defined network created!
+  Now reconnect containers:
+  docker network connect mynet kafka
+  docker network connect mynet zomato
+  → connect("kafka:9092") will now resolve via Docker's embedded DNS at 127.0.0.11`,
+    explain: 'The default bridge network has NO DNS. Container names don\'t resolve. User-defined networks get Docker\'s embedded DNS server at 127.0.0.11 automatically.',
+    learn: `Default bridge: containers use IPs only (change on restart)\nUser-defined: container name = hostname, DNS built-in\nDocker Compose creates a user-defined network automatically\n→ that's why service names just work in docker-compose.yml`,
+    points: 10,
+  },
+  {
+    id: 4,
+    difficulty: 'medium',
+    alert: 'New deploy of "payments-api" is live but causing 502 errors for ~15 seconds every time. Then it stabilises.',
+    logs: `$ kubectl rollout history deployment/payments-api
+REVISION  CHANGE-CAUSE
+3         v2.1.0 → v2.2.0 (deployed 10min ago)
+
+$ kubectl get events --sort-by=.lastTimestamp | tail -5
+Warning  Unhealthy  pod/payments-api  Readiness probe failed: HTTP probe
+Normal   Killing    pod/payments-api  Stopping container (old pod draining)
+Warning  Failed     pod/payments-api  502 Bad Gateway during transition
+
+# Dockerfile snippet:
+ENTRYPOINT "./payments-server"`,
+    question: 'There are TWO bugs here. Fix the Dockerfile ENTRYPOINT first.',
+    hint: 'Shell form ENTRYPOINT means SIGTERM never reaches your server — use exec form (array syntax)',
+    answer: ['ENTRYPOINT ["./payments-server"]',
+             'entrypoint ["./payments-server"]',
+             'ENTRYPOINT [\'./payments-server\']'],
+    keywords: ['ENTRYPOINT', '"./'],
+    successLog: `ENTRYPOINT ["./payments-server"]
+
+✓ Exec form fixed! Now ./payments-server IS PID1.
+  It will receive SIGTERM directly when the old pod is stopped.
+  The server can now drain in-flight requests before exiting.
+
+Bug #2 still present: readiness probe not configured.
+Traffic hits new pod before it's ready. Fix: add readinessProbe.`,
+    explain: 'Shell form ENTRYPOINT "./server" launches /bin/sh -c "./server". Shell is PID1. SIGTERM hits the shell → shell ignores it → server never gets it → SIGKILL after 10s → requests dropped.',
+    learn: `Shell form:  ENTRYPOINT "./server"    → sh is PID1, signals NOT forwarded\nExec form:  ENTRYPOINT ["./server"]  → your app IS PID1, gets SIGTERM\n\nAlso need: readinessProbe to prevent traffic before app is ready\nAnd: preStop hook + sleep 5 to let LB drain connections`,
+    points: 20,
+  },
+  {
+    id: 5,
+    difficulty: 'medium',
+    alert: 'Go service image is 1.1GB. CI takes 12 minutes. Other teams\' images are <20MB. What\'s wrong?',
+    logs: `$ docker images | grep payments
+REPOSITORY      TAG     SIZE
+payments-api    v2.2    1.12GB
+
+$ cat Dockerfile
+FROM golang:1.22
+WORKDIR /app
+COPY . .
+RUN go build -o server .
+ENTRYPOINT ["./server"]
+
+$ docker history payments-api:v2.2
+IMAGE       CREATED BY                          SIZE
+a1b2c3d4    ENTRYPOINT ["./server"]             0B
+b2c3d4e5    RUN go build -o server .            8.3MB
+c3d4e5f6    COPY . .                            42MB
+d4e5f6g7    FROM golang:1.22                    1.06GB`,
+    question: 'Fix the Dockerfile using a multi-stage build to get the image under 20MB',
+    hint: 'Use two FROM statements. Compile in golang:alpine AS builder, then copy only the binary to distroless/static',
+    answer: ['FROM golang:1.22-alpine AS builder',
+             'FROM golang:1.21-alpine AS builder',
+             'FROM golang:alpine AS builder',
+             'FROM golang:1.22 AS builder\nWORKDIR /app\nCOPY go.mod go.sum ./\nRUN go mod download',
+             'AS builder'],
+    keywords: ['AS builder', 'FROM', 'alpine'],
+    successLog: `FROM golang:1.22-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 go build -o /bin/server .
+
+FROM gcr.io/distroless/static-debian12
+COPY --from=builder /bin/server /server
+USER 65534
+ENTRYPOINT ["/server"]
+
+✓ Multi-stage build! 
+  Stage 1 (builder): 350MB → DISCARDED
+  Stage 2 (prod):    ~10MB ✓
+  Build time: 12min → 2min (cache on deps layer)`,
+    explain: 'golang:1.22 includes the full Go toolchain (~1GB). You only need the compiled binary in production. Multi-stage builds let you compile in a fat stage and ship only the output.',
+    learn: `Key insight: CGO_ENABLED=0 = statically linked binary (no libc needed)\nDistroless/static = 2MB, no shell, no apt, attacker gets nothing\nPin go.mod COPY before COPY . . → cache npm install on dep changes only\nResult: 1.1GB → ~10MB, 12min → ~2min builds`,
+    points: 25,
+  },
+  {
+    id: 6,
+    difficulty: 'medium',
+    alert: 'postgres container data disappears every time we restart it. Database keeps resetting to empty.',
+    logs: `$ docker ps -a
+CONTAINER   IMAGE      STATUS                      NAMES
+a1b2c3d4    postgres   Exited (0) 10 minutes ago   prod-db
+
+$ docker inspect prod-db | grep -A5 Mounts
+"Mounts": [],
+
+$ # The container was started with:
+docker run --name prod-db postgres:16`,
+    question: 'Re-run postgres with persistent storage so data survives restarts',
+    hint: 'Use -v with a named volume to mount the postgres data directory',
+    answer: ['docker run --name prod-db -v pgdata:/var/lib/postgresql/data postgres:16',
+             'docker run -v pgdata:/var/lib/postgresql/data --name prod-db postgres:16',
+             'docker run --name prod-db -v pgdata:/var/lib/postgresql/data -d postgres:16',
+             'docker run -d --name prod-db -v pgdata:/var/lib/postgresql/data postgres:16',
+             'docker volume create pgdata',
+             'docker run --name prod-db --mount source=pgdata,target=/var/lib/postgresql/data postgres:16'],
+    keywords: ['pgdata', '/var/lib/postgresql/data', 'volume'],
+    successLog: `$ docker run -d --name prod-db -v pgdata:/var/lib/postgresql/data postgres:16
+9f8e7d6c5b4a...
+
+$ docker inspect prod-db | grep -A8 Mounts
+"Mounts": [{
+  "Type": "volume",
+  "Name": "pgdata",
+  "Source": "/var/lib/docker/volumes/pgdata/_data",
+  "Destination": "/var/lib/postgresql/data"
+}]
+
+✓ Data now lives in named volume pgdata on the host disk.
+  Container restarts, upgrades, or removals → data persists.`,
+    explain: 'Writes inside a container go into the writable container layer — destroyed on docker rm. A named volume mounts storage from outside the container layer onto the host disk.',
+    learn: `Named volume:  docker run -v pgdata:/var/lib/postgresql/data\nDocker manages path: /var/lib/docker/volumes/pgdata/_data\nSurvives: docker stop, docker start, docker rm (volume not deleted)\nDelete: docker volume rm pgdata (explicit, intentional)\nBonus: volumes bypass OverlayFS → better I/O than writing inside container`,
+    points: 15,
+  },
+  {
+    id: 7,
+    difficulty: 'hard',
+    alert: 'Security audit finds container running as root with full capabilities. Must harden before prod deploy.',
+    logs: `$ docker inspect ride-api | grep -A3 User
+"User": "",
+
+$ docker inspect ride-api | grep -A5 CapAdd
+"CapAdd": null,
+"CapDrop": null,
+
+$ ps aux inside container:
+USER  PID  COMMAND
+root    1  ./ride-server   ← running as root!
+
+# Current Dockerfile:
+FROM ubuntu:22.04
+COPY ride-server /app/
+ENTRYPOINT ["/app/ride-server"]`,
+    question: 'Run the container with dropped capabilities and as non-root user',
+    hint: 'Use --cap-drop=ALL and --user flags. The server only needs NET_BIND_SERVICE if binding port 80.',
+    answer: ['docker run --cap-drop=ALL --user 1000:1000 ride-api',
+             'docker run --cap-drop ALL --user 1000:1000 ride-api',
+             'docker run --cap-drop=ALL --user 1000 ride-api',
+             'docker run --cap-drop=ALL --user nobody ride-api',
+             'docker run --cap-drop=ALL --security-opt no-new-privileges --user 1000:1000 ride-api',
+             'docker run --cap-drop=ALL --read-only --user 1000:1000 ride-api'],
+    keywords: ['cap-drop', 'user'],
+    successLog: `$ docker run --cap-drop=ALL --security-opt no-new-privileges \\
+               --read-only --user 1000:1000 ride-api
+
+✓ Hardened! Now:
+  - All ~40 Linux capabilities dropped
+  - Process runs as UID 1000 (not root)
+  - --security-opt no-new-privileges: cannot sudo/setuid to escalate
+  - --read-only: filesystem immutable
+
+If root had escaped: they'd be UID 1000 (nobody) on the host.
+Remaining risk: shared kernel. A kernel exploit still wins.`,
+    explain: 'Linux root is split into ~40 fine-grained capabilities. Dropping all means even if an attacker gets RCE inside the container, they have no capabilities to pivot — no CAP_NET_ADMIN, no CAP_SYS_PTRACE, no CAP_SYS_ADMIN.',
+    learn: `--cap-drop=ALL          # remove every capability\n--cap-add=NET_BIND_SERVICE  # only if binding port 80/443\n--user 1000:1000        # non-root UID:GID\n--security-opt no-new-privileges  # no setuid escalation\n--read-only             # immutable filesystem\n--tmpfs /tmp            # writable scratch space in RAM\n\nStill can't protect against: kernel 0-days (shared kernel = shared risk)`,
+    points: 25,
+  },
+  {
+    id: 8,
+    difficulty: 'hard',
+    alert: 'CI build time went from 2min to 14min after a Dockerfile change. Nothing in the app code changed.',
+    logs: `# Old Dockerfile (2 min):
+FROM node:20-alpine
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+CMD ["node", "server.js"]
+
+# New Dockerfile (14 min):
+FROM node:20-alpine
+WORKDIR /app
+COPY . .
+RUN npm ci
+CMD ["node", "server.js"]`,
+    question: 'Identify and fix the layer cache problem (write the corrected Dockerfile line order)',
+    hint: 'npm ci should come AFTER copying package.json but BEFORE copying all source code',
+    answer: ['COPY package.json package-lock.json ./',
+             'COPY package*.json ./',
+             'COPY package.json ./',
+             'COPY package.json package-lock.json ./\nRUN npm ci\nCOPY . .',
+             'copy package.json'],
+    keywords: ['COPY package', 'package.json'],
+    successLog: `✓ Correct! The fix:
+
+COPY package.json package-lock.json ./   ← stable layer (rarely changes)
+RUN npm ci                                ← cached if above doesn't change
+COPY . .                                  ← code changes go here
+
+In new Dockerfile: COPY . . invalidates cache on EVERY commit
+→ npm ci always reruns (2+ min) even if dependencies didn't change
+
+With fix: only reruns when package.json changes (~1% of commits)
+Build time: 14min → 2min for code-only changes ✓`,
+    explain: 'Once a layer changes, ALL layers below it must rebuild. COPY . . copies source code which changes every commit — putting npm ci after it means npm install reruns on every single build.',
+    learn: `Rule: put stable layers first, changing layers last\nOrder: FROM → system deps → package files → install deps → source code\n\nCache hit = zero time. Cache miss = full re-execution.\nFor npm: COPY package*.json → RUN npm ci → COPY . .\nFor pip: COPY requirements.txt → RUN pip install → COPY . .\nFor Go:  COPY go.mod go.sum → RUN go mod download → COPY . .`,
+    points: 20,
+  },
+  {
+    id: 9,
+    difficulty: 'hard',
+    alert: 'Production incident: containers on two different EC2 hosts can\'t communicate. Same docker network, different machines.',
+    logs: `# Host A (10.0.1.10):
+$ docker run --network mynet --name api api:v1
+
+# Host B (10.0.1.11):  
+$ docker run --network mynet --name db postgres:16
+
+$ docker exec api ping db
+ping: db: Name or service not known
+
+$ docker network inspect mynet
+{
+  "Driver": "bridge",    ← THE CLUE
+  "Scope": "local"       ← only works on ONE host
+}`,
+    question: 'Fix the network so containers on different hosts can communicate',
+    hint: 'Bridge networks are local to one host. Multi-host needs overlay driver with VXLAN tunnelling.',
+    answer: ['docker network create --driver overlay mynet',
+             'docker network create -d overlay mynet',
+             'docker network create --driver=overlay mynet',
+             'docker swarm init',
+             'docker network create --driver overlay --attachable mynet'],
+    keywords: ['overlay', 'driver'],
+    successLog: `$ docker network create --driver overlay --attachable mynet
+xk3m2n1p0q...
+
+✓ Overlay network created!
+  - Driver: overlay (vs bridge which is local-only)
+  - Scope: swarm (spans multiple hosts)
+  - Uses VXLAN (UDP 4789) to tunnel container packets across hosts
+  - ~10-15% overhead vs direct routing
+
+Now containers on Host A and Host B can find each other by name.`,
+    explain: 'Bridge networks exist only on a single host. Overlay networks use VXLAN encapsulation to tunnel container traffic across physical host boundaries — the container packets are wrapped in UDP and sent to the destination host, then unwrapped.',
+    learn: `Bridge: local only, veth pairs → docker0 → NAT → host NIC\nOverlay: VXLAN tunnel, UDP port 4789, ~10-15% overhead\nK8s uses CNI plugins (Flannel/Calico) for the same purpose\n\nAt Uber: custom CNI plugin handles multi-host networking\nFor standalone Docker: Docker Swarm enables overlay networks`,
+    points: 30,
+  },
+  {
+    id: 10,
+    difficulty: 'ultra',
+    alert: 'Staff interview. Design review question: "We have 4,500 services. A critical CVE is found in our base image ubuntu:22.04. How do you patch all 4,500 services in 24 hours without breaking anything?"',
+    logs: `# Context:
+- 4,500 microservices, all FROM ubuntu:22.04
+- 100,000+ deploys per week
+- Each service has its own Dockerfile
+- You are the infrastructure lead
+- Interviewer is watching how you think
+
+# Constraints:
+- Cannot touch 4,500 individual Dockerfiles
+- Must have rollback plan
+- Must not break prod
+- Must be auditable
+
+# Hint in the logs:
+$ docker images | grep ubuntu
+ubuntu   22.04   sha256:abc123...  (vulnerable)
+ubuntu   22.04   sha256:def456...  (patched, new pull)`,
+    question: 'What\'s your strategy? Describe the key architectural decision that makes this possible.',
+    hint: 'The answer involves centrally managed base images that all services inherit from — one change propagates everywhere',
+    answer: ['internal base image',
+             'base image registry',
+             'curated base image',
+             'rebuild base image',
+             'patch base image',
+             'internal base',
+             'base image',
+             'FROM internal',
+             'docker pull ubuntu',
+             'rebuild all',
+             'CI rebuild'],
+    keywords: ['base image', 'base', 'rebuild', 'internal', 'registry'],
+    successLog: `✓ Correct thinking! The strategy:
+
+1. ARCHITECTURE: All 4,500 services inherit from an INTERNAL base image
+   (not directly from ubuntu:22.04 on Docker Hub)
+   
+   Dockerfile pattern: FROM internal-registry/ubuntu-base:22.04
+   
+2. PATCH: Update internal base image with the CVE fix, push new SHA
+
+3. TRIGGER: CI/CD pipeline detects base image change → triggers rebuild
+   of all downstream services automatically
+   
+4. PROMOTE: Same image SHA: dev → staging → prod (no manual work per service)
+
+5. ROLLBACK: Repoint to previous base image SHA. 30 seconds.
+
+Result: 1 change → 4,500 services patched, auditable, rollback ready.`,
+    explain: 'This is a classic "internal base image" pattern. If all services FROM a company-controlled image, patching that one image + triggering CI rebuilds patches everything. This is exactly what Uber, Google, and Netflix do.',
+    learn: `Key design: FROM internal-registry/base:22.04 (not DockerHub directly)\nBase image team: patches weekly, or on CVE alert\nCI: watches base image digest; auto-triggers rebuild when it changes\nSecurity: Trivy scan on every build, block on CRITICAL CVEs\nAudit: every service SHA is tracked → who shipped what when\n\nAt Uber: Kraken P2P registry + internal base images + Kaniko CI builds`,
+    points: 40,
+  }
+];
+
+// ── GAME STATE ──────────────────────────────────────────────
+let labState = {
+  current: 0,
+  score: 0,
+  streak: 0,
+  maxStreak: 0,
+  hintUsed: false,
+  hintCount: 0,
+  attempts: [],
+  missed: [],
+  wrong: 0
+};
+
+function labInit() {
+  labState = { current: 0, score: 0, streak: 0, maxStreak: 0,
+               hintUsed: false, hintCount: 0, attempts: [], missed: [], wrong: 0 };
+  document.getElementById('lab-result').style.display = 'none';
+  document.getElementById('lab-complete').style.display = 'none';
+  document.getElementById('lab-incident-box').style.display = 'block';
+  labRender();
+}
+
+function labRender() {
+  const inc = INCIDENTS[labState.current];
+  if (!inc) { labComplete(); return; }
+
+  // Reset UI
+  labState.hintUsed = false;
+  document.getElementById('lab-hint-text').style.display = 'none';
+  document.getElementById('lab-hint-text').textContent = '';
+  document.getElementById('lab-result').style.display = 'none';
+  document.getElementById('lab-input').value = '';
+  document.getElementById('lab-input').disabled = false;
+  document.getElementById('lab-input').focus();
+
+  // Header
+  document.getElementById('lab-incident-num').textContent = `${labState.current + 1} / ${INCIDENTS.length}`;
+  const diff = inc.difficulty;
+  const diffEl = document.getElementById('lab-difficulty');
+  const diffMap = {
+    easy: ['#1A3A1F', '#3FB950', '⬡ Easy'],
+    medium: ['#3A2E10', '#E3B341', '⬡⬡ Medium'],
+    hard: ['#2A1A4A', '#BC8CFF', '⬡⬡⬡ Hard'],
+    ultra: ['#3A1A1A', '#F78166', '⬡⬡⬡⬡ Ultra']
+  };
+  diffEl.style.background = diffMap[diff][0];
+  diffEl.style.color = diffMap[diff][1];
+  diffEl.textContent = diffMap[diff][2];
+
+  // Alert
+  document.getElementById('lab-alert-text').textContent = inc.alert;
+
+  // Logs — typewriter effect
+  const logsEl = document.getElementById('lab-logs');
+  logsEl.textContent = '';
+  let logIdx = 0;
+  const logLines = inc.logs.split('\n');
+  const printLog = () => {
+    if (logIdx < logLines.length) {
+      logsEl.textContent += logLines[logIdx] + '\n';
+      logIdx++;
+      logsEl.scrollTop = logsEl.scrollHeight;
+      setTimeout(printLog, logIdx < 3 ? 80 : 20);
+    }
+  };
+  setTimeout(printLog, 200);
+
+  // HUD
+  updateHUD();
+
+  // Progress bar
+  const pct = (labState.current / INCIDENTS.length) * 100;
+  document.getElementById('lab-progress-fill').style.width = pct + '%';
+
+  // Animate incident box in
+  const box = document.getElementById('lab-incident-box');
+  box.style.opacity = '0';
+  box.style.transform = 'translateY(12px)';
+  requestAnimationFrame(() => {
+    box.style.transition = 'opacity .3s ease, transform .3s ease';
+    box.style.opacity = '1';
+    box.style.transform = 'none';
+  });
+}
+
+function updateHUD() {
+  document.getElementById('lab-score').textContent = labState.score;
+  document.getElementById('lab-streak').textContent = labState.streak + (labState.streak >= 3 ? '🔥' : '');
+  const levels = [[0,'Junior'],[50,'Mid-Level'],[120,'Senior'],[220,'Staff'],[350,'Principal']];
+  let lvl = 'Junior';
+  for (const [s, l] of levels) { if (labState.score >= s) lvl = l; }
+  document.getElementById('lab-level').textContent = lvl;
+  // Score bounce animation
+  const sc = document.getElementById('lab-score');
+  sc.style.transform = 'scale(1.3)';
+  sc.style.color = '#7bffa5';
+  setTimeout(() => { sc.style.transform = 'scale(1)'; sc.style.color = 'var(--green)'; }, 200);
+}
+
+function labShowHint() {
+  if (labState.hintUsed) return;
+  labState.hintUsed = true;
+  labState.hintCount++;
+  const hint = document.getElementById('lab-hint-text');
+  hint.textContent = '💡 ' + INCIDENTS[labState.current].hint;
+  hint.style.display = 'inline';
+  hint.style.opacity = '0';
+  setTimeout(() => { hint.style.transition = 'opacity .3s'; hint.style.opacity = '1'; }, 10);
+}
+
+function labSubmit() {
+  const input = document.getElementById('lab-input').value.trim();
+  if (!input) { shake(document.getElementById('lab-input')); return; }
+  const inc = INCIDENTS[labState.current];
+  const correct = checkAnswer(input, inc);
+  showResult(correct, input, inc);
+}
+
+function checkAnswer(input, inc) {
+  const lower = input.toLowerCase().trim();
+  // Check exact matches first
+  for (const ans of inc.answer) {
+    if (lower === ans.toLowerCase().trim()) return true;
+    if (lower.includes(ans.toLowerCase().trim())) return true;
+  }
+  // Check keyword matching (must have ALL keywords)
+  const matchedKeywords = inc.keywords.filter(kw => lower.includes(kw.toLowerCase()));
+  return matchedKeywords.length === inc.keywords.length;
+}
+
+function showResult(correct, input, inc) {
+  const hintPenalty = labState.hintUsed ? 5 : 0;
+  const points = correct ? Math.max(inc.points - hintPenalty - (labState.wrong * 5), 5) : 0;
+
+  document.getElementById('lab-input').disabled = true;
+  const resultEl = document.getElementById('lab-result');
+  resultEl.style.display = 'block';
+
+  if (correct) {
+    labState.score += points;
+    labState.streak++;
+    labState.maxStreak = Math.max(labState.streak, labState.maxStreak);
+    labState.wrong = 0;
+
+    resultEl.style.background = 'var(--gd)';
+    resultEl.style.borderColor = 'var(--green)';
+    document.getElementById('lab-result-icon').textContent = labState.streak >= 3 ? '🔥 ' + labState.streak + ' streak!' : '✅';
+    document.getElementById('lab-result-title').textContent = `Fixed! +${points} pts${hintPenalty ? ' (hint used: -5)' : ''}`;
+    document.getElementById('lab-logs').textContent += '\n' + inc.successLog;
+
+  } else {
+    labState.streak = 0;
+    labState.wrong++;
+
+    resultEl.style.background = 'var(--rd)';
+    resultEl.style.borderColor = 'var(--red)';
+    document.getElementById('lab-result-icon').textContent = '❌';
+    document.getElementById('lab-result-title').textContent = `Not quite. Try: ${inc.answer[0]}`;
+    if (!labState.missed.includes(inc.id)) labState.missed.push(inc.id);
+  }
+
+  document.getElementById('lab-result-explain').textContent = inc.explain;
+  document.getElementById('lab-result-learn').textContent = inc.learn;
+
+  // Animate result in
+  resultEl.style.opacity = '0';
+  resultEl.style.transform = 'translateY(10px)';
+  requestAnimationFrame(() => {
+    resultEl.style.transition = 'opacity .3s ease, transform .3s ease';
+    resultEl.style.opacity = '1';
+    resultEl.style.transform = 'none';
+  });
+
+  updateHUD();
+  resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function labNext() {
+  labState.current++;
+  labState.wrong = 0;
+  if (labState.current >= INCIDENTS.length) {
+    labComplete();
+  } else {
+    labRender();
+    window.scrollTo({ top: document.getElementById('lab-hud').offsetTop - 20, behavior: 'smooth' });
+  }
+}
+
+function labRetry() {
+  document.getElementById('lab-result').style.display = 'none';
+  document.getElementById('lab-input').value = '';
+  document.getElementById('lab-input').disabled = false;
+  document.getElementById('lab-input').focus();
+  labState.wrong++;
+}
+
+function labComplete() {
+  document.getElementById('lab-incident-box').style.display = 'none';
+  document.getElementById('lab-result').style.display = 'none';
+  const complete = document.getElementById('lab-complete');
+  complete.style.display = 'block';
+  complete.style.opacity = '0';
+  complete.style.transform = 'scale(.96)';
+  setTimeout(() => {
+    complete.style.transition = 'opacity .4s ease, transform .4s ease';
+    complete.style.opacity = '1';
+    complete.style.transform = 'none';
+  }, 50);
+
+  const maxScore = INCIDENTS.reduce((s, i) => s + i.points, 0);
+  const pct = Math.round((labState.score / maxScore) * 100);
+  document.getElementById('lab-final-score-text').textContent =
+    `You scored ${labState.score} / ${maxScore} points (${pct}%) · Best streak: ${labState.maxStreak}🔥`;
+
+  const ranks = [[90,'🏆 Principal Engineer','#3A2E10','#E3B341'],
+                 [75,'🥇 Staff Engineer','#2A1A4A','#BC8CFF'],
+                 [55,'🥈 Senior SDE','#1A3A1F','#3FB950'],
+                 [0,'🥉 Mid-Level — keep practising','#1F3A5F','#58A6FF']];
+  const [, label, bg, color] = ranks.find(([t]) => pct >= t);
+  const rb = document.getElementById('lab-rank-badge');
+  rb.style.background = bg; rb.style.color = color; rb.textContent = label;
+
+  if (labState.missed.length > 0) {
+    const missedIncs = INCIDENTS.filter(i => labState.missed.includes(i.id));
+    document.getElementById('lab-missed').innerHTML = '<div style="font-family:var(--mono);font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Review these concepts:</div>' +
+      missedIncs.map(i => `<div style="padding:8px 12px;background:var(--s2);border:1px solid var(--br);border-radius:8px;margin-bottom:6px;font-size:12px;color:var(--t2)">${i.learn.split('\n')[0]}</div>`).join('');
+  }
+
+  document.getElementById('lab-progress-fill').style.width = '100%';
+}
+
+function labReset() { labInit(); }
+
+function labAutocomplete() {
+  const inc = INCIDENTS[labState.current];
+  const input = document.getElementById('lab-input');
+  const val = input.value.toLowerCase();
+  const match = inc.answer.find(a => a.toLowerCase().startsWith(val));
+  if (match) { input.value = match; }
+}
+
+function shake(el) {
+  el.style.animation = 'shake .3s ease';
+  setTimeout(() => el.style.animation = '', 300);
+}
+
+// Add shake keyframe
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = '@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}';
+document.head.appendChild(shakeStyle);
+
+// Auto-init when page is navigated to
+document.querySelector('.ni[onclick*="p10"]').addEventListener('click', () => {
+  setTimeout(() => { if (!document.getElementById('lab-complete').style.display || document.getElementById('lab-complete').style.display === 'none') labInit(); }, 100);
+});
+</script>
+
+</main>
+</body>
+</html>

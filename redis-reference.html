@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redis Reference | FoodFlash</title>
+<style>
+:root{
+  --bg:#090b10;--surf:#0e1118;--card:#141820;--card2:#1a1f2e;
+  --b:#1f2535;--b2:#2a3048;--text:#dde2f0;--muted:#6b7799;--dim:#3a4260;
+  --acc:#4f7fff;--green:#2ec97a;--amber:#f0a015;--red:#e85555;
+  --teal:#1fbfa8;--purple:#8b6ef5;--pink:#d95fa8;
+  --mono:'JetBrains Mono','Fira Code',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.8;display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+#sb{width:260px;min-width:260px;background:var(--surf);border-right:1px solid var(--b);position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;}
+.sb-logo{padding:22px 18px 4px;font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--acc);}
+.sb-title{padding:4px 18px 4px;font-size:17px;font-weight:900;color:var(--text);}
+.sb-sub{padding:2px 18px 16px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--b);}
+.ng{padding:14px 14px 4px;font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:12.5px;color:var(--muted);cursor:pointer;border-radius:6px;margin:1px 6px;transition:all .13s;border:none;background:none;width:calc(100% - 12px);text-align:left;}
+.ni:hover{background:var(--card);color:var(--text);}
+.ni.active{background:rgba(79,127,255,.13);color:var(--acc);font-weight:700;}
+.ni .nd{width:5px;height:5px;border-radius:50%;background:var(--dim);flex-shrink:0;transition:background .13s;}
+.ni.active .nd{background:var(--acc);}
+.sb-foot{margin-top:auto;padding:14px 18px;border-top:1px solid var(--b);font-size:10px;color:var(--dim);line-height:1.6;}
+
+/* MAIN */
+#main{flex:1;overflow-y:auto;height:100vh;}
+.sec{display:none;padding:52px 60px 80px;max-width:920px;animation:fi .18s ease;}
+.sec.active{display:block;}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* TYPE */
+.eyebrow{font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--acc);margin-bottom:10px;}
+h1{font-size:36px;font-weight:900;line-height:1.12;margin-bottom:8px;letter-spacing:-.02em;color:#eef0f8;}
+h2{font-size:20px;font-weight:800;margin:48px 0 14px;color:#eef0f8;}
+h2::before{content:'';display:block;width:28px;height:3px;background:var(--acc);border-radius:2px;margin-bottom:10px;}
+h3{font-size:15px;font-weight:700;margin:24px 0 8px;color:var(--text);}
+p{color:var(--muted);margin-bottom:14px;line-height:1.85;}
+p strong{color:var(--text);font-weight:600;}
+.lead{font-size:16px;color:#b0bbd4;line-height:1.9;margin-bottom:32px;border-left:3px solid var(--acc);padding-left:18px;}
+
+/* CODE */
+pre{background:#050709;border:1px solid var(--b);border-radius:10px;padding:0;overflow:hidden;margin:14px 0;font-family:var(--mono);font-size:12.5px;line-height:1.8;}
+.pre-hdr{background:var(--card2);padding:8px 16px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center;}
+.pre-body{padding:18px 20px;overflow-x:auto;}
+.cm{color:#2d3a58;font-style:italic;}
+.kw{color:#4f7fff;}.str{color:#2ec97a;}.nm{color:#f0a015;}.cmd{color:#d95fa8;font-weight:700;}
+
+/* OUTPUT */
+.output{background:#030508;border:1px solid var(--b);border-radius:10px;padding:16px 20px;margin:8px 0 20px;font-family:var(--mono);font-size:12.5px;line-height:1.9;color:var(--muted);}
+.output .ok{color:var(--green);}
+.output .num{color:var(--amber);}
+.output .nil{color:var(--red);}
+.output .key{color:var(--acc);}
+.output .label{font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);display:block;margin-bottom:8px;}
+
+/* COMPLEXITY BADGE */
+.cx-row{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 20px;}
+.cx{border-radius:8px;padding:12px 16px;font-size:12px;line-height:1.6;flex:1;min-width:160px;}
+.cx-title{font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;}
+.cx-val{font-family:var(--mono);font-size:16px;font-weight:900;margin-bottom:4px;}
+.cx-desc{font-size:11px;color:var(--muted);}
+.cx-o1{background:rgba(46,201,122,.07);border:1px solid rgba(46,201,122,.2);}
+.cx-o1 .cx-title{color:var(--green);}.cx-o1 .cx-val{color:var(--green);}
+.cx-ologn{background:rgba(240,160,21,.07);border:1px solid rgba(240,160,21,.2);}
+.cx-ologn .cx-title{color:var(--amber);}.cx-ologn .cx-val{color:var(--amber);}
+.cx-on{background:rgba(232,85,85,.07);border:1px solid rgba(232,85,85,.2);}
+.cx-on .cx-title{color:var(--red);}.cx-on .cx-val{color:var(--red);}
+
+/* INTERNALS BOX */
+.internals{background:var(--card2);border:1px solid var(--b2);border-radius:10px;padding:20px 24px;margin:20px 0;}
+.internals-hdr{font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--purple);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.internals-hdr::before{content:'⬡';font-size:14px;}
+.internals p{font-size:13.5px;margin-bottom:10px;}
+.internals p:last-child{margin-bottom:0;}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--b);border-radius:10px;padding:18px 22px;margin:14px 0;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;}
+.sc{background:var(--card2);border:1px solid var(--b2);border-radius:9px;padding:18px 22px;margin:12px 0;}
+.sc-head{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.scd{width:7px;height:7px;border-radius:50%;}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:13px;}
+th{background:var(--card2);padding:10px 14px;text-align:left;font-weight:700;font-size:10px;color:var(--muted);border-bottom:1px solid var(--b2);text-transform:uppercase;letter-spacing:.08em;}
+td{padding:11px 14px;border-bottom:1px solid var(--b);color:var(--text);vertical-align:top;line-height:1.6;}
+tr:last-child td{border-bottom:none;}
+td.yes{color:var(--green);font-weight:600;}
+td.no{color:var(--red);}
+
+/* CALLOUT */
+.callout{border-radius:9px;padding:16px 20px;margin:18px 0;border-left:3px solid;font-size:14px;line-height:1.85;}
+.ci{background:rgba(79,127,255,.07);border-color:var(--acc);color:var(--text);}
+.cw{background:rgba(240,160,21,.07);border-color:var(--amber);color:var(--text);}
+.co{background:rgba(46,201,122,.07);border-color:var(--green);color:var(--text);}
+.ce{background:rgba(232,85,85,.07);border-color:var(--red);color:var(--text);}
+
+/* IC */
+.ic{display:inline;background:rgba(79,127,255,.1);border:1px solid rgba(79,127,255,.2);border-radius:4px;padding:1px 6px;font-family:var(--mono);font-size:12px;color:var(--acc);}
+
+/* NAV */
+.sec-nav{display:flex;justify-content:flex-end;margin-top:56px;padding-top:22px;border-top:1px solid var(--b);}
+.nxt{background:var(--acc);color:#fff;border:none;padding:11px 22px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;transition:opacity .13s;}
+.nxt:hover{opacity:.85;}
+
+::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<nav id="sb">
+  <div class="sb-logo">FoodFlash Engineering</div>
+  <div class="sb-title">Redis Reference</div>
+  <div class="sb-sub">Data structures, internals, real complexity</div>
+  <div class="ng">Data Structures</div>
+  <button class="ni active" onclick="show('strings')"><span class="nd"></span>Strings &amp; TTL</button>
+  <button class="ni" onclick="show('hashes')"><span class="nd"></span>Hashes</button>
+  <button class="ni" onclick="show('lists')"><span class="nd"></span>Lists</button>
+  <button class="ni" onclick="show('sets')"><span class="nd"></span>Sets</button>
+  <button class="ni" onclick="show('zsets')"><span class="nd"></span>Sorted Sets</button>
+  <button class="ni" onclick="show('geo')"><span class="nd"></span>GEO</button>
+  <button class="ni" onclick="show('pubsub')"><span class="nd"></span>Pub/Sub</button>
+  <div class="ng">Internals</div>
+  <button class="ni" onclick="show('memory')"><span class="nd"></span>Memory &amp; persistence</button>
+  <button class="ni" onclick="show('patterns')"><span class="nd"></span>FoodFlash patterns</button>
+  <div class="sb-foot">Built during FoodFlash · Redis 7.x<br>Every example tested in your redis-cli</div>
+</nav>
+
+<main id="main">
+
+<!-- ══════════ STRINGS ══════════ -->
+<section id="strings" class="sec active">
+<div class="eyebrow">Chapter 1</div>
+<h1>Strings &amp; TTL</h1>
+<p class="lead">The simplest structure — one key maps to one value. The value can be a plain string, a number, or serialized JSON. TTL (time-to-live) makes keys self-destruct after N seconds — no cron job needed.</p>
+
+<h2>Basic commands</h2>
+<div class="pre-hdr"><span>INPUT</span></div>
+<pre><div class="pre-body"><span class="cmd">SET</span>  user:abc:name <span class="str">"Tarun"</span>
+<span class="cmd">GET</span>  user:abc:name
+
+<span class="cmd">SET</span>  session:tok123 <span class="str">"user-abc"</span>  <span class="kw">EX</span> <span class="nm">30</span>   <span class="cm"># expires in 30 seconds</span>
+<span class="cmd">TTL</span>  session:tok123                        <span class="cm"># seconds remaining</span>
+<span class="cm"># wait 30 seconds...</span>
+<span class="cmd">GET</span>  session:tok123                        <span class="cm"># gone</span>
+
+<span class="cmd">SET</span>  counter <span class="nm">0</span>
+<span class="cmd">INCR</span> counter                              <span class="cm"># atomic +1</span>
+<span class="cmd">INCR</span> counter
+<span class="cmd">INCRBY</span> counter <span class="nm">10</span>
+<span class="cmd">GET</span>  counter</div></pre>
+
+<div class="output">
+<span class="label">output</span>
+<span class="ok">OK</span>
+<span class="str">"Tarun"</span>
+
+<span class="ok">OK</span>
+<span class="num">(integer) 28</span>
+<span class="nil">(nil)</span>
+
+<span class="ok">OK</span>
+<span class="num">(integer) 1</span>
+<span class="num">(integer) 2</span>
+<span class="num">(integer) 12</span>
+<span class="str">"12"</span>
+</div>
+
+<h2>Complexity</h2>
+<div class="cx-row">
+  <div class="cx cx-o1"><div class="cx-title">GET / SET</div><div class="cx-val">O(1)</div><div class="cx-desc">Single hashtable lookup by key hash. ~1µs on M4 Max.</div></div>
+  <div class="cx cx-o1"><div class="cx-title">INCR / DECR</div><div class="cx-val">O(1)</div><div class="cx-desc">Atomic integer increment. No lock needed — Redis is single-threaded.</div></div>
+  <div class="cx cx-o1"><div class="cx-title">TTL check</div><div class="cx-val">O(1)</div><div class="cx-desc">Expiry stored alongside the value in the same hashtable entry.</div></div>
+</div>
+
+<h2>How TTL works internally</h2>
+<div class="internals">
+  <div class="internals-hdr">Internal algorithm</div>
+  <p>Redis stores expiry as an absolute Unix timestamp (milliseconds) in a separate <strong>expires dict</strong> — a second hashtable that maps key → expiry_ms. When you call <span class="ic">TTL key</span>, Redis does <span class="ic">expires[key] - now()</span>.</p>
+  <p><strong>Lazy expiry:</strong> when you <span class="ic">GET</span> a key, Redis first checks the expires dict. If expired, it deletes the key right then and returns nil. Keys are not deleted the moment they expire — only when accessed or found by the active sweep.</p>
+  <p><strong>Active sweep:</strong> 10 times per second Redis randomly samples 20 keys from the expires dict, deletes any that are expired. If more than 25% of the sample was expired, it repeats immediately. This keeps memory from filling up with keys that nobody ever reads.</p>
+  <p><strong>Why not a timer per key:</strong> millions of timers would destroy memory. The lazy + probabilistic sweep approach keeps expiry cheap at scale.</p>
+</div>
+
+<h2>In FoodFlash</h2>
+<div class="g2">
+  <div class="sc"><div class="sc-head"><span class="scd" style="background:var(--acc)"></span>Auth tokens</div><p style="font-size:13px;color:var(--muted)"><span class="ic">SET session:{token} {userId} EX 86400</span> — 24 hour expiry. Token validates in O(1). No DB hit on every request.</p></div>
+  <div class="sc"><div class="sc-head"><span class="scd" style="background:var(--amber)"></span>Typing indicators</div><p style="font-size:13px;color:var(--muted)"><span class="ic">SET typing:{orderId}:{userId} true EX 3</span> — expires in 3s automatically. No cleanup code needed.</p></div>
+</div>
+
+<div class="sec-nav"><button class="nxt" onclick="show('hashes')">Hashes →</button></div>
+</section>
+
+<!-- ══════════ HASHES ══════════ -->
+<section id="hashes" class="sec">
+<div class="eyebrow">Chapter 2</div>
+<h1>Hashes</h1>
+<p class="lead">A Hash stores a map of field→value pairs under one key — like a row in a database, or a flat object. The key benefit over a JSON string: you can read or update one field without touching the rest.</p>
+
+<h2>Basic commands</h2>
+<div class="pre-hdr"><span>INPUT</span></div>
+<pre><div class="pre-body"><span class="cm"># store an order object</span>
+<span class="cmd">HSET</span> order:123  status <span class="str">"PENDING"</span>  user_id <span class="str">"abc"</span>  amount <span class="str">"380"</span>
+
+<span class="cmd">HGET</span>    order:123  status          <span class="cm"># get one field</span>
+<span class="cmd">HGETALL</span> order:123                  <span class="cm"># get everything</span>
+<span class="cmd">HMGET</span>   order:123  status amount   <span class="cm"># get specific fields</span>
+
+<span class="cmd">HSET</span>    order:123  status <span class="str">"CONFIRMED"</span>   <span class="cm"># update one field only</span>
+<span class="cmd">HGET</span>    order:123  status
+
+<span class="cmd">HDEL</span>    order:123  amount
+<span class="cmd">HEXISTS</span> order:123  amount
+<span class="cmd">HLEN</span>    order:123</div></pre>
+
+<div class="output">
+<span class="label">output</span>
+<span class="num">(integer) 3</span>   <span style="color:var(--dim)"># fields set</span>
+
+<span class="str">"PENDING"</span>
+<span class="num">1) </span><span class="key">"status"</span>
+<span class="num">2) </span><span class="str">"PENDING"</span>
+<span class="num">3) </span><span class="key">"user_id"</span>
+<span class="num">4) </span><span class="str">"abc"</span>
+<span class="num">5) </span><span class="key">"amount"</span>
+<span class="num">6) </span><span class="str">"380"</span>
+<span class="num">1) </span><span class="str">"PENDING"</span>
+<span class="num">2) </span><span class="str">"380"</span>
+
+<span class="num">(integer) 0</span>   <span style="color:var(--dim)"># 0 = field existed and was updated</span>
+<span class="str">"CONFIRMED"</span>
+
+<span class="num">(integer) 1</span>
+<span class="num">(integer) 0</span>   <span style="color:var(--dim)"># doesn't exist</span>
+<span class="num">(integer) 2</span>   <span style="color:var(--dim)"># remaining fields</span>
+</div>
+
+<h2>Nested objects — flatten into field names</h2>
+<div class="pre-hdr"><span>INPUT — encoding nesting as field name paths</span></div>
+<pre><div class="pre-body"><span class="cm"># {status:"PENDING", restaurant:{id:"r1", name:"Dominos", addr:{city:"Hyd"}}}</span>
+<span class="cmd">HSET</span> order:123
+  status           <span class="str">"PENDING"</span>
+  restaurant:id    <span class="str">"r1"</span>
+  restaurant:name  <span class="str">"Dominos"</span>
+  restaurant:addr:city  <span class="str">"Hyd"</span>
+
+<span class="cmd">HGET</span>  order:123  restaurant:addr:city
+<span class="cmd">HGET</span>  order:123  restaurant:name</div></pre>
+
+<div class="output">
+<span class="label">output</span>
+<span class="str">"Hyd"</span>
+<span class="str">"Dominos"</span>
+</div>
+
+<h2>Complexity</h2>
+<div class="cx-row">
+  <div class="cx cx-o1"><div class="cx-title">HGET / HSET</div><div class="cx-val">O(1)</div><div class="cx-desc">Two hashtable lookups: outer key → hash object, then field inside it.</div></div>
+  <div class="cx cx-on"><div class="cx-title">HGETALL</div><div class="cx-val">O(N)</div><div class="cx-desc">N = number of fields. Iterates all fields. Avoid on hashes with thousands of fields.</div></div>
+  <div class="cx cx-o1"><div class="cx-title">HMGET</div><div class="cx-val">O(N)</div><div class="cx-desc">N = number of fields requested, not total fields. Always prefer over HGETALL when you need specific fields.</div></div>
+</div>
+
+<h2>How Hashes work internally</h2>
+<div class="internals">
+  <div class="internals-hdr">Internal algorithm — two encodings</div>
+  <p><strong>Listpack (small hashes):</strong> when a hash has fewer than 128 fields AND all values are under 64 bytes, Redis stores it as a listpack — a compact, contiguous byte array in memory. No pointers, no hashtable overhead. Field lookup is O(N) linear scan, but N is so small (&lt;128) that it's faster in practice than a hashtable due to CPU cache locality. Every field is right next to the previous one in memory.</p>
+  <p><strong>Hashtable (large hashes):</strong> once either threshold is exceeded, Redis converts to a proper hashtable. Now HGET is O(1) true average-case — hash the field name, find the bucket, walk the chain. But memory jumps significantly because each entry needs a pointer.</p>
+  <p><strong>Why this matters for you:</strong> our order cache hashes are small (10-15 fields), so Redis keeps them as listpacks. They fit in one or two CPU cache lines. HGET on a listpack is actually faster than a hashtable O(1) because there's no pointer chasing — just scanning adjacent bytes in L1 cache.</p>
+</div>
+
+<div class="sec-nav"><button class="nxt" onclick="show('lists')">Lists →</button></div>
+</section>
+
+<!-- ══════════ LISTS ══════════ -->
+<section id="lists" class="sec">
+<div class="eyebrow">Chapter 3</div>
+<h1>Lists</h1>
+<p class="lead">A doubly-linked list of strings. Fast O(1) push and pop at both ends. Indexed access is O(N). The killer feature: BRPOP — blocking pop that makes lists a natural job queue without polling.</p>
+
+<h2>Basic commands</h2>
+<div class="pre-hdr"><span>INPUT</span></div>
+<pre><div class="pre-body"><span class="cmd">LPUSH</span> order:123:timeline <span class="str">"ORDER_PLACED"</span>
+<span class="cmd">LPUSH</span> order:123:timeline <span class="str">"RESTAURANT_CONFIRMED"</span>
+<span class="cmd">LPUSH</span> order:123:timeline <span class="str">"AGENT_ASSIGNED"</span>
+<span class="cmd">LPUSH</span> order:123:timeline <span class="str">"DELIVERED"</span>
+
+<span class="cmd">LRANGE</span> order:123:timeline <span class="nm">0</span> <span class="nm">-1</span>   <span class="cm"># all elements</span>
+<span class="cmd">LRANGE</span> order:123:timeline <span class="nm">0</span> <span class="nm">1</span>    <span class="cm"># last 2 events</span>
+<span class="cmd">LLEN</span>   order:123:timeline
+<span class="cmd">LINDEX</span> order:123:timeline <span class="nm">0</span>       <span class="cm"># newest event</span>
+<span class="cmd">RPOP</span>   order:123:timeline         <span class="cm"># remove oldest</span></div></pre>
+
+<div class="output">
+<span class="label">output</span>
+<span class="num">(integer) 1</span>
+<span class="num">(integer) 2</span>
+<span class="num">(integer) 3</span>
+<span class="num">(integer) 4</span>
+
+<span class="num">1) </span><span class="str">"DELIVERED"</span>          <span style="color:var(--dim)"># newest first (LPUSH adds to head)</span>
+<span class="num">2) </span><span class="str">"AGENT_ASSIGNED"</span>
+<span class="num">3) </span><span class="str">"RESTAURANT_CONFIRMED"</span>
+<span class="num">4) </span><span class="str">"ORDER_PLACED"</span>
+<span class="num">1) </span><span class="str">"DELIVERED"</span>
+<span class="num">2) </span><span class="str">"AGENT_ASSIGNED"</span>
+<span class="num">(integer) 4</span>
+<span class="str">"DELIVERED"</span>
+<span class="str">"ORDER_PLACED"</span>
+</div>
+
+<h2>As a job queue — BRPOP</h2>
+<div class="pre-hdr"><span>TERMINAL 1 — worker waiting for jobs</span></div>
+<pre><div class="pre-body"><span class="cmd">BRPOP</span> jobs:email <span class="nm">0</span>    <span class="cm"># blocks forever (0 = no timeout)</span>
+<span class="cm"># cursor blinks... worker is sleeping</span></div></pre>
+
+<div class="pre-hdr"><span>TERMINAL 2 — producer pushes a job</span></div>
+<pre><div class="pre-body"><span class="cmd">LPUSH</span> jobs:email <span class="str">"send-receipt:order-123"</span></div></pre>
+
+<div class="output">
+<span class="label">terminal 1 instantly wakes up</span>
+<span class="num">1) </span><span class="str">"jobs:email"</span>
+<span class="num">2) </span><span class="str">"send-receipt:order-123"</span>
+<span style="color:var(--dim)"># took 0.3ms from LPUSH to BRPOP returning</span>
+</div>
+
+<h2>Complexity</h2>
+<div class="cx-row">
+  <div class="cx cx-o1"><div class="cx-title">LPUSH / RPUSH / LPOP / RPOP</div><div class="cx-val">O(1)</div><div class="cx-desc">Head and tail pointers. Constant time regardless of list size.</div></div>
+  <div class="cx cx-on"><div class="cx-title">LRANGE</div><div class="cx-val">O(S+N)</div><div class="cx-desc">S = offset from head, N = elements returned. LRANGE 0 -1 on a 10k list = O(10k).</div></div>
+  <div class="cx cx-on"><div class="cx-title">LINDEX</div><div class="cx-val">O(N)</div><div class="cx-desc">Must traverse linked list from head. LINDEX 0 is O(1), LINDEX 5000 is O(5000).</div></div>
+</div>
+
+<h2>Internally — quicklist</h2>
+<div class="internals">
+  <div class="internals-hdr">Internal algorithm</div>
+  <p>Redis lists use a <strong>quicklist</strong> — a doubly-linked list of listpack nodes. Instead of one node per element (wasteful pointer overhead), each node is a small listpack holding up to 128 elements as a packed byte array. So the structure is: linked list of arrays.</p>
+  <p>This gives you the best of both: O(1) push/pop at ends (linked list property), and good memory density (listpack arrays reduce pointer overhead by ~8x vs a naive linked list). LINDEX traversal walks the linked list of nodes, then scans inside a listpack — still O(N) overall but with smaller constant.</p>
+  <p><strong>BRPOP blocking mechanism:</strong> when no elements exist, Redis registers the client in a wait list for that key. When LPUSH fires, Redis checks the wait list before even returning to the event loop — wakes the blocked client directly. This is why BRPOP latency is sub-millisecond, not the 1-10ms you'd get from polling.</p>
+</div>
+
+<div class="sec-nav"><button class="nxt" onclick="show('sets')">Sets →</button></div>
+</section>
+
+<!-- ══════════ SETS ══════════ -->
+<section id="sets" class="sec">
+<div class="eyebrow">Chapter 4</div>
+<h1>Sets</h1>
+<p class="lead">An unordered collection of unique strings. No duplicates ever. The power is in set operations — intersection, union, difference — all done server-side in one command. No sorting, no scores.</p>
+
+<h2>Basic commands</h2>
+<div class="pre-hdr"><span>INPUT</span></div>
+<pre><div class="pre-body"><span class="cmd">SADD</span> restaurant:r1:tags <span class="str">"pizza"</span> <span class="str">"italian"</span> <span class="str">"veg-friendly"</span>
+<span class="cmd">SADD</span> restaurant:r2:tags <span class="str">"pizza"</span> <span class="str">"fast-food"</span> <span class="str">"delivery-only"</span>
+
+<span class="cmd">SMEMBERS</span>  restaurant:r1:tags
+<span class="cmd">SISMEMBER</span> restaurant:r1:tags <span class="str">"pizza"</span>    <span class="cm"># is "pizza" in set?</span>
+<span class="cmd">SCARD</span>     restaurant:r1:tags             <span class="cm"># count</span>
+
+<span class="cmd">SINTER</span> restaurant:r1:tags restaurant:r2:tags  <span class="cm"># common tags</span>
+<span class="cmd">SUNION</span> restaurant:r1:tags restaurant:r2:tags  <span class="cm"># all tags</span>
+<span class="cmd">SDIFF</span>  restaurant:r1:tags restaurant:r2:tags  <span class="cm"># in r1 but not r2</span>
+
+<span class="cmd">SADD</span> restaurant:r1:tags <span class="str">"pizza"</span>   <span class="cm"># duplicate — silently ignored</span>
+<span class="cmd">SCARD</span> restaurant:r1:tags</div></pre>
+
+<div class="output">
+<span class="label">output</span>
+<span class="num">(integer) 3</span>
+<span class="num">(integer) 2</span>
+
+<span class="num">1) </span><span class="str">"veg-friendly"</span>
+<span class="num">2) </span><span class="str">"italian"</span>
+<span class="num">3) </span><span class="str">"pizza"</span>
+<span class="num">(integer) 1</span>   <span style="color:var(--dim)"># yes</span>
+<span class="num">(integer) 3</span>
+
+<span class="num">1) </span><span class="str">"pizza"</span>
+<span class="num">1) </span><span class="str">"pizza"</span><span class="num">  2) </span><span class="str">"italian"</span><span class="num">  3) </span><span class="str">"veg-friendly"</span><span class="num">  4) </span><span class="str">"fast-food"</span><span class="num">  5) </span><span class="str">"delivery-only"</span>
+<span class="num">1) </span><span class="str">"italian"</span><span class="num">  2) </span><span class="str">"veg-friendly"</span>
+
+<span class="num">(integer) 0</span>   <span style="color:var(--dim)"># 0 new members added (already existed)</span>
+<span class="num">(integer) 3</span>   <span style="color:var(--dim)"># still 3, no duplicate added</span>
+</div>
+
+<h2>Complexity</h2>
+<div class="cx-row">
+  <div class="cx cx-o1"><div class="cx-title">SADD / SREM / SISMEMBER</div><div class="cx-val">O(1)</div><div class="cx-desc">Hashtable lookup. Average constant time.</div></div>
+  <div class="cx cx-on"><div class="cx-title">SMEMBERS</div><div class="cx-val">O(N)</div><div class="cx-desc">Must return all N members. Avoid on large sets.</div></div>
+  <div class="cx cx-on"><div class="cx-title">SINTER / SUNION / SDIFF</div><div class="cx-val">O(N×M)</div><div class="cx-desc">N = smallest set size, M = number of sets. Intersection walks smallest set, checks each in others.</div></div>
+</div>
+
+<h2>Internally — intset vs hashtable</h2>
+<div class="internals">
+  <div class="internals-hdr">Internal algorithm</div>
+  <p><strong>Intset:</strong> if all members are integers and count is under 512, Redis stores the set as a sorted array of integers — an intset. SISMEMBER does binary search: O(log N) but with tiny N and perfect cache locality, faster in practice than O(1) hashtable.</p>
+  <p><strong>Hashtable:</strong> as soon as any string member is added or count exceeds 512, converts to a hashtable. Each member is a key in the hashtable with a null value. SADD hashes the member, checks the bucket, adds if absent. Deduplication is free — hashtable lookup handles it.</p>
+  <p><strong>SINTER algorithm:</strong> takes the smallest set, iterates every member, checks if it exists in all other sets via O(1) hashtable lookup. Total: O(smallest_set × num_sets). Always put your smallest set first in SINTER.</p>
+</div>
+
+<div class="sec-nav"><button class="nxt" onclick="show('zsets')">Sorted Sets →</button></div>
+</section>
+
+<!-- ══════════ SORTED SETS ══════════ -->
+<section id="zsets" class="sec">
+<div class="eyebrow">Chapter 5</div>
+<h1>Sorted Sets</h1>
+<p class="lead">Like a Set but every member has a float score, and members are always kept sorted by score. The most complex and powerful Redis structure — backed by a skip list internally. Used for leaderboards, delay queues, and range queries by score.</p>
+
+<h2>Basic commands</h2>
+<div class="pre-hdr"><span>INPUT</span></div>
+<pre><div class="pre-body"><span class="cmd">ZADD</span> leaderboard <span class="nm">450</span> <span class="str">"restaurant-dominos"</span>
+<span class="cmd">ZADD</span> leaderboard <span class="nm">380</span> <span class="str">"restaurant-pizzahut"</span>
+<span class="cmd">ZADD</span> leaderboard <span class="nm">510</span> <span class="str">"restaurant-mcdonalds"</span>
+<span class="cmd">ZADD</span> leaderboard <span class="nm">290</span> <span class="str">"restaurant-kfc"</span>
+
+<span class="cmd">ZRANGE</span>    leaderboard <span class="nm">0</span> <span class="nm">-1</span> <span class="kw">WITHSCORES</span>   <span class="cm"># low → high</span>
+<span class="cmd">ZREVRANGE</span> leaderboard <span class="nm">0</span> <span class="nm">1</span>  <span class="kw">WITHSCORES</span>   <span class="cm"># top 2</span>
+<span class="cmd">ZRANK</span>     leaderboard <span class="str">"restaurant-dominos"</span> <span class="cm"># 0-indexed rank</span>
+<span class="cmd">ZSCORE</span>    leaderboard <span class="str">"restaurant-dominos"</span>
+<span class="cmd">ZINCRBY</span>   leaderboard <span class="nm">50</span> <span class="str">"restaurant-kfc"</span>  <span class="cm"># add 50 to score</span>
+
+<span class="cm"># range by score — all restaurants rated 400-500</span>
+<span class="cmd">ZRANGEBYSCORE</span> leaderboard <span class="nm">400</span> <span class="nm">500</span> <span class="kw">WITHSCORES</span></div></pre>
+
+<div class="output">
+<span class="label">output</span>
+<span class="num">1) </span><span class="str">"restaurant-kfc"</span>        <span class="num">2) </span><span class="str">"290"</span>
+<span class="num">3) </span><span class="str">"restaurant-pizzahut"</span>   <span class="num">4) </span><span class="str">"380"</span>
+<span class="num">5) </span><span class="str">"restaurant-dominos"</span>    <span class="num">6) </span><span class="str">"450"</span>
+<span class="num">7) </span><span class="str">"restaurant-mcdonalds"</span>  <span class="num">8) </span><span class="str">"510"</span>
+
+<span class="num">1) </span><span class="str">"restaurant-mcdonalds"</span>  <span class="num">2) </span><span class="str">"510"</span>
+<span class="num">3) </span><span class="str">"restaurant-dominos"</span>    <span class="num">4) </span><span class="str">"450"</span>
+
+<span class="num">(integer) 2</span>   <span style="color:var(--dim)"># rank 2 (0=lowest)</span>
+<span class="str">"450"</span>
+<span class="str">"340"</span>          <span style="color:var(--dim)"># kfc now 340</span>
+
+<span class="num">1) </span><span class="str">"restaurant-dominos"</span>    <span class="num">2) </span><span class="str">"450"</span>
+</div>
+
+<h2>Delay queue pattern — using score as unix timestamp</h2>
+<div class="pre-hdr"><span>INPUT — schedule a job for future execution</span></div>
+<pre><div class="pre-body"><span class="cm"># schedule order timeout check 15 minutes from now</span>
+<span class="cmd">ZADD</span> delayed:jobs <span class="nm">1736944800</span> <span class="str">"timeout:order-123"</span>
+<span class="cmd">ZADD</span> delayed:jobs <span class="nm">1736945100</span> <span class="str">"timeout:order-124"</span>
+
+<span class="cm"># worker polls every second: get all jobs due NOW</span>
+<span class="cmd">ZRANGEBYSCORE</span> delayed:jobs <span class="nm">0</span> <span class="nm">1736944900</span>  <span class="cm"># up to current unix time</span>
+
+<span class="cm"># process them, then remove</span>
+<span class="cmd">ZREM</span> delayed:jobs <span class="str">"timeout:order-123"</span></div></pre>
+
+<h2>Complexity</h2>
+<div class="cx-row">
+  <div class="cx cx-ologn"><div class="cx-title">ZADD / ZREM / ZSCORE / ZRANK</div><div class="cx-val">O(log N)</div><div class="cx-desc">Skip list insertion/deletion. N = total members in sorted set.</div></div>
+  <div class="cx cx-ologn"><div class="cx-title">ZRANGE / ZRANGEBYSCORE</div><div class="cx-val">O(log N + M)</div><div class="cx-desc">log N to find start position, then M to traverse results.</div></div>
+  <div class="cx cx-o1"><div class="cx-title">ZINCRBY</div><div class="cx-val">O(log N)</div><div class="cx-desc">Remove old position, re-insert at new score. Two skip list operations.</div></div>
+</div>
+
+<h2>Internally — skip list + hashtable</h2>
+<div class="internals">
+  <div class="internals-hdr">Internal algorithm — skip list</div>
+  <p>A sorted set is backed by <strong>two</strong> data structures simultaneously: a skip list for score-ordered traversal and range queries, and a hashtable for O(1) member→score lookups (ZSCORE, ZRANK).</p>
+  <p><strong>Skip list:</strong> imagine a linked list where each node also has "express lanes" — pointers that skip ahead by 2, 4, 8, 16 nodes. To find where to insert score 450, you start at the top express lane, skip forward until you overshoot, drop down a lane, repeat. Expected traversal: O(log N) hops. Unlike a balanced BST (AVL/Red-Black), a skip list is simpler to implement and cache-friendly because forward pointers are often in the same memory region.</p>
+  <p><strong>Why both structures:</strong> skip list alone can't do O(1) ZSCORE (you'd have to scan). Hashtable alone can't do range queries. Together: ZRANGEBYSCORE uses skip list, ZSCORE uses hashtable. Memory cost is roughly 2× a simple list, but you get both query shapes in one structure.</p>
+  <p><strong>Small sorted sets:</strong> under 128 members with values under 64 bytes, Redis uses a listpack instead of a skip list — same listpack encoding as Hashes. Promotes to skip list+hashtable on overflow.</p>
+</div>
+
+<div class="sec-nav"><button class="nxt" onclick="show('geo')">GEO →</button></div>
+</section>
+
+<!-- ══════════ GEO ══════════ -->
+<section id="geo" class="sec">
+<div class="eyebrow">Chapter 6</div>
+<h1>GEO</h1>
+<p class="lead">GEO commands let you store coordinates and query by radius — without PostGIS, without spatial indexes. Internally it's just a Sorted Set with coordinates encoded as scores. The encoding is the clever part.</p>
+
+<h2>Basic commands</h2>
+<div class="pre-hdr"><span>INPUT</span></div>
+<pre><div class="pre-body"><span class="cmd">GEOADD</span> drivers:locations <span class="nm">78.4867</span> <span class="nm">17.3850</span> <span class="str">"agent-raju"</span>
+<span class="cmd">GEOADD</span> drivers:locations <span class="nm">78.4960</span> <span class="nm">17.3950</span> <span class="str">"agent-priya"</span>
+<span class="cmd">GEOADD</span> drivers:locations <span class="nm">78.5100</span> <span class="nm">17.4100</span> <span class="str">"agent-kumar"</span>
+
+<span class="cmd">GEOPOS</span>  drivers:locations <span class="str">"agent-raju"</span>
+<span class="cmd">GEODIST</span> drivers:locations <span class="str">"agent-raju"</span> <span class="str">"agent-priya"</span> <span class="kw">km</span>
+
+<span class="cm"># find all agents within 5km of a point, sorted nearest first</span>
+<span class="cmd">GEORADIUS</span> drivers:locations <span class="nm">78.4867</span> <span class="nm">17.3850</span> <span class="nm">5</span> <span class="kw">km ASC</span>
+
+<span class="cm"># with distance in result</span>
+<span class="cmd">GEORADIUS</span> drivers:locations <span class="nm">78.4867</span> <span class="nm">17.3850</span> <span class="nm">5</span> <span class="kw">km ASC WITHCOORD WITHDIST</span></div></pre>
+
+<div class="output">
+<span class="label">output</span>
+<span class="num">1) 1) </span><span class="str">"78.48670"</span>
+<span class="num">   2) </span><span class="str">"17.38500"</span>
+<span class="str">"1.2341"</span>   <span style="color:var(--dim)"># km between raju and priya</span>
+
+<span class="num">1) </span><span class="str">"agent-raju"</span>
+<span class="num">2) </span><span class="str">"agent-priya"</span>
+<span class="num">3) </span><span class="str">"agent-kumar"</span>
+
+<span class="num">1) 1) </span><span class="str">"agent-raju"</span>
+<span class="num">   2) </span><span class="str">"0.0000"</span>     <span style="color:var(--dim)"># 0km — it's the origin point itself</span>
+<span class="num">   3) 1) </span><span class="str">"78.48670"</span>
+<span class="num">      2) </span><span class="str">"17.38500"</span>
+</div>
+
+<h2>Complexity</h2>
+<div class="cx-row">
+  <div class="cx cx-ologn"><div class="cx-title">GEOADD</div><div class="cx-val">O(log N)</div><div class="cx-desc">Encodes coords as geohash score, inserts into sorted set. N = existing members.</div></div>
+  <div class="cx cx-ologn"><div class="cx-title">GEORADIUS</div><div class="cx-val">O(N+log M)</div><div class="cx-desc">N = members in radius, M = total members. Uses score range query on sorted set.</div></div>
+  <div class="cx cx-o1"><div class="cx-title">GEODIST / GEOPOS</div><div class="cx-val">O(log N)</div><div class="cx-desc">Looks up geohash score in sorted set, decodes back to coordinates.</div></div>
+</div>
+
+<h2>Internally — geohash as sorted set score</h2>
+<div class="internals">
+  <div class="internals-hdr">Internal algorithm — 52-bit geohash</div>
+  <p><strong>Geohash encoding:</strong> latitude and longitude are each converted to a binary fraction, then interleaved bit by bit into a single 52-bit integer. For example: lat=17.385 → 01101..., lng=78.487 → 10110... → interleaved: 100110... This integer becomes the sorted set score.</p>
+  <p><strong>Why interleaving works for proximity:</strong> coordinates that are geographically close produce geohash integers that are numerically close. So "find all points within 5km" becomes "find all scores in range [hash-delta, hash+delta]" — a ZRANGEBYSCORE query on the skip list. No spatial index needed.</p>
+  <p><strong>GEORADIUS algorithm:</strong> (1) compute the geohash of the center point, (2) calculate the score delta corresponding to the radius in degrees, (3) run ZRANGEBYSCORE to get candidates, (4) filter by actual Haversine distance (because geohash ranges are rectangular, not circular — some corner candidates are out of radius). Step 4 is why it's O(N+log M) not just O(log M).</p>
+  <p><strong>Precision tradeoff:</strong> 52-bit geohash gives ~0.6mm precision. More than enough for delivery driver tracking.</p>
+</div>
+
+<div class="sec-nav"><button class="nxt" onclick="show('pubsub')">Pub/Sub →</button></div>
+</section>
+
+<!-- ══════════ PUBSUB ══════════ -->
+<section id="pubsub" class="sec">
+<div class="eyebrow">Chapter 7</div>
+<h1>Pub/Sub</h1>
+<p class="lead">Publish/Subscribe is a messaging layer built into Redis. Publishers send to channels. Subscribers listening to a channel receive messages instantly. No persistence — if no subscriber is listening when a message is published, it's gone. This is both its power (sub-millisecond) and its limitation.</p>
+
+<h2>Basic commands — open two terminals</h2>
+<div class="pre-hdr"><span>TERMINAL 1 — subscriber (driver's chat server instance)</span></div>
+<pre><div class="pre-body"><span class="cmd">SUBSCRIBE</span> chat:order-123
+<span class="cm"># blocks here, waiting for messages</span></div></pre>
+
+<div class="output">
+<span class="label">terminal 1 output immediately</span>
+<span class="num">1) </span><span class="str">"subscribe"</span>
+<span class="num">2) </span><span class="str">"chat:order-123"</span>
+<span class="num">3) </span><span class="num">(integer) 1</span>   <span style="color:var(--dim)"># 1 subscription active</span>
+</div>
+
+<div class="pre-hdr"><span>TERMINAL 2 — publisher (customer's chat server instance)</span></div>
+<pre><div class="pre-body"><span class="cmd">PUBLISH</span> chat:order-123 <span class="str">"Are you nearby?"</span>
+<span class="cmd">PUBLISH</span> chat:order-123 <span class="str">"I can see your location"</span></div></pre>
+
+<div class="output">
+<span class="label">terminal 1 receives instantly (&lt;1ms)</span>
+<span class="num">1) </span><span class="str">"message"</span>
+<span class="num">2) </span><span class="str">"chat:order-123"</span>
+<span class="num">3) </span><span class="str">"Are you nearby?"</span>
+
+<span class="num">1) </span><span class="str">"message"</span>
+<span class="num">2) </span><span class="str">"chat:order-123"</span>
+<span class="num">3) </span><span class="str">"I can see your location"</span>
+</div>
+
+<div class="pre-hdr"><span>Pattern subscribe — multiple channels at once</span></div>
+<pre><div class="pre-body"><span class="cmd">PSUBSCRIBE</span> chat:*         <span class="cm"># all chat channels</span>
+<span class="cmd">PSUBSCRIBE</span> order:*:status <span class="cm"># all order status channels</span>
+
+<span class="cmd">PUBSUB CHANNELS</span>           <span class="cm"># list all active channels</span>
+<span class="cmd">PUBSUB NUMSUB</span> chat:order-123  <span class="cm"># count subscribers on channel</span></div></pre>
+
+<h2>Complexity</h2>
+<div class="cx-row">
+  <div class="cx cx-on"><div class="cx-title">PUBLISH</div><div class="cx-val">O(N+M)</div><div class="cx-desc">N = subscribers on channel, M = pattern subscriptions to check. Each subscriber gets a copy pushed.</div></div>
+  <div class="cx cx-o1"><div class="cx-title">SUBSCRIBE</div><div class="cx-val">O(N)</div><div class="cx-desc">N = channels being subscribed. Registers client in channel's subscriber list.</div></div>
+</div>
+
+<h2>Pub/Sub vs Kafka for chat — why we use both</h2>
+<div class="g2">
+  <div class="sc">
+    <div class="sc-head"><span class="scd" style="background:var(--teal)"></span>Redis Pub/Sub — real-time delivery</div>
+    <p style="font-size:13px;color:var(--muted)">Customer on server-instance-3, driver on server-instance-7. Customer sends message → instance-3 publishes to Redis channel → instance-7 (subscribed) receives in &lt;1ms → pushes to driver's WebSocket. Zero message history. If driver is offline: message is lost.</p>
+  </div>
+  <div class="sc">
+    <div class="sc-head"><span class="scd" style="background:var(--acc)"></span>Kafka — durable pipeline</div>
+    <p style="font-size:13px;color:var(--muted)">Simultaneously, instance-3 publishes same message to Kafka chat.message topic → Cassandra writer consumer persists it. Driver comes back online → loads chat history from Cassandra. Kafka is the durability layer, Redis is the speed layer.</p>
+  </div>
+</div>
+
+<div class="callout ce"><strong>The critical gotcha:</strong> Pub/Sub has zero persistence. If Redis restarts while messages are in flight, they vanish. If your subscriber is slow and can't keep up, Redis drops messages — there's no queue backing up. For fire-and-forget real-time fanout it's perfect. For anything that must be guaranteed delivered, use Kafka or Redis Streams instead.</div>
+
+<h2>Internally — push model, no polling</h2>
+<div class="internals">
+  <div class="internals-hdr">Internal algorithm</div>
+  <p>Redis maintains a dictionary mapping channel name → list of subscribed clients. When PUBLISH fires, Redis looks up the channel, iterates the subscriber list, and pushes the message directly into each client's output buffer — all within the same event loop tick. No disk I/O, no serialization overhead beyond the network write.</p>
+  <p><strong>Why it's faster than Kafka for this use case:</strong> Kafka writes to disk (even with acks=1, the leader writes before acknowledging). Redis Pub/Sub never touches disk. It's purely in-memory socket writes. The tradeoff is exactly that: Kafka's disk write is what gives you durability and replay. Redis's lack of disk write is what gives you sub-millisecond latency.</p>
+</div>
+
+<div class="sec-nav"><button class="nxt" onclick="show('memory')">Memory &amp; persistence →</button></div>
+</section>
+
+<!-- ══════════ MEMORY ══════════ -->
+<section id="memory" class="sec">
+<div class="eyebrow">Chapter 8</div>
+<h1>Memory &amp; Persistence</h1>
+<p class="lead">Redis is an in-memory database — all data lives in RAM by default. This is why it's fast and why it's volatile. Understanding persistence modes tells you exactly what you can and can't trust Redis to survive.</p>
+
+<h2>Prove it — restart Redis, data is gone</h2>
+<div class="pre-hdr"><span>INPUT</span></div>
+<pre><div class="pre-body"><span class="cmd">SET</span> important:data <span class="str">"dont lose me"</span>
+<span class="cmd">GET</span> important:data
+
+<span class="cm"># in your Mac terminal (not redis-cli):</span>
+docker restart redis
+
+<span class="cm"># back in redis-cli:</span>
+<span class="cmd">GET</span> important:data</div></pre>
+
+<div class="output">
+<span class="label">output</span>
+<span class="ok">OK</span>
+<span class="str">"dont lose me"</span>
+
+<span style="color:var(--dim)"># restarting...</span>
+
+<span class="nil">(nil)</span>   <span style="color:var(--dim)"># gone. RAM was cleared on restart.</span>
+</div>
+
+<h2>Three persistence modes</h2>
+<table>
+<thead><tr><th>Mode</th><th>What it does</th><th>Data loss on crash</th><th>Use when</th></tr></thead>
+<tbody>
+<tr><td><strong>None (default)</strong></td><td>Pure RAM. Nothing written to disk.</td><td class="no">Everything since last restart</td><td>Pure cache — you can reconstruct from source of truth</td></tr>
+<tr><td><strong>RDB snapshots</strong></td><td>Full dump to disk every N seconds or M writes. <span class="ic">SAVE</span> / <span class="ic">BGSAVE</span></td><td class="no">Up to N seconds of writes</td><td>Backup and restore. Not for durability.</td></tr>
+<tr><td><strong>AOF (appendonly)</strong></td><td>Every write command appended to a log file. Replayed on restart.</td><td class="yes">At most 1 second (fsync every second)</td><td>When you need durability and can accept slight latency</td></tr>
+</tbody>
+</table>
+
+<h2>The design rule for FoodFlash</h2>
+<div class="callout cw"><strong>Redis holds what you can reconstruct. Postgres/Cassandra holds what you can't afford to lose.</strong><br><br>
+Auth tokens: lose them → user re-logs in. Fine.<br>
+Agent locations: lose them → next ping arrives in 3s. Fine.<br>
+Typing indicators: lose them → nobody sees "typing". Fine.<br>
+Order data: lose it → customer charged, no order in system. NOT fine → Postgres.<br>
+Chat history: lose it → conversation gone → Cassandra.<br><br>
+Never store in Redis-only anything whose loss would cause a business incident.</div>
+
+<h2>Memory — what Redis actually uses RAM for</h2>
+<div class="pre-hdr"><span>INPUT — check memory usage</span></div>
+<pre><div class="pre-body"><span class="cmd">INFO</span> memory
+<span class="cmd">MEMORY USAGE</span> order:123       <span class="cm"># bytes for one key</span>
+<span class="cmd">DBSIZE</span>                        <span class="cm"># total keys</span></div></pre>
+
+<div class="internals">
+  <div class="internals-hdr">How Redis manages memory</div>
+  <p><strong>jemalloc:</strong> Redis uses jemalloc as its memory allocator — better fragmentation characteristics than glibc malloc for Redis's mixed allocation pattern (many small objects).</p>
+  <p><strong>maxmemory + eviction:</strong> set <span class="ic">maxmemory 2gb</span> in redis.conf. When limit is hit, Redis evicts keys based on policy: <span class="ic">allkeys-lru</span> (evict least recently used, any key), <span class="ic">volatile-lru</span> (evict LRU keys that have TTL set only), <span class="ic">allkeys-random</span>. For a pure cache, <span class="ic">allkeys-lru</span> is standard. LRU is approximated — Redis samples 10 random keys and evicts the least recently used from that sample, avoiding the overhead of a true LRU linked list.</p>
+  <p><strong>Memory per key overhead:</strong> every Redis key has a base overhead of ~50–70 bytes (key string, expiry dict entry, metadata). A key with value "1" costs more than 1 byte — it costs ~70 bytes total. This is why you don't use Redis for millions of tiny keys without considering memory budget.</p>
+</div>
+
+<div class="sec-nav"><button class="nxt" onclick="show('patterns')">FoodFlash patterns →</button></div>
+</section>
+
+<!-- ══════════ PATTERNS ══════════ -->
+<section id="patterns" class="sec">
+<div class="eyebrow">Chapter 9</div>
+<h1>FoodFlash Patterns</h1>
+<p class="lead">Every Redis structure we use in FoodFlash, why we chose it over alternatives, and the exact key schema. This is what you'd explain in a system design interview.</p>
+
+<h2>Complete key schema</h2>
+<table>
+<thead><tr><th>Key pattern</th><th>Structure</th><th>Value</th><th>TTL</th></tr></thead>
+<tbody>
+<tr><td><span class="ic">session:{token}</span></td><td>String</td><td>userId</td><td>24h</td></tr>
+<tr><td><span class="ic">user:{id}:profile</span></td><td>Hash</td><td>name, email, phone fields</td><td>1h</td></tr>
+<tr><td><span class="ic">restaurant:{id}:active_orders</span></td><td>String (integer)</td><td>count</td><td>none</td></tr>
+<tr><td><span class="ic">restaurant:{id}:menu</span></td><td>String (JSON)</td><td>full menu JSON</td><td>10min</td></tr>
+<tr><td><span class="ic">order:{id}:status</span></td><td>String</td><td>PENDING/CONFIRMED/etc</td><td>2h</td></tr>
+<tr><td><span class="ic">drivers:locations</span></td><td>GEO (Sorted Set)</td><td>agentId → lat/lng</td><td>none</td></tr>
+<tr><td><span class="ic">typing:{orderId}:{userId}</span></td><td>String</td><td>"true"</td><td>3s</td></tr>
+<tr><td><span class="ic">chat:{orderId}</span></td><td>Pub/Sub channel</td><td>real-time messages</td><td>ephemeral</td></tr>
+<tr><td><span class="ic">delayed:jobs</span></td><td>Sorted Set</td><td>jobId → unix timestamp</td><td>none</td></tr>
+</tbody>
+</table>
+
+<h2>Cache-aside pattern — how menu caching works</h2>
+<div class="pre-hdr"><span>pseudocode — Go API Gateway</span></div>
+<pre><div class="pre-body"><span class="kw">func</span> <span class="fn">getMenu</span>(restaurantId string) Menu {
+    <span class="cm">// 1. check cache first</span>
+    cached := redis.<span class="fn">Get</span>(<span class="str">"restaurant:"</span> + restaurantId + <span class="str">":menu"</span>)
+    <span class="kw">if</span> cached != nil {
+        <span class="kw">return</span> <span class="fn">parse</span>(cached)   <span class="cm">// cache hit — ~1ms</span>
+    }
+
+    <span class="cm">// 2. cache miss — go to postgres</span>
+    menu := postgres.<span class="fn">query</span>(<span class="str">"SELECT * FROM menu_items WHERE restaurant_id = ?"</span>, restaurantId)
+
+    <span class="cm">// 3. populate cache for next 10 minutes</span>
+    redis.<span class="fn">Set</span>(<span class="str">"restaurant:"</span> + restaurantId + <span class="str">":menu"</span>, <span class="fn">serialize</span>(menu), <span class="nm">600</span>)
+
+    <span class="kw">return</span> menu   <span class="cm">// ~15ms on cache miss</span>
+}</span></div></pre>
+
+<div class="callout ci"><strong>Why not always use Redis for menu?</strong> Menu changes (restaurant adds/removes item) must invalidate the cache. You'd call <span class="ic">DEL restaurant:{id}:menu</span> in the update flow. If you forget, customers see stale menus for up to 10 minutes. TTL is the safety net — even if your invalidation logic has a bug, the cache self-heals in 10 minutes.</div>
+
+<h2>Quick reference — all 6 structures</h2>
+<table>
+<thead><tr><th>Structure</th><th>Get complexity</th><th>Internal algo</th><th>FoodFlash use</th></tr></thead>
+<tbody>
+<tr><td>String</td><td class="yes">O(1)</td><td>Global hashtable</td><td>Tokens, counters, flags</td></tr>
+<tr><td>Hash</td><td class="yes">O(1) / O(N) HGETALL</td><td>Listpack → hashtable</td><td>Cached objects (order, user)</td></tr>
+<tr><td>List</td><td class="yes">O(1) push/pop</td><td>Quicklist (linked listpacks)</td><td>Job queues, event timeline</td></tr>
+<tr><td>Set</td><td class="yes">O(1) SISMEMBER</td><td>Intset → hashtable</td><td>Tags, unique visitors</td></tr>
+<tr><td>Sorted Set</td><td>O(log N)</td><td>Skip list + hashtable</td><td>Driver ranking, delay queues</td></tr>
+<tr><td>GEO</td><td>O(log N + M)</td><td>Sorted Set + geohash</td><td>Live driver locations</td></tr>
+</tbody>
+</table>
+</section>
+
+</main>
+<script>
+function show(id) {
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.ni').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + id + "'"))
+      n.classList.add('active');
+  });
+  document.getElementById('main').scrollTop = 0;
+}
+</script>
+</body>
+</html>

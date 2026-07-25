@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+changed_nav_files=$(node scripts/enhance-note-nav.mjs --print-changed)
+node scripts/build-index.mjs
+
+if [ -n "$changed_nav_files" ]; then
+  printf '%s\n' "$changed_nav_files" | xargs git add
+fi
+
+git add index.html

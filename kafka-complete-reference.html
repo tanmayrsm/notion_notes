@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kafka — Complete Reference | FoodFlash Engineering</title>
+<style>
+:root{
+  --bg:#090b10;--surf:#0f1219;--card:#151921;--card2:#1b2030;
+  --b:#222840;--b2:#2d3550;--text:#dde2f0;--muted:#6e7a9a;--dim:#3d4560;
+  --acc:#4f7fff;--acc2:#2d5fff;--green:#33c97a;--amber:#f0a015;
+  --red:#e85555;--teal:#1fc8b0;--purple:#8b6ef5;--pink:#d95fa8;
+  --mono:'JetBrains Mono','Fira Code','Courier New',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:15px;line-height:1.8;display:flex;overflow:hidden;}
+
+/* ─── SIDEBAR ─── */
+#sb{width:280px;min-width:280px;background:var(--surf);border-right:1px solid var(--b);height:100vh;overflow-y:auto;display:flex;flex-direction:column;flex-shrink:0;}
+.sb-logo{padding:24px 20px 0;font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--acc);}
+.sb-title{padding:6px 20px 4px;font-size:17px;font-weight:900;color:var(--text);}
+.sb-sub{padding:0 20px 18px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--b);}
+.ng{padding:14px 16px 4px;font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);}
+.ni{display:flex;align-items:flex-start;gap:9px;padding:8px 14px 8px 16px;font-size:12.5px;color:var(--muted);cursor:pointer;border-radius:7px;margin:1px 8px;transition:all .14s;border:none;background:none;width:calc(100% - 16px);text-align:left;line-height:1.45;}
+.ni:hover{background:var(--card);color:var(--text);}
+.ni.active{background:rgba(79,127,255,.14);color:var(--acc);font-weight:600;}
+.ni .nd{width:5px;height:5px;border-radius:50%;background:var(--dim);flex-shrink:0;margin-top:5px;transition:background .14s;}
+.ni.active .nd{background:var(--acc);}
+.lbadge{margin-left:auto;font-size:8px;padding:2px 5px;border-radius:3px;font-weight:800;flex-shrink:0;}
+.l5b{background:rgba(139,110,245,.18);color:var(--purple);}
+.l6b{background:rgba(217,95,168,.18);color:var(--pink);}
+.sb-foot{margin-top:auto;padding:14px 18px;border-top:1px solid var(--b);font-size:10px;color:var(--dim);line-height:1.6;}
+
+/* ─── MAIN ─── */
+#main{flex:1;overflow-y:auto;height:100vh;}
+.sec{display:none;padding:56px 64px 80px;max-width:960px;animation:fi .18s ease;}
+.sec.active{display:block;}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── TYPOGRAPHY ─── */
+.eyebrow{font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--acc);margin-bottom:10px;}
+h1{font-size:38px;font-weight:900;line-height:1.12;margin-bottom:8px;letter-spacing:-.02em;color:#eef0f8;}
+h2{font-size:22px;font-weight:800;margin:52px 0 16px;color:#eef0f8;padding-top:4px;}
+h2::before{content:'';display:block;width:32px;height:3px;background:var(--acc);border-radius:2px;margin-bottom:10px;}
+h3{font-size:16px;font-weight:700;margin:28px 0 10px;color:var(--text);}
+p{color:var(--muted);margin-bottom:16px;line-height:1.85;}
+p strong,li strong{color:var(--text);font-weight:600;}
+.lead{font-size:17px;color:#b0bbd4;line-height:1.9;margin-bottom:36px;border-left:3px solid var(--acc);padding-left:20px;font-style:italic;}
+
+/* ─── CODE ─── */
+pre{background:#060810;border:1px solid var(--b);border-radius:10px;padding:22px 26px;overflow-x:auto;margin:18px 0;font-family:var(--mono);font-size:12.5px;line-height:1.8;}
+code{font-family:var(--mono);font-size:13px;}
+.kw{color:#5b8fff;}.str{color:#33c97a;}.cm{color:#2d3a5a;font-style:italic;}.nm{color:#f0a015;}.fn{color:#d95fa8;}.vr{color:#1fc8b0;}.pp{color:#8b6ef5;}
+
+/* ─── DIAGRAM ─── */
+.diagram{background:#060810;border:1px solid var(--b);border-radius:10px;padding:26px 28px;margin:20px 0;font-family:var(--mono);font-size:12.5px;line-height:2.1;overflow-x:auto;white-space:pre;color:var(--muted);}
+
+/* ─── CALLOUT ─── */
+.callout{border-radius:10px;padding:18px 22px;margin:22px 0;border-left:4px solid;font-size:14px;line-height:1.85;}
+.ci{background:rgba(79,127,255,.07);border-color:var(--acc);color:var(--text);}
+.cw{background:rgba(240,160,21,.07);border-color:var(--amber);color:var(--text);}
+.co{background:rgba(51,201,122,.07);border-color:var(--green);color:var(--text);}
+.ce{background:rgba(232,85,85,.07);border-color:var(--red);color:var(--text);}
+
+/* ─── TABLE ─── */
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:13.5px;}
+th{background:var(--card2);padding:11px 15px;text-align:left;font-weight:700;font-size:10px;color:var(--muted);border-bottom:1px solid var(--b2);text-transform:uppercase;letter-spacing:.08em;}
+td{padding:12px 15px;border-bottom:1px solid var(--b);color:var(--text);vertical-align:top;line-height:1.65;}
+tr:last-child td{border-bottom:none;}
+td.yes{color:var(--green);font-weight:600;}
+td.no{color:var(--red);}
+td.mid{color:var(--amber);}
+
+/* ─── TAGS ─── */
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;margin:2px;}
+.tb{background:rgba(79,127,255,.14);color:var(--acc);}
+.tg{background:rgba(51,201,122,.14);color:var(--green);}
+.ta{background:rgba(240,160,21,.14);color:var(--amber);}
+.tr{background:rgba(232,85,85,.14);color:var(--red);}
+.tp{background:rgba(139,110,245,.14);color:var(--purple);}
+.tt{background:rgba(31,200,176,.14);color:var(--teal);}
+
+/* ─── CARD ─── */
+.card{background:var(--card);border:1px solid var(--b);border-radius:12px;padding:22px 26px;margin:16px 0;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:18px 0;}
+.sc{background:var(--card2);border:1px solid var(--b2);border-radius:10px;padding:20px 24px;margin:14px 0;}
+.sc-head{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.scd{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.cg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0;}
+.stat{background:var(--card);border:1px solid var(--b);border-radius:10px;padding:18px 20px;text-align:center;}
+.sv{font-size:32px;font-weight:900;color:var(--acc);font-family:var(--mono);}
+.sl{font-size:12px;color:var(--muted);margin-top:3px;}
+
+/* ─── INTERVIEW ─── */
+.interview{background:linear-gradient(135deg,rgba(79,127,255,.08),rgba(139,110,245,.05));border:1px solid rgba(79,127,255,.22);border-radius:12px;padding:28px;margin:28px 0;position:relative;overflow:hidden;}
+.interview::before{content:'L5 INTERVIEW ANSWER';position:absolute;top:16px;right:18px;font-size:9px;font-weight:800;letter-spacing:.16em;color:var(--acc);opacity:.65;}
+.interview p{color:#c8d2e8;font-style:italic;line-height:2;margin:0;font-size:14.5px;}
+
+/* ─── TIMELINE ─── */
+.tl{margin:24px 0;}
+.tl-item{display:flex;gap:18px;margin-bottom:22px;position:relative;}
+.tl-item::before{content:'';position:absolute;left:17px;top:38px;bottom:-22px;width:2px;background:var(--b);}
+.tl-item:last-child::before{display:none;}
+.tl-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0;}
+.tl-body{flex:1;padding-top:6px;}
+.tl-t{font-size:14px;font-weight:700;margin-bottom:6px;color:var(--text);}
+.tl-d{font-size:13px;color:var(--muted);line-height:1.8;}
+
+/* ─── BTN ─── */
+.btn{display:inline-flex;align-items:center;gap:6px;background:rgba(79,127,255,.12);border:1px solid rgba(79,127,255,.28);color:var(--acc);padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .14s;margin:4px 4px 4px 0;font-family:inherit;}
+.btn:hover{background:rgba(79,127,255,.22);}
+.btn.rd{background:rgba(232,85,85,.1);border-color:rgba(232,85,85,.28);color:var(--red);}
+.btn.rd:hover{background:rgba(232,85,85,.2);}
+.btn.gr{background:rgba(51,201,122,.1);border-color:rgba(51,201,122,.28);color:var(--green);}
+.btn.gr:hover{background:rgba(51,201,122,.2);}
+.btn.am{background:rgba(240,160,21,.1);border-color:rgba(240,160,21,.28);color:var(--amber);}
+.btn.am:hover{background:rgba(240,160,21,.2);}
+
+/* ─── INLINE CODE ─── */
+.ic{display:inline;background:rgba(79,127,255,.1);border:1px solid rgba(79,127,255,.2);border-radius:4px;padding:1px 7px;font-family:var(--mono);font-size:12.5px;color:var(--acc);}
+
+/* ─── ANNOTATION ─── */
+.ann{background:var(--card);border-left:3px solid var(--acc);padding:14px 20px;margin:14px 0;border-radius:0 8px 8px 0;font-size:13.5px;line-height:1.8;color:var(--text);}
+.ann-t{font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--acc);margin-bottom:6px;display:block;}
+
+/* ─── OFFSET TABLE ─── */
+.otbl{background:var(--card2);border:1px solid var(--b);border-radius:10px;padding:20px;margin:18px 0;font-family:var(--mono);font-size:12.5px;}
+.orow{display:flex;align-items:center;padding:9px 0;border-bottom:1px solid var(--b);gap:14px;}
+.orow:last-child{border-bottom:none;}
+.og{min-width:230px;font-size:12px;}
+.ov{min-width:70px;font-weight:700;font-size:14px;}
+.ob-w{flex:1;background:rgba(255,255,255,.05);border-radius:4px;height:7px;}
+.ob{height:7px;border-radius:4px;transition:width .7s cubic-bezier(.4,0,.2,1);}
+.lag{font-size:10px;color:var(--dim);min-width:80px;text-align:right;}
+
+/* ─── BROKER VIS ─── */
+.broker-row{display:flex;gap:14px;justify-content:center;margin:22px 0;flex-wrap:wrap;}
+.broker{background:var(--card2);border:2px solid var(--b2);border-radius:14px;padding:18px 20px;min-width:170px;text-align:center;position:relative;transition:all .35s;}
+.broker.alive{border-color:var(--acc);}
+.broker.dead{opacity:.2;border-color:var(--red);filter:grayscale(1);}
+.broker.follower-alive{border-color:var(--green);}
+.b-badge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:800;padding:3px 11px;border-radius:20px;white-space:nowrap;letter-spacing:.06em;}
+.b-name{font-size:14px;font-weight:800;color:var(--text);margin-bottom:2px;}
+.b-port{font-size:11px;color:var(--muted);}
+.b-parts{display:flex;gap:4px;justify-content:center;margin-top:12px;flex-wrap:wrap;}
+.bp{width:30px;height:22px;border-radius:5px;font-size:10px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:800;}
+.bp.l{background:rgba(79,127,255,.2);border:1px solid rgba(79,127,255,.5);color:var(--acc);}
+.bp.r{background:rgba(31,200,176,.08);border:1px solid rgba(31,200,176,.25);color:var(--teal);}
+.bp.promo{background:rgba(51,201,122,.15);border:1px solid rgba(51,201,122,.5);color:var(--green);}
+
+/* ─── PARTITION VIS ─── */
+.topic-wrap{background:#060810;border:1px solid var(--b);border-radius:12px;padding:24px;margin:20px 0;}
+.tw-hdr{font-size:13px;font-weight:700;color:var(--acc);margin-bottom:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.p-row{display:flex;align-items:center;margin:8px 0;gap:12px;}
+.p-id{font-size:11px;color:var(--muted);font-family:var(--mono);min-width:88px;}
+.p-msgs{display:flex;gap:5px;overflow-x:auto;padding-bottom:2px;}
+.msg{background:rgba(79,127,255,.13);border:1px solid rgba(79,127,255,.28);border-radius:5px;padding:5px 11px;font-size:11px;font-family:var(--mono);color:var(--acc);white-space:nowrap;}
+.msg .off{display:block;font-size:9px;color:var(--dim);text-align:center;margin-top:2px;}
+.msg.new{animation:fl .5s;background:rgba(79,127,255,.45);}
+@keyframes fl{0%{background:rgba(79,127,255,.7)}100%{background:rgba(79,127,255,.13)}}
+.p-broker{font-size:10px;color:var(--dim);font-family:var(--mono);min-width:65px;}
+
+/* ─── GUARANTEE CARDS ─── */
+.gcards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:22px 0;}
+.gc{border-radius:12px;padding:22px;border:1px solid;}
+.gc-atm{background:rgba(240,160,21,.05);border-color:rgba(240,160,21,.2);}
+.gc-al{background:rgba(79,127,255,.05);border-color:rgba(79,127,255,.2);}
+.gc-ex{background:rgba(51,201,122,.05);border-color:rgba(51,201,122,.2);}
+.gc-icon{font-size:28px;margin-bottom:12px;}
+.gc-t{font-size:15px;font-weight:800;margin-bottom:6px;}
+.gc-sub{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.65;}
+.gc-list li{list-style:none;font-size:13px;color:var(--muted);padding:3px 0 3px 18px;position:relative;line-height:1.65;}
+.gc-list li::before{content:'→';position:absolute;left:0;color:var(--dim);}
+
+/* ─── REBALANCE ─── */
+.rb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0;}
+.rb-box{background:var(--card);border:1px solid var(--b);border-radius:10px;padding:16px;text-align:center;transition:all .4s;}
+.rb-box.dead{opacity:.18;border-color:var(--red);}
+.rb-box.gained{border-color:var(--green);background:rgba(51,201,122,.05);}
+.rb-name{font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px;}
+.rb-parts{font-size:11px;color:var(--muted);font-family:var(--mono);line-height:1.7;}
+.rb-st{font-size:10px;margin-top:6px;}
+
+/* ─── SIM LOG ─── */
+#simlog{background:#030508;border:1px solid var(--b);border-radius:8px;padding:14px 16px;font-family:var(--mono);font-size:12px;height:210px;overflow-y:auto;margin:12px 0;}
+.ll{padding:2px 0;line-height:1.7;}
+.ll.ok{color:var(--green);}.ll.wn{color:var(--amber);}.ll.er{color:var(--red);}.ll.inf{color:var(--acc);}.ll.mu{color:var(--muted);}
+
+/* ─── NEXT NAV ─── */
+.sec-nav{display:flex;justify-content:flex-end;margin-top:60px;padding-top:24px;border-top:1px solid var(--b);}
+.nxt{background:var(--acc2);color:#fff;border:none;padding:12px 24px;border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;transition:background .14s;font-family:inherit;}
+.nxt:hover{background:var(--acc);}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px;}
+</style>
+</head>
+<body>
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<nav id="sb">
+  <div class="sb-logo">FoodFlash Engineering</div>
+  <div class="sb-title">Kafka: Complete Reference</div>
+  <div class="sb-sub">Deep, linked, built to last a decade</div>
+
+  <div class="ng">Foundations</div>
+  <button class="ni active" onclick="show('what')"><span class="nd"></span>What is Kafka &amp; why does it exist</button>
+  <button class="ni" onclick="show('logvsqueue')"><span class="nd"></span>Log vs Queue — the core difference</button>
+  <button class="ni" onclick="show('arch')"><span class="nd"></span>Brokers, Zookeeper &amp; the cluster</button>
+
+  <div class="ng">Core Mechanics</div>
+  <button class="ni" onclick="show('topics')"><span class="nd"></span>Topics, Partitions &amp; Offsets</button>
+  <button class="ni" onclick="show('replication')"><span class="nd"></span>Replication — RF=3 in complete detail</button>
+  <button class="ni" onclick="show('producers')"><span class="nd"></span>Producers, keys &amp; message routing</button>
+  <button class="ni" onclick="show('consumers')"><span class="nd"></span>Consumer groups — how independent readers work</button>
+  <button class="ni" onclick="show('offsets')"><span class="nd"></span>Offsets — bookmarks, commits &amp; replay</button>
+
+  <div class="ng">Advanced — L5</div>
+  <button class="ni" onclick="show('brokerdeath')"><span class="nd"></span>When a broker dies — full walkthrough <span class="lbadge l5b">L5</span></button>
+  <button class="ni" onclick="show('retention')"><span class="nd"></span>Storage, segments &amp; retention <span class="lbadge l5b">L5</span></button>
+  <button class="ni" onclick="show('rebalance')"><span class="nd"></span>Rebalancing — every trigger explained <span class="lbadge l5b">L5</span></button>
+  <button class="ni" onclick="show('delivery')"><span class="nd"></span>Delivery guarantees — in depth <span class="lbadge l5b">L5</span></button>
+  <button class="ni" onclick="show('threadsafety')"><span class="nd"></span>Thread safety — why it's guaranteed <span class="lbadge l5b">L5</span></button>
+
+  <div class="ng">System Design — L6</div>
+  <button class="ni" onclick="show('foodflash')"><span class="nd"></span>FoodFlash — every decision explained <span class="lbadge l6b">L6</span></button>
+  <button class="ni" onclick="show('simulator')"><span class="nd"></span>Live simulator — all scenarios</button>
+
+  <div class="sb-foot">Built during FoodFlash · M4 Max · 2025<br>Every concept = a real question you asked while building</div>
+</nav>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main id="main">
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--  SECTION 1 — WHAT IS KAFKA                               -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="what" class="sec active">
+<div class="eyebrow">Chapter 1 — Foundations</div>
+<h1>What is Apache Kafka?</h1>
+<p class="lead">Kafka is a distributed, fault-tolerant, durable event streaming platform. Think of it as an append-only ledger that sits between your services — every service writes events to it, every interested service reads from it, at its own pace, independently. The ledger never forgets unless you tell it to.</p>
+
+<h2>The Problem Kafka Was Built to Solve</h2>
+<p>In 2010, LinkedIn had hundreds of internal microservices — profile service, job recommendations, people you may know, analytics, activity feed. Every time one service needed data from another, they built a direct point-to-point connection. With 10 services wanting to talk, you get up to 45 different connection pairs. With 50 services, up to 1,225. This grew into an unmaintainable spaghetti of integrations, where adding any new service required coordinating changes across multiple existing teams.</p>
+<p>Jay Kreps, Neha Narkhede, and Jun Rao solved this in 2010 by building a universal bus: one central system where everything publishes events, and everything interested reads them. They called it Kafka. It was open-sourced in 2011, donated to Apache in 2012, and the three founders left LinkedIn to found <strong>Confluent</strong> — whose Docker images (<span class="ic">confluentinc/cp-kafka</span>) we use in our cluster today. Kafka now runs at every major tech company: Uber, Airbnb, Netflix, Twitter, PayPal (where you work), and yes — Zomato and Swiggy.</p>
+
+<div class="g2">
+<div class="sc"><div class="sc-head"><span class="scd" style="background:var(--red)"></span>Before Kafka — spaghetti integrations</div><p style="font-size:13px;color:var(--muted)">5 services = up to 20 direct connections. Order Service directly calls Restaurant Service, Notification Service, Analytics Service, Flink. Any one failing can cascade. Adding fraud detection means modifying Order Service code and coordinating deploys. Every connection is a failure point, a version conflict, a deployment dependency.</p></div>
+<div class="sc"><div class="sc-head"><span class="scd" style="background:var(--green)"></span>After Kafka — star topology</div><p style="font-size:13px;color:var(--muted)">Every service talks only to Kafka. Order Service publishes one event. Restaurant Service, Notification, Analytics, Flink, Fraud — each subscribes independently. Adding fraud detection later? Zero changes to Order Service. Zero coordination needed. N services = N connections to Kafka, not N² between services.</p></div>
+</div>
+
+<h2>In FoodFlash — What This Concretely Means</h2>
+<p>When a customer places an order, that single event must reach five different systems with completely different concerns. Without Kafka, Order Service would need to know about and call each one. With Kafka, it knows about none of them:</p>
+
+<div class="diagram">Customer clicks "Place Order" on the app
+         ↓
+[Order Service — Spring Boot]
+  - validates: restaurant open? capacity available? payment authorized?
+  - writes order to PostgreSQL (status=PENDING)
+  - publishes ONE event to Kafka: topic "order.created", key=orderId
+  - job done. returns 200 to customer. doesn't wait for anyone.
+         ↓
+[Kafka — order.created topic, partition-2, offset 1001]
+  Message sits on disk. Will stay for 7 days.
+         ↓ ↓ ↓ ↓ ↓
+  [Flink]      reads it → calculates ETA → assigns nearest agent
+  [Restaurant] reads it → sends notification to chef's tablet
+  [Notif Svc]  reads it → sends push notification to customer's phone
+  [Analytics]  reads it → increments city-level order counter on dashboard
+  [Fraud Svc]  reads it → checks patterns → flags suspicious orders
+
+All 5 read the SAME event, independently, at their own pace.
+Adding a 6th service (say, carbon footprint tracking) = subscribe to topic. Zero changes to Order Service.</div>
+
+<div class="cg">
+<div class="stat"><div class="sv">1M+</div><div class="sl">messages/sec per broker</div></div>
+<div class="stat"><div class="sv">&lt;10ms</div><div class="sl">P99 write latency</div></div>
+<div class="stat"><div class="sv">7 days</div><div class="sl">our order event retention</div></div>
+<div class="stat"><div class="sv">RF=3</div><div class="sl">every message on 3 disks</div></div>
+</div>
+
+<div class="sec-nav"><button class="nxt" onclick="show('logvsqueue')">Log vs Queue — the core difference →</button></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--  SECTION 2 — LOG VS QUEUE                                -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="logvsqueue" class="sec">
+<div class="eyebrow">Chapter 2 — Foundations</div>
+<h1>Log vs Queue — The Core Difference</h1>
+<p class="lead">This is the single most important concept to understand before anything else. A message queue (RabbitMQ, SQS, ActiveMQ) destroys messages after they're delivered. Kafka keeps messages on disk regardless of how many times they've been read, until a time-based retention period expires. This one difference changes everything.</p>
+
+<h2>How a Traditional Message Queue Works</h2>
+<p>Picture a queue as a to-do pile on a shared desk. You add a task, someone picks it up, the task is shredded — gone. That's RabbitMQ. Once a consumer processes a message and sends an acknowledgement, the broker deletes it permanently.</p>
+
+<div class="tl">
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(79,127,255,.15);border:2px solid var(--acc);color:var(--acc)">1</div>
+  <div class="tl-body"><div class="tl-t">Order Service publishes "order created" to RabbitMQ</div><div class="tl-d">Message enters the queue. It waits there for a consumer to pick it up.</div></div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(79,127,255,.15);border:2px solid var(--acc);color:var(--acc)">2</div>
+  <div class="tl-body"><div class="tl-t">Restaurant Service consumes it — RabbitMQ deletes the message</div><div class="tl-d">Restaurant Service receives the message, processes it, sends an ACK. RabbitMQ permanently deletes the message. It no longer exists anywhere.</div></div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(232,85,85,.15);border:2px solid var(--red);color:var(--red)">!</div>
+  <div class="tl-body"><div class="tl-t" style="color:var(--red)">Notification Service, Flink, Analytics — they get nothing</div><div class="tl-d">The message is gone. To send it to other services, you'd need to either: (a) publish separate copies to separate queues — now Order Service must know about every consumer, or (b) use RabbitMQ fan-out exchanges — still complex coupling. A new fraud detection service added three months later will never see historical orders. Ever.</div></div>
+</div>
+</div>
+
+<h2>How Kafka's Commit Log Works</h2>
+<p>Kafka is a physical log file on disk — like a ledger. Every message gets a sequential number called an offset and is appended to the end. Consumers read from the log by tracking their position. Reading does not delete. The message stays until the retention window expires.</p>
+
+<div class="tl">
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(51,201,122,.15);border:2px solid var(--green);color:var(--green)">1</div>
+  <div class="tl-body"><div class="tl-t">Order Service publishes — message written to disk at offset 1001</div><div class="tl-d">Written to partition-0 of <span class="ic">order.created</span> on kafka1's disk. Immediately replicated to kafka2 and kafka3 (RF=3). This message will exist on disk for the next 7 days regardless of anything.</div></div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(51,201,122,.15);border:2px solid var(--green);color:var(--green)">2</div>
+  <div class="tl-body"><div class="tl-t">Restaurant Service reads offset 1001 — message still on disk</div><div class="tl-d">restaurant-group reads offset 1001, processes it, stores its bookmark: "I've read up to 1001, give me 1002 next." The message at offset 1001 is completely untouched on disk.</div></div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(51,201,122,.15);border:2px solid var(--green);color:var(--green)">3</div>
+  <div class="tl-body"><div class="tl-t">Notification Service reads the same offset 1001 — still there</div><div class="tl-d">notification-group has its own independent bookmark. It reads offset 1001, sends the push notification, updates its bookmark. Neither group knows or affects the other.</div></div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(51,201,122,.15);border:2px solid var(--green);color:var(--green)">4</div>
+  <div class="tl-body"><div class="tl-t">Fraud detection added 3 months later — reads the entire history</div><div class="tl-d">fraud-group is a brand new consumer group. It has never read this topic before. Kafka has no record of it. With <span class="ic">auto.offset.reset=earliest</span>, it starts from offset 0 and reads every single order from the past 7 days (the retention window). No changes to Order Service needed. No re-publishing needed.</div></div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(113,113,113,.15);border:2px solid var(--dim);color:var(--muted)">7d</div>
+  <div class="tl-body"><div class="tl-t" style="color:var(--muted)">After 7 days — broker deletes the segment file</div><div class="tl-d">The Kafka broker's log cleaner thread deletes the segment containing offset 1001. This is based on time only — has nothing to do with whether anyone read it. Consumer state (bookmarks) are stored separately and are not deleted here.</div></div>
+</div>
+</div>
+
+<h2>Side-by-Side Comparison</h2>
+<table>
+<thead><tr><th>Capability</th><th>RabbitMQ / SQS</th><th>Kafka</th></tr></thead>
+<tbody>
+<tr><td>After consumer reads</td><td class="no">Message permanently deleted</td><td class="yes">Message stays on disk (until retention expires)</td></tr>
+<tr><td>Multiple consumers, same message</td><td class="no">Only one consumer gets it (or use exchange/fan-out, added complexity)</td><td class="yes">Unlimited consumer groups, each reads independently</td></tr>
+<tr><td>Add new service 3 months later, needs history</td><td class="no">Impossible. History is gone.</td><td class="yes">Set auto.offset.reset=earliest. Reads all history.</td></tr>
+<tr><td>Bug in processing code — replay last week</td><td class="no">Cannot. Data deleted.</td><td class="yes">Reset consumer group offset to last week. Replay through fixed code.</td></tr>
+<tr><td>Consumer crashes, back online after 2 hours</td><td class="mid">Depends on message TTL config</td><td class="yes">Reads from last committed bookmark. Zero messages lost.</td></tr>
+<tr><td>Throughput</td><td class="mid">~50–100k msg/sec</td><td class="yes">1M+ msg/sec per broker</td></tr>
+<tr><td>Message ordering</td><td class="mid">Per queue</td><td class="yes">Per partition (stronger guarantee)</td></tr>
+<tr><td>Complex routing (topic exchanges)</td><td class="yes">Excellent native support</td><td class="no">Not its strength — use topic naming conventions</td></tr>
+<tr><td>Request/response pattern</td><td class="yes">Well suited</td><td class="no">Not designed for it — use REST/gRPC</td></tr>
+</tbody>
+</table>
+
+<div class="callout ci"><strong>When to use which:</strong> If you need fan-out (same event → multiple independent consumers), replay, high throughput, or time-series — use Kafka. If you need complex routing logic, simple task queues where only one consumer should process each job, or request/response patterns — use RabbitMQ or SQS. In FoodFlash, every inter-service event uses Kafka. HTTP/gRPC is used only for synchronous request-response (e.g., customer app querying current order status).</div>
+
+<div class="sec-nav"><button class="nxt" onclick="show('arch')">Brokers, Zookeeper &amp; the cluster →</button></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--  SECTION 3 — ARCHITECTURE                                -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="arch" class="sec">
+<div class="eyebrow">Chapter 3 — Foundations</div>
+<h1>Brokers, Zookeeper &amp; the Cluster</h1>
+<p class="lead">A Kafka cluster is a group of broker processes (servers) coordinated by Zookeeper. Producers and consumers are clients that connect to brokers. Our cluster runs 3 brokers inside Docker containers on your M4 Mac — identical architecture to production, just smaller scale.</p>
+
+<h2>What a Broker Is</h2>
+<p>A broker is a single Kafka server process. Its responsibilities: receive messages from producers and write them to disk, replicate those messages to follower brokers, serve read requests from consumers, and participate in leader election when another broker dies.</p>
+<p>In a production cluster at Zomato scale, each broker is a dedicated physical machine with 32+ CPU cores, 128GB+ RAM, and 10TB+ of fast NVMe SSDs — because Kafka's performance bottleneck is disk I/O and network bandwidth. In our local setup, each broker is a Docker container sharing your M4 Max's hardware. Same behavior, same configuration flags, different scale.</p>
+
+<div class="diagram">YOUR M4 MAC (64GB RAM, M4 Max chip)
+│
+└── Docker Engine (Rancher Desktop)
+      │
+      ├── zookeeper container     port: 2181
+      │    Role: cluster coordinator — NOT a message store
+      │    Tracks: which brokers are alive
+      │             which broker is "leader" for each partition
+      │             cluster topology and config
+      │    Does NOT: store any message data
+      │
+      ├── kafka1 container        port: 9092 (external), 29092 (internal)
+      │    Stores: /var/kafka-logs/  ← actual message data on disk
+      │    Currently leads: P0, P3 of every topic
+      │    Also holds replicas: P1, P2, P4, P5 (copies from other leaders)
+      │
+      ├── kafka2 container        port: 9093 (external), 29093 (internal)
+      │    Currently leads: P1, P4
+      │    Also holds replicas: P0, P2, P3, P5
+      │
+      ├── kafka3 container        port: 9094 (external), 29094 (internal)
+      │    Currently leads: P2, P5
+      │    Also holds replicas: P0, P1, P3, P4
+      │
+      └── kafka-ui container      port: 8080
+           Read-only web dashboard. Connects to all 3 brokers.
+           NOT part of the Kafka cluster. Just a viewer.</div>
+
+<h2>Zookeeper — The Cluster's Nervous System</h2>
+<p>Zookeeper is a distributed coordination service built by Yahoo in 2008. Kafka uses it as a single source of truth for cluster state. Here's what it tracks and why:</p>
+
+<div class="card">
+<h3 style="margin-top:0">Job 1: Broker heartbeats (liveness tracking)</h3>
+<p style="font-size:13.5px">Every broker maintains a "session" with Zookeeper, sending heartbeats every 2 seconds. When kafka1 starts, it registers itself: <em>"I am broker 1, reachable at kafka1:29092."</em> If heartbeats stop for more than 10 seconds (configurable), Zookeeper declares the session expired and broadcasts to all remaining brokers: <em>"Broker 1 is dead."</em> This triggers leader election for any partitions that kafka1 was leading.</p>
+
+<h3>Job 2: Partition leader tracking</h3>
+<p style="font-size:13.5px">For each of our 6 partitions, Zookeeper stores: <em>"The leader for order.created partition-0 is broker 1."</em> Producers and consumers ask Zookeeper (or a broker that has cached this info): <em>"Who is the leader for partition-0?"</em> and route accordingly. When a leader dies and a new one is elected, Zookeeper is updated and all clients refresh their routing tables.</p>
+
+<h3>Job 3: Topic and configuration metadata</h3>
+<p style="font-size:13.5px">Kafka stores topic configurations (partition count, replication factor, retention settings) in Zookeeper. This is why you need Zookeeper running before you can create topics. Note: Kafka 3.x introduced KRaft mode — Kafka managing its own consensus without Zookeeper. Our setup uses the traditional Zookeeper model for compatibility with our Docker images.</p>
+</div>
+
+<h2>Why Two Listener Addresses in docker-compose?</h2>
+<p>This is a real production gotcha. Look at our config:</p>
+<pre><code><span class="pp">KAFKA_ADVERTISED_LISTENERS</span>: <span class="str">PLAINTEXT://kafka1:29092,PLAINTEXT_HOST://localhost:9092</span></code></pre>
+<p>Two listeners, two different addresses. Why? Because two different "networks" need to reach kafka1:</p>
+<div class="g2">
+<div class="sc">
+  <div class="sc-head"><span class="scd" style="background:var(--acc)"></span>kafka1:29092 — inside Docker network</div>
+  <p style="font-size:13px;color:var(--muted)">When Spring Boot Order Service runs inside Docker, it lives on the same bridge network as kafka1. The hostname <span class="ic">kafka1</span> resolves to kafka1's container IP. Other containers use this address. If they used <span class="ic">localhost:9092</span>, they'd be talking to their own container's loopback — a completely wrong address that silently fails.</p>
+</div>
+<div class="sc">
+  <div class="sc-head"><span class="scd" style="background:var(--teal)"></span>localhost:9092 — from your Mac terminal</div>
+  <p style="font-size:13px;color:var(--muted)">When you run <span class="ic">kafka-topics --bootstrap-server localhost:9092</span> from your Mac's terminal, <span class="ic">localhost</span> resolves to 127.0.0.1 on your Mac. Docker maps port 9092 on your Mac to kafka1's internal port 29092. This is how kafka-ui, your terminal commands, and any local test code reach the cluster.</p>
+</div>
+</div>
+<p>Without this split, you'd have to choose: either local tools work and containers don't, or containers work and local tools don't. The dual listener pattern solves both simultaneously.</p>
+
+<div class="sec-nav"><button class="nxt" onclick="show('topics')">Topics, Partitions &amp; Offsets →</button></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--  SECTION 4 — TOPICS, PARTITIONS & OFFSETS                -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="topics" class="sec">
+<div class="eyebrow">Chapter 4 — Core Mechanics</div>
+<h1>Topics, Partitions &amp; Offsets</h1>
+<p class="lead">A topic is a named category of events. A partition is a physical shard of that topic — an actual append-only log file on disk. An offset is a sequential integer that uniquely identifies each message within a partition. These three concepts are the foundation of everything else in Kafka.</p>
+
+<h2>What a Topic Is</h2>
+<p>A topic is the equivalent of a database table, except it's an append-only event stream rather than mutable rows. When you create the topic <span class="ic">order.created</span>, you're telling Kafka: "I want a named category where order-creation events will be stored, accessible to any service that wants them." Topics are identified purely by name — there's no schema enforcement by default (though schema registry can add this).</p>
+
+<h2>What a Partition Is — The Physical Reality</h2>
+<p>When you create a topic with 6 partitions, Kafka creates 6 independent directories on broker disks. Each partition is physically a sequence of segment files:</p>
+
+<pre><code><span class="cm"># Inside kafka1 container, for topic order.created, partition 0:</span>
+/var/kafka-logs/order.created-<span class="nm">0</span>/
+    00000000000000000000.log       <span class="cm"># messages: offset 0 → 999</span>
+    00000000000000000000.index     <span class="cm"># offset → byte position in .log file</span>
+    00000000000000000000.timeindex <span class="cm"># timestamp → offset lookup</span>
+    00000000000001000000.log       <span class="cm"># messages: offset 1000 → 1999</span>
+    00000000000001000000.index
+    00000000000002000000.log       <span class="cm"># messages: offset 2000 → present (active)</span>
+
+<span class="cm"># kafka2 has an IDENTICAL copy of this directory (it's a replica for P0)</span>
+<span class="cm"># kafka3 has an IDENTICAL copy too (RF=3 means 3 total copies)</span></code></pre>
+
+<p>The <span class="ic">.log</span> file is a raw binary file — each record is: 8 bytes for offset, 4 bytes for message size, 4 bytes for CRC checksum, 1 byte magic number, 1 byte attributes, 8 bytes timestamp, then the key bytes and value bytes. The <span class="ic">.index</span> file maps offsets to byte positions in the .log file so Kafka can jump to any offset in O(log n) time using binary search.</p>
+
+<h2>What an Offset Is</h2>
+<p>An offset is a monotonically increasing integer assigned to each message within a partition. Offset 0 is the first message ever written to a partition. Offset 1001 is the 1002nd. Offsets are per-partition — there's a separate offset sequence for each partition. Message #1001 in partition-0 and message #1001 in partition-1 are completely different messages.</p>
+<p>Offsets are how consumers track their position — "I have processed everything up to offset 1001 in partition-0." This bookmark is stored in an internal Kafka topic called <span class="ic">__consumer_offsets</span>, which we'll cover in depth in the Offsets chapter.</p>
+
+<h2>Our 6 FoodFlash Topics — Interactive</h2>
+<div class="topic-wrap">
+  <div class="tw-hdr">TOPIC: order.created <span class="tag tb">6 partitions</span><span class="tag tg">RF=3</span><span class="tag tt">retention: 7 days</span></div>
+  <div class="p-row"><span class="p-id">partition-0</span><div class="p-msgs" id="pm0"><div class="msg">order-AAA<span class="off">off:0</span></div><div class="msg">order-GGG<span class="off">off:1</span></div><div class="msg">order-MMM<span class="off">off:2</span></div></div><span class="p-broker">leader:kafka1</span></div>
+  <div class="p-row"><span class="p-id">partition-1</span><div class="p-msgs" id="pm1"><div class="msg">order-BBB<span class="off">off:0</span></div><div class="msg">order-HHH<span class="off">off:1</span></div><div class="msg">order-NNN<span class="off">off:2</span></div></div><span class="p-broker">leader:kafka2</span></div>
+  <div class="p-row"><span class="p-id">partition-2</span><div class="p-msgs" id="pm2"><div class="msg">order-CCC<span class="off">off:0</span></div><div class="msg">order-III<span class="off">off:1</span></div></div><span class="p-broker">leader:kafka3</span></div>
+  <div class="p-row"><span class="p-id">partition-3</span><div class="p-msgs" id="pm3"><div class="msg">order-DDD<span class="off">off:0</span></div><div class="msg">order-JJJ<span class="off">off:1</span></div><div class="msg">order-PPP<span class="off">off:2</span></div></div><span class="p-broker">leader:kafka1</span></div>
+  <div class="p-row"><span class="p-id">partition-4</span><div class="p-msgs" id="pm4"><div class="msg">order-EEE<span class="off">off:0</span></div><div class="msg">order-KKK<span class="off">off:1</span></div></div><span class="p-broker">leader:kafka2</span></div>
+  <div class="p-row"><span class="p-id">partition-5</span><div class="p-msgs" id="pm5"><div class="msg">order-FFF<span class="off">off:0</span></div><div class="msg">order-LLL<span class="off">off:1</span></div><div class="msg">order-RRR<span class="off">off:2</span></div></div><span class="p-broker">leader:kafka3</span></div>
+  <div style="margin-top:16px;"><button class="btn" onclick="addMsg()">+ Produce a message</button></div>
+  <div style="margin-top:10px;font-size:11px;color:var(--dim)">Messages route to partitions via hash(key) % 6. Same key always lands on the same partition — ordering guaranteed within a partition.</div>
+</div>
+
+<h2>Why 6 Partitions — The Parallelism Math</h2>
+<p>The number of partitions sets the ceiling on how many consumer instances can read in parallel. With 6 partitions, you can have at most 6 active readers in one consumer group simultaneously — one per partition. A 7th consumer would sit idle; Kafka cannot split one partition between two consumers.</p>
+<p>We chose 6 because it's divisible by 1, 2, 3, and 6 — meaning we can scale Order Service to 1, 2, 3, or 6 instances and partitions will always distribute evenly without any idle consumers. This is a deliberate, permanent architectural choice — you can increase partition count later but reducing it requires recreating the topic and migrating data.</p>
+
+<h2>Ordering Guarantees — What's Promised and What Isn't</h2>
+<div class="g2">
+<div class="sc">
+  <div class="sc-head"><span class="scd" style="background:var(--green)"></span>Guaranteed: ordering within one partition</div>
+  <p style="font-size:13px;color:var(--muted)">All messages within a single partition are strictly ordered by offset. If order-AAA (offset 0) was written before order-GGG (offset 1), every consumer that reads partition-0 will always see order-AAA first. Always. This is an iron-clad guarantee enforced by the append-only log structure and by Kafka's replication protocol.</p>
+</div>
+<div class="sc">
+  <div class="sc-head"><span class="scd" style="background:var(--amber)"></span>Not guaranteed: ordering across partitions</div>
+  <p style="font-size:13px;color:var(--muted)">order-AAA (partition-0) and order-BBB (partition-1) were written in that order, but are handled by different consumer threads with no coordination. There's no global ordering. If your business logic requires global ordering across all messages, you must use 1 partition — but that eliminates all parallelism. Design your keys to avoid this requirement.</p>
+</div>
+</div>
+
+<div class="ann"><span class="ann-t">FoodFlash design decision</span>We use <span class="ic">orderId</span> as the message key for <span class="ic">order.created</span> and <span class="ic">order.status</span>. Kafka hashes the key: <span class="ic">partition = hash("order-AAA") % 6 = 2</span>. All events for order-AAA always land on partition-2. The consumer reading partition-2 sees order-AAA's entire lifecycle in exact order: PENDING → CONFIRMED → PREPARING → PICKED_UP → DELIVERED. This is ordering where it matters, without sacrificing global parallelism.</div>
+
+<div class="sec-nav"><button class="nxt" onclick="show('replication')">Replication — RF=3 in complete detail →</button></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--  SECTION 5 — REPLICATION                                 -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="replication" class="sec">
+<div class="eyebrow">Chapter 5 — Core Mechanics</div>
+<h1>Replication — RF=3 in Complete Detail</h1>
+<p class="lead">Replication Factor 3 means every message you write is stored on three separate broker disks simultaneously. One broker is the "leader" for each partition and handles all reads and writes. The other two are "followers" — they continuously replicate every message from the leader and stand ready to take over instantly the moment the leader dies. This is how Kafka guarantees zero data loss even when machines fail.</p>
+
+<h2>The Complete Write Path — What Happens When Spring Boot Publishes a Message</h2>
+<div class="tl">
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(79,127,255,.15);border:2px solid var(--acc);color:var(--acc)">1</div>
+  <div class="tl-body">
+    <div class="tl-t">Spring Boot calls producer.send()</div>
+    <div class="tl-d">The Kafka producer client (inside your Spring Boot jar) looks up its cached metadata: "Who is the leader for order.created partition-0?" The answer is kafka1. The producer opens a TCP connection to kafka1:29092 and sends the message. The message payload is: key=orderId, value=JSON, headers=timestamp+traceId.</div>
+  </div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(79,127,255,.15);border:2px solid var(--acc);color:var(--acc)">2</div>
+  <div class="tl-body">
+    <div class="tl-t">kafka1 appends to its local log file</div>
+    <div class="tl-d">kafka1 writes the message to its active segment file: <span class="ic">/var/kafka-logs/order.created-0/00002000.log</span>, assigning it offset 2001. This is a sequential disk write — extremely fast (microseconds) because modern SSDs and HDDs are optimized for sequential I/O.</div>
+  </div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(79,127,255,.15);border:2px solid var(--acc);color:var(--acc)">3</div>
+  <div class="tl-body">
+    <div class="tl-t">Followers fetch the new message (asynchronously)</div>
+    <div class="tl-d">kafka2 and kafka3 are followers for partition-0. They each run a "replication fetch" loop — continuously asking the leader: <em>"Give me all messages after offset 2000."</em> kafka1 responds with the new offset 2001 message. Both kafka2 and kafka3 write it to their own disks. This happens independently and continuously, regardless of whether anyone is reading the topic.</div>
+  </div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(79,127,255,.15);border:2px solid var(--acc);color:var(--acc)">4</div>
+  <div class="tl-body">
+    <div class="tl-t">ISR (In-Sync Replicas) confirm — what acks=all means</div>
+    <div class="tl-d">The <strong>In-Sync Replica set (ISR)</strong> is the list of follower brokers that are caught up within a configurable lag threshold. With <span class="ic">acks=all</span> (which we use for order.created), kafka1 does NOT acknowledge the producer until every broker in the ISR has confirmed they've persisted offset 2001. So the producer's <span class="ic">producer.send()</span> call blocks until all 3 brokers confirm. This adds ~5–10ms latency but guarantees that even if kafka1 crashes immediately after sending the ack, the message is already on kafka2 and kafka3.</div>
+  </div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(51,201,122,.15);border:2px solid var(--green);color:var(--green)">✓</div>
+  <div class="tl-body">
+    <div class="tl-t">Producer receives "success" — message on 3 disks</div>
+    <div class="tl-d">Spring Boot's <span class="ic">producer.send()</span> returns. The message is durably stored on kafka1, kafka2, and kafka3. The cluster can lose any one of these machines entirely and suffer zero data loss. This is what makes Kafka production-grade.</div>
+  </div>
+</div>
+</div>
+
+<h2>Leader Distribution — Why It Matters</h2>
+<p>With 6 partitions and 3 brokers, Kafka distributes leader responsibilities evenly — 2 leader partitions per broker. This is crucial: if all 6 leaders lived on kafka1, it would handle 100% of all write and read traffic while kafka2 and kafka3 sat idle holding only replicas. Traffic distribution is:</p>
+<div class="broker-row">
+  <div class="broker alive"><span class="b-badge" style="background:var(--acc2);color:#fff">LEADS P0, P3</span><div style="margin-top:8px" class="b-name">kafka1</div><div class="b-port">:9092</div><div class="b-parts"><div class="bp l">P0</div><div class="bp l">P3</div><div class="bp r">R1</div><div class="bp r">R2</div><div class="bp r">R4</div><div class="bp r">R5</div></div><div style="font-size:10px;color:var(--muted);margin-top:8px">Leads P0,P3 — Has replicas of P1,2,4,5</div></div>
+  <div class="broker alive"><span class="b-badge" style="background:var(--teal);color:#000">LEADS P1, P4</span><div style="margin-top:8px" class="b-name">kafka2</div><div class="b-port">:9093</div><div class="b-parts"><div class="bp l" style="border-color:rgba(31,200,176,.5);color:var(--teal)">P1</div><div class="bp l" style="border-color:rgba(31,200,176,.5);color:var(--teal)">P4</div><div class="bp r">R0</div><div class="bp r">R2</div><div class="bp r">R3</div><div class="bp r">R5</div></div><div style="font-size:10px;color:var(--muted);margin-top:8px">Leads P1,P4 — Has replicas of P0,2,3,5</div></div>
+  <div class="broker alive"><span class="b-badge" style="background:var(--purple);color:#fff">LEADS P2, P5</span><div style="margin-top:8px" class="b-name">kafka3</div><div class="b-port">:9094</div><div class="b-parts"><div class="bp l" style="border-color:rgba(139,110,245,.5);color:var(--purple)">P2</div><div class="bp l" style="border-color:rgba(139,110,245,.5);color:var(--purple)">P5</div><div class="bp r">R0</div><div class="bp r">R1</div><div class="bp r">R3</div><div class="bp r">R4</div></div><div style="font-size:10px;color:var(--muted);margin-top:8px">Leads P2,P5 — Has replicas of P0,1,3,4</div></div>
+</div>
+<p>Notice: kafka1 leads P0 and P3. kafka2 leads P1 and P4. kafka3 leads P2 and P5. Each broker also holds replicas of the other brokers' leader partitions. So kafka1 has a full copy of P1, P2, P4, P5 — it just doesn't handle reads/writes for them unless it's elected leader. This is what "preferred leader election" means — Kafka tries to evenly distribute leaders across healthy brokers.</p>
+
+<div class="sec-nav"><button class="nxt" onclick="show('producers')">Producers, keys &amp; message routing →</button></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--  SECTION 6 — PRODUCERS                                   -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="producers" class="sec">
+<div class="eyebrow">Chapter 6 — Core Mechanics</div>
+<h1>Producers, Keys &amp; Message Routing</h1>
+<p class="lead">A producer publishes messages to a Kafka topic. The message key is the most consequential decision a producer makes — it determines which partition the message lands in, which determines ordering, load distribution, and which consumer instance processes it. Get the key wrong and you get hot partitions, broken ordering, and wasted parallelism.</p>
+
+<h2>How Partition Selection Works</h2>
+<p>When a producer sends a message, Kafka must decide which of the 6 partitions to put it in. The logic is:</p>
+<pre><code><span class="cm">// If message has a key:</span>
+partition = murmur2_hash(key) % numPartitions
+<span class="cm">// murmur2 is a fast, deterministic hash function
+// Same key → same hash → same partition, always, forever
+// "order-AAA" always maps to partition-2 (for example)
+// Even after broker restarts, partition count changes would break this
+// (which is why you don't change partition count on live topics)</span>
+
+<span class="cm">// If message has no key:</span>
+<span class="cm">// Kafka uses a "sticky partitioner" (Kafka 2.4+) — batches messages to one
+// partition until the batch is full, then switches. Old behavior was pure round-robin.</span>
+<span class="cm">// Either way: no ordering guarantee, but even load distribution.</span></code></pre>
+
+<h2>Key Strategy in FoodFlash — and the Reasoning</h2>
+<table>
+<thead><tr><th>Topic</th><th>Key Choice</th><th>Why This Key</th><th>What Breaks If Wrong</th></tr></thead>
+<tbody>
+<tr><td>order.created</td><td class="yes">orderId (UUID)</td><td>All downstream services need to correlate events by order. Same orderId → same partition → all events arrive in sequence at the same consumer instance.</td><td>Without a key: order-AAA's PENDING could land on partition-0 and DELIVERED on partition-3. Two different consumer instances. Status could appear out of order to Flink ETA calculator.</td></tr>
+<tr><td>order.status</td><td class="yes">orderId (UUID)</td><td>Status transitions must be strictly ordered: PENDING → CONFIRMED → PREPARING → PICKED_UP → DELIVERED. A consumer must see them in this order.</td><td>Without key: DELIVERED could be processed before CONFIRMED. Chef's tablet shows wrong state. Customer tracking shows delivered before picked up.</td></tr>
+<tr><td>location.update</td><td class="yes">agentId (UUID)</td><td>Each agent's location pings are a time-series. To calculate speed, direction, or ETA, Flink needs each agent's pings in order.</td><td>Without key: agent-X's ping at 3:00pm might arrive before ping at 2:59pm. Distance calculations are corrupted.</td></tr>
+<tr><td>chat.message</td><td class="yes">orderId</td><td>Messages in a conversation must appear in send order to both customer and driver.</td><td>Without key: "Are you nearby?" might display after "I've arrived" — confusing conversation order.</td></tr>
+<tr><td>chat.typing</td><td class="no">null (no key)</td><td>Typing indicators are ephemeral and have no state dependency. Lost or out-of-order = acceptable.</td><td>N/A — no meaningful impact from out-of-order typing events.</td></tr>
+<tr><td>analytics.events</td><td class="no">null (no key)</td><td>Aggregation operations (count orders per city per hour) don't require per-event ordering.</td><td>N/A — Spark/Flink aggregation handles unordered streams natively.</td></tr>
+</tbody>
+</table>
+
+<h2>The Hot Partition Problem — A Silent Killer</h2>
+<p>If your key has low cardinality (few distinct values), most messages pile up on a few partitions while the rest sit idle. This is called a hot partition and it destroys both performance and the parallelism benefit of having multiple partitions.</p>
+<div class="sc">
+  <div class="sc-head"><span class="scd" style="background:var(--red)"></span>Bad key example: city name as key for order.created</div>
+  <div class="diagram" style="padding:14px;margin:8px 0">key="Hyderabad" → murmur2("Hyderabad") % 6 = 3 → partition-3
+key="Mumbai"    → murmur2("Mumbai") % 6 = 1    → partition-1
+key="Bangalore" → murmur2("Bangalore") % 6 = 3 → partition-3 (collision!)
+
+Result: Hyderabad + Bangalore orders → ALL on kafka1 (which leads P3)
+        kafka1 handling 60% of traffic
+        kafka2, kafka3 partially idle
+        partition-0, 2, 4, 5 mostly empty
+        Consumer assigned P3 drowning in work
+        Consumer assigned P0 sitting idle</div>
+</div>
+<div class="sc">
+  <div class="sc-head"><span class="scd" style="background:var(--green)"></span>Good key: orderId (UUID — extremely high cardinality)</div>
+  <div class="diagram" style="padding:14px;margin:8px 0">1000 orders in an hour → 1000 different UUIDs → hash spreads evenly
+partition-0: ~167 orders (kafka1 handles this load)
+partition-1: ~166 orders (kafka2 handles this load)
+partition-2: ~167 orders (kafka3 handles this load)
+partition-3: ~167 orders (kafka1 handles this load)
+partition-4: ~166 orders (kafka2 handles this load)
+partition-5: ~167 orders (kafka3 handles this load)
+All 3 brokers share load evenly. All 6 consumers have work. ✅</div>
+</div>
+
+<h2>Producer Acknowledgement Settings (acks) — Durability vs Speed</h2>
+<p>The <span class="ic">acks</span> setting controls how many brokers must confirm a write before the producer considers it successful. This is a direct tradeoff between write latency and durability:</p>
+<table>
+<thead><tr><th>Setting</th><th>What happens</th><th>Latency</th><th>Risk</th><th>FoodFlash uses for</th></tr></thead>
+<tbody>
+<tr><td><span class="ic">acks=0</span></td><td>Producer sends and immediately moves on. No confirmation from any broker. Fire and forget.</td><td class="yes">Lowest possible</td><td class="no">Message can vanish without trace — broker could be down, full disk, network drop — producer never knows</td><td>chat.typing (losing a typing indicator has zero business impact)</td></tr>
+<tr><td><span class="ic">acks=1</span></td><td>Leader writes to its disk and confirms. Followers replicate asynchronously afterward.</td><td class="mid">Low (+2–3ms)</td><td class="mid">If leader dies between ack and follower replication, message is lost. Small window, but exists.</td><td>location.update (next ping comes in 3 seconds — one lost ping is acceptable)</td></tr>
+<tr><td><span class="ic">acks=all</span></td><td>Leader waits for all ISR followers to confirm, then sends ack. Message on all 3 disks before success.</td><td class="no">Higher (+5–15ms)</td><td class="yes">Zero data loss even if leader dies immediately after ack. Strongest possible guarantee.</td><td>order.created, order.status, chat.message (business impact of loss is too high)</td></tr>
+</tbody>
+</table>
+
+<div class="sec-nav"><button class="nxt" onclick="show('consumers')">Consumer groups — how independent readers work →</button></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--  SECTION 7 — CONSUMERS                                   -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="consumers" class="sec">
+<div class="eyebrow">Chapter 7 — Core Mechanics</div>
+<h1>Consumer Groups — How Independent Readers Work</h1>
+<p class="lead">A consumer group is a named team of consumer instances that collaborate to read a topic. Each partition is assigned to exactly one instance within the group at any time — so instances share the work without duplicating it. Multiple independent groups can read the same topic simultaneously with no coordination and no interference with each other.</p>
+
+<h2>The Two Rules That Govern Everything</h2>
+<div class="callout ci">
+<strong>Rule 1 — Within one consumer group:</strong> each partition is exclusively owned by exactly one consumer instance at any moment. Two instances in the same group cannot both process messages from the same partition simultaneously. Kafka enforces this at the protocol level — it's not something you manage in code.<br><br>
+<strong>Rule 2 — Across different consumer groups:</strong> every group gets a completely independent view of the topic. They each track their own position independently. One group's position, speed, or failures have zero effect on any other group. The same message is delivered to every group.
+</div>
+
+<h2>All Four Groups on order.created — Visualized</h2>
+<div class="topic-wrap">
+  <div class="tw-hdr">TOPIC: order.created — 4 independent consumer groups, all reading the same 6 partitions</div>
+  <div class="sc" style="margin:10px 0;border-color:rgba(79,127,255,.3)">
+    <div class="sc-head"><span class="scd" style="background:var(--acc)"></span>order-service-group — 3 Spring Boot instances — processes orders into PostgreSQL</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Each instance owns 2 partitions. They collectively process every new order. If you scale to 6 instances, each owns 1 partition — maximum parallelism. If you scale to 2 instances, one owns 4 partitions and one owns 2 — uneven but functional.</p>
+    <div style="font-family:var(--mono);font-size:12px;color:var(--muted)">instance-1 → <span style="color:var(--acc)">partition-0, partition-1</span> (committed offset: 1001, 998)<br>instance-2 → <span style="color:var(--acc)">partition-2, partition-3</span> (committed offset: 999, 1003)<br>instance-3 → <span style="color:var(--acc)">partition-4, partition-5</span> (committed offset: 1000, 997)</div>
+  </div>
+  <div class="sc" style="margin:10px 0;border-color:rgba(31,200,176,.3)">
+    <div class="sc-head"><span class="scd" style="background:var(--teal)"></span>notification-group — 6 Go instances — sends push notifications via FCM</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Maximum parallelism: 6 instances for 6 partitions. One consumer per partition. Its committed offsets are slightly behind order-service-group — that's fine, they're tracking independently.</p>
+    <div style="font-family:var(--mono);font-size:12px;color:var(--muted)">instance-1→P0 (offset:995) &nbsp; instance-2→P1 (offset:992) &nbsp; instance-3→P2 (offset:990)<br>instance-4→P3 (offset:997) &nbsp; instance-5→P4 (offset:991) &nbsp; instance-6→P5 (offset:993)</div>
+  </div>
+  <div class="sc" style="margin:10px 0;border-color:rgba(139,110,245,.3)">
+    <div class="sc-head"><span class="scd" style="background:var(--purple)"></span>flink-eta-group — 2 Flink task managers — calculates delivery ETA</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Flink is stateful stream processing. 2 instances for 6 partitions — each handles 3 partitions. Flink tracks its own internal checkpointed state on top of Kafka offsets.</p>
+    <div style="font-family:var(--mono);font-size:12px;color:var(--muted)">taskmanager-1 → <span style="color:var(--purple)">P0, P1, P2</span> (offsets: 998, 995, 993)<br>taskmanager-2 → <span style="color:var(--purple)">P3, P4, P5</span> (offsets: 1000, 990, 996)</div>
+  </div>
+  <div class="sc" style="margin:10px 0;border-color:rgba(240,160,21,.3)">
+    <div class="sc-head"><span class="scd" style="background:var(--amber)"></span>analytics-group — 1 Spark driver — updates admin dashboards (naturally behind)</div>
+    <p style="font-size:13px;color:var(--muted)">A single Spark instance reading all 6 partitions. It's ~20 messages behind (lag=120 across all partitions). This is completely normal — Spark batch processing is slower than Go/Spring consumers. This group's lag does not affect any other group.</p>
+  </div>
+</div>
+
+<h2>Why "Two Consumers Both Read offset 1001" Is Possible</h2>
+<p>The rule is "one partition per consumer <em>per group</em>." Different groups each have their own independent assignment. So order-service-group's instance-1 owns partition-0 within order-service-group. notification-group's instance-1 also owns partition-0 within notification-group. They don't share — each group independently tracks its position in <span class="ic">__consumer_offsets</span> under its own group ID key. No coordination, no shared state, no interference.</p>
+
+<h2>Idle Consumers — The Hard Ceiling</h2>
+<p>You can never benefit from more consumer instances than partitions. The 7th instance in a 6-partition topic gets zero partition assignments and sits idle forever, consuming memory and CPU for nothing. This is a hard limit enforced by Kafka — a partition cannot be split between two consumers in the same group. Design your partition count with your expected maximum parallelism in mind.</p>
+
+<div class="sec-nav"><button class="nxt" onclick="show('offsets')">Offsets — bookmarks, commits &amp; replay →</button></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--  SECTION 8 — OFFSETS                                     -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="offsets" class="sec">
+<div class="eyebrow">Chapter 8 — Core Mechanics</div>
+<h1>Offsets — Bookmarks, Commits &amp; Replay</h1>
+<p class="lead">An offset is the address of a message within a partition. Consumer groups track their reading position by storing their current offset in an internal Kafka topic called __consumer_offsets. This design — positions stored inside Kafka itself — is what enables independent consumers, crash recovery, replay, and new service catchup. It's also why resetting consumer positions requires stopping the service first.</p>
+
+<h2>__consumer_offsets — What It Is and Why It Exists</h2>
+<p>In Kafka's earliest versions, consumer offsets were stored in Zookeeper. This turned out to be a bottleneck — Zookeeper is optimized for rare configuration reads, not the high-frequency small writes that offset commits generate (potentially thousands per second across a large cluster). Since Kafka 0.9 (2015), offsets are stored in an internal Kafka topic: <span class="ic">__consumer_offsets</span>.</p>
+<p>This topic has 50 partitions (so offset commits can be distributed across brokers) and RF=3 (so offset data survives broker failures). When a consumer commits its position, it writes a record to this topic:</p>
+<pre><code><span class="cm">// Record written to __consumer_offsets when consumer commits:</span>
+key:   group_id=<span class="str">"order-service-group"</span> + topic=<span class="str">"order.created"</span> + partition=<span class="nm">0</span>
+value: offset=<span class="nm">1002</span>  metadata=<span class="str">"processed at 2025-01-15T14:32:11"</span>  timestamp=<span class="nm">1736944331000</span>
+
+<span class="cm">// This means: "order-service-group has processed everything up to and including
+// offset 1001 in partition-0 of order.created.
+// Next time this group reads partition-0, start from offset 1002."</span></code></pre>
+<p>Because <span class="ic">__consumer_offsets</span> is itself a Kafka topic with RF=3, your consumer positions survive any single broker failure. Even if kafka1 dies, the offset record is on kafka2 and kafka3.</p>
+
+<h2>Current Offset State — Interactive</h2>
+<div class="otbl">
+  <div style="font-size:11px;color:var(--dim);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--b)">__consumer_offsets snapshot — partition-0 of order.created (latest written offset: 1200)</div>
+  <div class="orow"><span class="og" style="color:var(--acc)">order-service-group / P0</span><span class="ov" id="ov1" style="color:var(--acc)">1001</span><div class="ob-w"><div class="ob" id="ob1" style="width:83%;background:var(--acc)"></div></div><span class="lag" id="lag1">lag: 199</span></div>
+  <div class="orow"><span class="og" style="color:var(--teal)">notification-group / P0</span><span class="ov" id="ov2" style="color:var(--teal)">995</span><div class="ob-w"><div class="ob" id="ob2" style="width:82%;background:var(--teal)"></div></div><span class="lag" id="lag2">lag: 205</span></div>
+  <div class="orow"><span class="og" style="color:var(--purple)">flink-eta-group / P0</span><span class="ov" id="ov3" style="color:var(--purple)">998</span><div class="ob-w"><div class="ob" id="ob3" style="width:83%;background:var(--purple)"></div></div><span class="lag" id="lag3">lag: 202</span></div>
+  <div class="orow"><span class="og" style="color:var(--amber)">analytics-group / P0</span><span class="ov" id="ov4" style="color:var(--amber)">980</span><div class="ob-w"><div class="ob" id="ob4" style="width:81%;background:var(--amber)"></div></div><span class="lag" id="lag4">lag: 220 (Spark is slower — normal)</span></div>
+  <div class="orow"><span class="og" style="color:var(--pink)">fraud-group / P0 <span style="color:var(--dim)">(new service catching up)</span></span><span class="ov" id="ov5" style="color:var(--pink)">0</span><div class="ob-w"><div class="ob" id="ob5" style="width:0%;background:var(--pink)"></div></div><span class="lag" id="lag5">lag: 1200 — reading history</span></div>
+  <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+    <button class="btn" onclick="advOff()">Simulate processing (all groups advance)</button>
+    <button class="btn am" onclick="resetFraud()">Reset fraud-group → offset 0 (replay from beginning)</button>
+  </div>
+</div>
+
+<h2>Why You Must Stop the Service Before Resetting Its Offset</h2>
+<p>This is one of the most important operational facts about Kafka, and it's non-obvious. Here's exactly what happens if you try to reset while the service is running:</p>
+<div class="sc">
+  <div class="sc-head"><span class="scd" style="background:var(--red)"></span>Reset without stopping — race condition, reset silently fails</div>
+  <pre style="background:transparent;border:none;padding:0;font-size:12.5px;line-height:1.9;color:var(--muted)">T=0ms:    Service instance reads offset 1001 from partition-0
+T=30ms:   Service processes it → INSERT INTO orders WHERE id=?
+T=60ms:   Service calls consumer.commitSync()
+          → writes to __consumer_offsets: {order-service-group, order.created, P0} = 1002
+T=100ms:  YOU run kafka-consumer-groups --reset-offsets --to-earliest --execute
+          → writes to __consumer_offsets: {order-service-group, order.created, P0} = 0
+T=130ms:  Service reads offset 1002, processes it, calls commitSync()
+          → writes to __consumer_offsets: {order-service-group, order.created, P0} = 1003
+          ← THIS OVERWRITES YOUR RESET. Your reset to 0 is gone.
+T=160ms:  Service reads offset 1003. Continues normally. Reset had zero effect. ❌</pre>
+</div>
+<div class="sc">
+  <div class="sc-head"><span class="scd" style="background:var(--green)"></span>Correct procedure — stop, reset, restart</div>
+  <pre style="background:transparent;border:none;padding:0;font-size:12.5px;line-height:1.9;color:var(--muted)">Step 1: kubectl scale deployment order-service --replicas=0
+        → K8s kills all pods. Zero processes are committing offsets. Silence.
+
+Step 2: kafka-consumer-groups --bootstrap-server kafka1:29092 \
+          --group order-service-group \
+          --topic order.created \
+          --reset-offsets --to-earliest --execute
+        → Kafka writes: {order-service-group, order.created, P0} = 0
+                        {order-service-group, order.created, P1} = 0
+                        ... (all 6 partitions reset to 0)
+        Nothing overwrites this. The reset persists.
+
+Step 3: kubectl scale deployment order-service --replicas=3
+        → New pods start, register with consumer group
+        → Read __consumer_offsets: "group says start from offset 0"
+        → Begin reading from the beginning. Replay in progress. ✅</pre>
+</div>
+
+<h2>Three Ways to Reset — When to Use Each</h2>
+<pre><code><span class="cm"># 1. Reset to the absolute beginning — replay all retained history</span>
+kafka-consumer-groups --bootstrap-server kafka1:29092 \
+  --group flink-eta-group --topic order.created \
+  --reset-offsets --to-earliest --execute
+
+<span class="cm"># 2. Reset to a specific timestamp — replay from exactly 2pm yesterday</span>
+<span class="cm"># Use when: "the bug was deployed at 3pm, re-process from before that"</span>
+kafka-consumer-groups --bootstrap-server kafka1:29092 \
+  --group flink-eta-group --topic order.created \
+  --reset-offsets --to-datetime <span class="str">2025-01-14T14:00:00.000</span> --execute
+
+<span class="cm"># 3. Reset to a specific offset number — precise surgical replay</span>
+kafka-consumer-groups --bootstrap-server kafka1:29092 \
+  --group flink-eta-group --topic order.created \
+  --reset-offsets --to-offset <span class="nm">500</span> --execute</code></pre>
+
+<div class="sec-nav"><button class="nxt" onclick="show('brokerdeath')">When a broker dies — full walkthrough →</button></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--  SECTION 9 — BROKER DEATH                                -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="brokerdeath" class="sec">
+<div class="eyebrow">Chapter 9 — Advanced L5</div>
+<h1>When a Broker Dies — Full Walkthrough</h1>
+<p class="lead">You asked exactly the right question: "If kafka1 dies, it was leader for P0 and P3. Do those partitions go dark until kafka1 comes back? What happens to all the messages going to P0 and P3 while kafka1 is down?" This chapter answers that completely — with the exact sequence of events and the reason zero data is lost.</p>
+
+<h2>The Critical Misunderstanding — Clarified First</h2>
+<p>When we say "kafka1 is the leader for P0 and P3," we mean kafka1 is <em>currently responsible for handling reads and writes</em> for those partitions. <strong>It does NOT mean kafka1 is the only place where P0 and P3 data exists.</strong></p>
+<p>Because RF=3, every message ever written to P0 is already on kafka1 AND kafka2 AND kafka3. All three brokers have identical copies of P0's data (up to the replication lag, which with acks=all is zero). The "leader" label is just a routing designation — who handles traffic. The moment the leader dies, the routing label can be moved to any follower that has all the data. And they do — because they've been continuously replicating in real-time.</p>
+
+<div class="callout ci"><strong>Analogy:</strong> Three identical textbooks, one assigned to be the "primary" reference. If the primary is lost, you immediately promote one of the other two — which have identical content. No information was lost. The only thing that changed was which book you point to.</div>
+
+<h2>The Exact Timeline When kafka1 Dies at 3:00pm</h2>
+<div id="bd-timeline" class="tl">
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(232,85,85,.2);border:2px solid var(--red);color:var(--red)">💥</div>
+  <div class="tl-body">
+    <div class="tl-t" style="color:var(--red)">T=0s — kafka1 process crashes (OOM, hardware failure, docker kill)</div>
+    <div class="tl-d">The kafka1 container is dead. It was leading P0 and P3 across all topics. kafka2 and kafka3 are still running, each holding complete replica copies of P0 and P3. These replicas are not "stale backups" — they were continuously receiving every single message kafka1 received (with acks=all, they were fully in sync before any message was acknowledged).</div>
+  </div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(240,160,21,.2);border:2px solid var(--amber);color:var(--amber)">5s</div>
+  <div class="tl-body">
+    <div class="tl-t" style="color:var(--amber)">T=5s — Zookeeper detects the missing heartbeat</div>
+    <div class="tl-d">kafka1 was sending a heartbeat to Zookeeper every 2 seconds. Zookeeper waits for the configured session timeout (default: 6 seconds). At 5s of silence, Zookeeper declares the session expired and emits a "broker 1 is dead" event to all remaining brokers. kafka2 and kafka3 receive this notification.</div>
+  </div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(240,160,21,.2);border:2px solid var(--amber);color:var(--amber)">6s</div>
+  <div class="tl-body">
+    <div class="tl-t" style="color:var(--amber)">T=6s — Kafka Controller checks the ISR for P0 and P3</div>
+    <div class="tl-d">One broker in the cluster acts as the "Controller" — elected once at cluster startup. The Controller is responsible for managing leader elections. It checks the ISR (In-Sync Replica set) for partition-0: the ISR was [kafka1, kafka2, kafka3]. kafka1 is dead, so eligible candidates are kafka2 and kafka3 — both have complete data. The Controller picks kafka2 as the new leader for P0. For partition-3, it picks kafka3.</div>
+  </div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(51,201,122,.2);border:2px solid var(--green);color:var(--green)">7s</div>
+  <div class="tl-body">
+    <div class="tl-t" style="color:var(--green)">T=7s — kafka2 becomes leader for P0; kafka3 becomes leader for P3</div>
+    <div class="tl-d">kafka2 updates its internal state: "I am now the leader for P0." kafka3 updates: "I am now the leader for P3." Zookeeper is updated with the new leader assignments. The cluster metadata is propagated. Total time from crash to new leader: about 7 seconds.</div>
+  </div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(51,201,122,.2);border:2px solid var(--green);color:var(--green)">9s</div>
+  <div class="tl-body">
+    <div class="tl-t" style="color:var(--green)">T=9s — Producer and consumer clients automatically reroute</div>
+    <div class="tl-d">The Kafka producer client library (inside your Spring Boot jar) has built-in retry and metadata refresh logic. When it tries to send a message to kafka1 (the old leader for P0) and gets a connection error or a "not a leader" error, it automatically re-fetches cluster metadata from any available broker, discovers kafka2 is now the leader for P0, and starts sending there. No code changes. No service restart. The retry is transparent.</div>
+  </div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(79,127,255,.2);border:2px solid var(--acc);color:var(--acc)">10s</div>
+  <div class="tl-body">
+    <div class="tl-t">T=10s — Cluster fully operational with 2 brokers</div>
+    <div class="tl-d">All 6 partitions have live leaders: P0→kafka2, P1→kafka2, P2→kafka3, P3→kafka3, P4→kafka2, P5→kafka3. kafka2 and kafka3 are now each leading 3 partitions (they took over kafka1's partitions). All producers and consumers have rerouted. Zero data was lost because acks=all guaranteed everything was on all 3 disks before any message was acknowledged.</div>
+  </div>
+</div>
+</div>
+
+<h2>Interactive: Simulate kafka1 Death and Recovery</h2>
+<div style="background:#060810;border:1px solid var(--b);border-radius:12px;padding:28px;margin:24px 0;">
+  <div class="broker-row" id="bd-brokers">
+    <div class="broker alive" id="bdb1">
+      <span class="b-badge" id="bdb1-badge" style="background:var(--acc2);color:#fff">LEADER P0,P3</span>
+      <div style="margin-top:8px" class="b-name">kafka1</div><div class="b-port">:9092</div>
+      <div class="b-parts" id="bdb1-parts">
+        <div class="bp l">P0</div><div class="bp l">P3</div>
+        <div class="bp r">R1</div><div class="bp r">R2</div><div class="bp r">R4</div><div class="bp r">R5</div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:8px" id="bdb1-sub">Leads P0,P3 — Replica P1,2,4,5</div>
+    </div>
+    <div class="broker alive" id="bdb2">
+      <span class="b-badge" id="bdb2-badge" style="background:var(--teal);color:#000">LEADER P1,P4</span>
+      <div style="margin-top:8px" class="b-name">kafka2</div><div class="b-port">:9093</div>
+      <div class="b-parts" id="bdb2-parts">
+        <div class="bp l" style="border-color:rgba(31,200,176,.5);color:var(--teal)">P1</div>
+        <div class="bp l" style="border-color:rgba(31,200,176,.5);color:var(--teal)">P4</div>
+        <div class="bp r" id="p0r-k2">R0</div><div class="bp r" id="p3r-k2">R3</div>
+        <div class="bp r">R2</div><div class="bp r">R5</div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:8px" id="bdb2-sub">Leads P1,P4 — Replica P0,2,3,5</div>
+    </div>
+    <div class="broker alive" id="bdb3">
+      <span class="b-badge" style="background:var(--purple);color:#fff" id="bdb3-badge">LEADER P2,P5</span>
+      <div style="margin-top:8px" class="b-name">kafka3</div><div class="b-port">:9094</div>
+      <div class="b-parts" id="bdb3-parts">
+        <div class="bp l" style="border-color:rgba(139,110,245,.5);color:var(--purple)">P2</div>
+        <div class="bp l" style="border-color:rgba(139,110,245,.5);color:var(--purple)">P5</div>
+        <div class="bp r" id="p0r-k3">R0</div><div class="bp r" id="p3r-k3">R3</div>
+        <div class="bp r">R1</div><div class="bp r">R4</div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:8px" id="bdb3-sub">Leads P2,P5 — Replica P0,1,3,4</div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:18px;">
+    <button class="btn rd" id="bd-kill-btn" onclick="bdKill()">Simulate kafka1 crash</button>
+    <button class="btn gr" id="bd-revive-btn" onclick="bdRevive()">Revive kafka1 (rejoin as follower)</button>
+  </div>
+  <div id="bd-status" style="text-align:center;font-size:13px;color:var(--muted);margin-top:16px;line-height:1.8;min-height:44px">All 3 brokers healthy. kafka2 and kafka3 hold complete replica copies of P0 and P3 already — replicating in real-time.</div>
+</div>
+
+<h2>What Happens to Messages Produced to P0 During the Outage</h2>
+<p>This is the specific scenario you were worried about: "while kafka1 is down, producers trying to write to P0... where do those messages go?"</p>
+<div class="g2">
+<div class="sc">
+  <div class="sc-head"><span class="scd" style="background:var(--green)"></span>After election (T=10s onward) — fully transparent</div>
+  <p style="font-size:13px;color:var(--muted)">Once kafka2 is elected leader for P0 (takes ~7-10 seconds), the producer client auto-discovers this and sends P0 messages to kafka2. Consumers reading P0 now read from kafka2. Everything works identically to before — kafka2 just happens to be answering now instead of kafka1. The message stream is uninterrupted.</p>
+</div>
+<div class="sc">
+  <div class="sc-head"><span class="scd" style="background:var(--amber)"></span>During election (T=0s → T=10s) — brief retry period</div>
+  <p style="font-size:13px;color:var(--muted)">During these ~10 seconds, producers trying to write to P0 get connection errors or "not a leader" responses. The producer client has built-in retry logic: it retries up to <span class="ic">retries=Integer.MAX_VALUE</span> times with exponential backoff. With <span class="ic">delivery.timeout.ms=120000</span> (2 minutes default), the producer keeps retrying until a new leader is elected and the message is delivered. From the Spring Boot perspective, the send() call blocks a bit longer than usual, but ultimately succeeds. No message is lost.</p>
+</div>
+</div>
+<div class="callout co"><strong>The bottom line:</strong> P0 and P3 don't "go dark." They are briefly unavailable for writes (~7-10 seconds) during leader election, during which producers retry. After election, kafka2 and kafka3 fully handle those partitions with identical data. The gap is invisible to your application code because the Kafka client libraries handle retries transparently.</div>
+
+<h2>When kafka1 Comes Back — The Rejoin Process</h2>
+<p>This is equally important to understand. When kafka1 restarts, it does NOT immediately reclaim P0 and P3 leadership. Here's why and what actually happens:</p>
+<div class="tl">
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(51,201,122,.15);border:2px solid var(--green);color:var(--green)">1</div>
+  <div class="tl-body">
+    <div class="tl-t">kafka1 starts up and registers with Zookeeper</div>
+    <div class="tl-d">kafka1 announces itself: "I'm back, I'm broker 1." But the cluster's current state is: kafka2 leads P0 (and has been receiving all P0 writes during kafka1's absence). kafka1's local log for P0 is behind — it's missing everything written while it was dead.</div>
+  </div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(51,201,122,.15);border:2px solid var(--green);color:var(--green)">2</div>
+  <div class="tl-body">
+    <div class="tl-t">kafka1 joins as follower for P0 and P3 — not immediately as leader</div>
+    <div class="tl-d">kafka1 cannot be promoted to leader for P0 until it catches up with kafka2 (the current leader). So it joins as a follower: it starts fetching all the messages it missed from kafka2 while it was dead. This is the same replication fetch loop that normally keeps followers in sync.</div>
+  </div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(51,201,122,.15);border:2px solid var(--green);color:var(--green)">3</div>
+  <div class="tl-body">
+    <div class="tl-t">kafka1 catches up and re-enters the ISR</div>
+    <div class="tl-d">Once kafka1 has replicated all the messages it missed (could take seconds to minutes depending on how long it was dead and how much traffic there was), it is back in the ISR for P0 and P3. It's now a fully in-sync replica again.</div>
+  </div>
+</div>
+<div class="tl-item">
+  <div class="tl-dot" style="background:rgba(51,201,122,.15);border:2px solid var(--green);color:var(--green)">4</div>
+  <div class="tl-body">
+    <div class="tl-t">Preferred leader election restores kafka1 as leader for P0, P3</div>
+    <div class="tl-d">With <span class="ic">auto.leader.rebalance.enable=true</span> (default), the Controller periodically runs preferred leader election. kafka1 is the "preferred leader" for P0 and P3 (it was originally assigned those). Once kafka1 is fully in-sync, the Controller moves leadership back to kafka1. This happens during a quiet period to minimize disruption. kafka2 smoothly transitions back to being a follower for P0.</div>
+  </div>
+</div>
+</div>
+
+<div class="interview">
+<p>"When kafka1 dies, P0 and P3 aren't lost because RF=3 means all data was already on kafka2 and kafka3 — followers replicate in real-time, and with acks=all, every acknowledged message was confirmed on all three disks before the producer received success. Zookeeper detects the death via heartbeat timeout in about 5-6 seconds. The Kafka Controller then elects a new leader from the ISR for each affected partition — kafka2 takes P0, kafka3 takes P3 — in about 1-2 more seconds. Producer and consumer clients automatically reroute by re-fetching cluster metadata. During the ~7-10 second election window, producers retry automatically and no messages are lost. When kafka1 revives, it rejoins as a follower, catches up on missed messages, re-enters the ISR, and preferred leader election eventually returns P0/P3 leadership to it. Total visible impact: a brief latency spike in the 10-second window, zero data loss."</p>
+</div>
+
+<div class="sec-nav"><button class="nxt" onclick="show('retention')">Storage, segments &amp; retention →</button></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--  SECTION 10 — RETENTION                                  -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="retention" class="sec">
+<div class="eyebrow">Chapter 10 — Advanced L5</div>
+<h1>Storage, Segments &amp; Retention</h1>
+<p class="lead">Kafka messages are stored on broker disk as segment files within partition directories. A background thread on each broker periodically scans these files and deletes segments that have exceeded the retention threshold. This deletion is based purely on time or size — consumer reads have absolutely no effect on when messages are deleted.</p>
+
+<h2>How Segment Files Work</h2>
+<p>Each partition is not one giant file — it's a directory of rolling segment files. Kafka splits messages into segments because you can't efficiently delete from the middle of a large file. The active segment receives new messages. Sealed segments are immutable and eligible for deletion.</p>
+<pre><code><span class="cm"># Inside kafka1, partition-0 of order.created:</span>
+/var/kafka-logs/order.created-<span class="nm">0</span>/
+  00000000000000000000.log    <span class="cm"># messages offset 0–999 (sealed, 7 days old)</span>
+  00000000000000000000.index  <span class="cm"># offset→byte_position index</span>
+  00000000000001000000.log    <span class="cm"># messages offset 1000–1999 (sealed, 5 days old)</span>
+  00000000000001000000.index
+  00000000000002000000.log    <span class="cm"># messages offset 2000–present (ACTIVE — never deleted while open)</span>
+  00000000000002000000.index
+  leader-epoch-checkpoint     <span class="cm"># tracks leader term changes for correctness</span></code></pre>
+
+<h2>The Deletion Logic — Exactly How It Works</h2>
+<p>The log cleaner thread runs on every broker every 5 minutes (configurable). For each sealed segment, it checks:</p>
+<pre><code><span class="cm"># Pseudocode for the log cleaner's decision:</span>
+<span class="kw">for</span> partition <span class="kw">in</span> all_partitions:
+    <span class="kw">for</span> segment <span class="kw">in</span> sealed_segments(partition):
+        newest_message_timestamp = segment.last_record_timestamp
+        age = current_time - newest_message_timestamp
+        
+        <span class="kw">if</span> age > retention_ms:           <span class="cm"># 7 days = 604,800,000ms</span>
+            delete(segment.log_file)
+            delete(segment.index_file)
+            delete(segment.timeindex_file)
+        <span class="cm"># else: keep the entire segment, even if first message is ancient</span>
+
+    <span class="cm"># Active segment: NEVER deleted regardless of age</span>
+    <span class="cm"># Consumer offsets: NEVER consulted. Deletion doesn't care who read what.</span></code></pre>
+
+<p>The key insight: deletion happens at <strong>segment granularity</strong>, not at message granularity. If a segment contains messages from day 1 to day 7, the entire segment is kept until the <em>newest</em> message in it exceeds the retention period. This means retention is not precise — it's precise to the nearest segment boundary (which is configurable but defaults to 1GB or 7 days of data).</p>
+
+<div class="callout cw"><strong>Consumer reads do not prevent deletion.</strong> Kafka has no concept of "wait until all consumers read before deleting." If you have a consumer group that falls behind by more than the retention window, those messages will be deleted while the consumer is still behind. When the consumer tries to read its last committed offset, Kafka responds with <span class="ic">OffsetOutOfRangeException</span> — the data at that offset no longer exists. Your code must handle this by resetting to the earliest available offset and logging that data was lost for investigation.</div>
+
+<h2>Our Retention Strategy — Each Topic's Reasoning</h2>
+<table>
+<thead><tr><th>Topic</th><th>Retention</th><th>Reasoning</th></tr></thead>
+<tbody>
+<tr><td>order.created</td><td class="yes">7 days</td><td>Orders are financially critical. If Flink ETA service has a bug, we need 7 days of orders to replay through the fixed code. This is the maximum window in which we'd realistically discover and fix a data processing bug.</td></tr>
+<tr><td>order.status</td><td class="yes">7 days</td><td>Status update history is needed for debugging delivery disputes, customer service queries, and SLA analysis. Same reasoning as order.created.</td></tr>
+<tr><td>location.update</td><td class="mid">24 hours</td><td>Agents ping every 3 seconds. 1000 agents × 20 pings/min × 60 × 24 = 28.8 million pings per day. This is enormous volume. Cassandra stores permanent location history — Kafka is just the transport pipe. 24 hours of buffer is more than sufficient for any consumer lag.</td></tr>
+<tr><td>chat.message</td><td class="yes">7 days</td><td>Cassandra is the permanent store. Kafka is the pipeline from chat service to Cassandra writer. 7 days gives ample replay window if Cassandra writer has a bug.</td></tr>
+<tr><td>chat.typing</td><td class="no">1 hour</td><td>Typing indicators are ephemeral by nature. Nobody ever needs to replay "driver was typing 45 minutes ago." 1 hour is generous for this use case.</td></tr>
+<tr><td>analytics.events</td><td>30 days</td><td>Spark batch jobs may run weekly. Flink jobs may need to reprocess a month of events during a major incident recovery. Analytics consumers are naturally slower — they need extra headroom.</td></tr>
+</tbody>
+</table>
+
+<div class="sec-nav"><button class="nxt" onclick="show('rebalance')">Rebalancing — every trigger explained →</button></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--  SECTION 11 — REBALANCE                                  -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="rebalance" class="sec">
+<div class="eyebrow">Chapter 11 — Advanced L5</div>
+<h1>Rebalancing — Every Trigger Explained</h1>
+<p class="lead">A rebalance is when Kafka redistributes which partitions are assigned to which consumer instances within a group. This happens when the group's membership changes. During a rebalance, all consumption pauses — no consumer in the group reads any messages until new assignments are complete. This "stop the world" behavior is what makes rebalancing a production concern.</p>
+
+<h2>Why Rebalances Happen — All Triggers</h2>
+<table>
+<thead><tr><th>Trigger</th><th>What happens</th><th>How to minimize impact</th></tr></thead>
+<tbody>
+<tr><td>New consumer instance joins</td><td>K8s scales order-service from 3→4 pods. New pod starts and announces itself to the consumer group coordinator. Kafka triggers a rebalance to give the new pod some partitions.</td><td>Use CooperativeStickyAssignor — only moves partitions that need to move, not all of them.</td></tr>
+<tr><td>Consumer instance crashes / dies</td><td>Pod OOM-killed, JVM crash, docker kill. The broker's consumer coordinator waits for session.timeout.ms (default 10s) of missed heartbeats, then declares the consumer dead and triggers rebalance to redistribute its partitions.</td><td>Readiness probes + graceful shutdown — K8s drains traffic before killing pod, pod commits final offsets, leaves group cleanly. Kafka detects clean departure immediately (no timeout wait).</td></tr>
+<tr><td>Consumer processing too slow</td><td>Your @KafkaListener code takes longer than max.poll.interval.ms (default 5 minutes) to process a batch. Kafka considers the consumer dead — it stopped polling — and triggers rebalance. The consumer itself then tries to rejoin and causes another rebalance.</td><td>Process messages async, or increase max.poll.interval.ms, or decrease max.poll.records.</td></tr>
+<tr><td>Partition count increases</td><td>You add partitions to a topic (kafka-topics --alter --partitions 12). New partitions have no assigned consumers. Kafka triggers rebalance to distribute new partitions.</td><td>Can't avoid this trigger — it's inherent to scaling. Schedule partition increases during low-traffic periods.</td></tr>
+</tbody>
+</table>
+
+<h2>Simulate a Rebalance</h2>
+<div class="rb-grid" id="rb-vis">
+  <div class="rb-box" id="rbb1"><div class="rb-name">instance-1</div><div class="rb-parts" id="rbp1">P0, P1</div><div class="rb-st" id="rbs1" style="color:var(--green)">● healthy</div></div>
+  <div class="rb-box" id="rbb2"><div class="rb-name">instance-2</div><div class="rb-parts" id="rbp2">P2, P3</div><div class="rb-st" id="rbs2" style="color:var(--green)">● healthy</div></div>
+  <div class="rb-box" id="rbb3"><div class="rb-name">instance-3</div><div class="rb-parts" id="rbp3">P4, P5</div><div class="rb-st" id="rbs3" style="color:var(--green)">● healthy</div></div>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+  <button class="btn rd" onclick="rbKill()">Kill instance-2 (pod crash)</button>
+  <button class="btn" onclick="rbScale()">Scale up → add instance-4</button>
+  <button class="btn gr" onclick="rbReset()">Reset to initial state</button>
+</div>
+<div id="rb-status" style="font-size:13px;color:var(--muted);line-height:1.7;min-height:40px">3 instances healthy. 2 partitions each. No rebalance in progress.</div>
+
+<h2>The Stop-The-World Problem — In Real Numbers</h2>
+<p>During a rebalance triggered by a simple pod restart (common in K8s rolling deployments), the sequence is:</p>
+<div class="diagram">K8s begins rolling deploy — kills old pod-1
+  ↓ (pod-1 dies without graceful shutdown config)
+Kafka consumer coordinator: "pod-1 missed heartbeat"
+  ↓ (waits for session.timeout.ms = 10 seconds)
+Kafka: "pod-1 is dead, trigger rebalance"
+  ↓
+All 3 remaining consumers STOP reading (stop the world)
+Coordinator sends "join group" request to all
+Consumers re-register, send their subscriptions
+Coordinator runs assignment algorithm
+Sends new assignments to all consumers
+Consumers start reading again
+  ↓
+Total pause: ~10s detection + ~5s rebalance = ~15 seconds
+At 1000 orders/min: ~250 orders delayed 15s during each deploy
+
+With graceful shutdown (correct config):
+Pod-1 calls consumer.wakeup() → poll() returns → commits current offset → leaves group
+Kafka: "pod-1 left cleanly" → immediate rebalance (no 10s timeout wait)
+Cooperative rebalancing: only P0,P1 revoked → other consumers keep reading P2-P5
+Total pause: &lt;2 seconds, only affects consumers assigned P0,P1</div>
+
+<h2>CooperativeStickyAssignor — The Production Solution</h2>
+<pre><code><span class="cm">// application.yml — enable cooperative rebalancing</span>
+<span class="pp">spring.kafka.consumer.properties.partition.assignment.strategy</span>: 
+  <span class="str">org.apache.kafka.clients.consumer.CooperativeStickyAssignor</span>
+
+<span class="cm">// Default behavior (EagerRebalance): ALL partitions revoked from ALL consumers
+// during any rebalance. Everyone stops. Everything reassigned from scratch.
+// Impact: 10-30 second pause affecting all consumers.
+
+// CooperativeStickyAssignor: only partitions that MUST change hands are revoked.
+// When instance-2 dies:
+//   instance-1 keeps P0, P1 (no disruption — keeps reading)
+//   instance-3 keeps P4, P5 (no disruption — keeps reading)
+//   Only P2, P3 are revoked and reassigned to instance-1 and instance-3
+// Impact: &lt;100ms disruption visible to users with K8s readiness probes configured.</span></code></pre>
+
+<div class="sec-nav"><button class="nxt" onclick="show('delivery')">Delivery guarantees — in depth →</button></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--  SECTION 12 — DELIVERY GUARANTEES                        -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="delivery" class="sec">
+<div class="eyebrow">Chapter 12 — Advanced L5</div>
+<h1>Delivery Guarantees — In Depth</h1>
+<p class="lead">What happens when your consumer crashes between reading a message and committing the offset? The answer depends on which delivery guarantee you've configured. There are exactly three options, each a deliberate trade-off between safety, performance, and complexity. Understanding when each is appropriate separates senior engineers from juniors.</p>
+
+<h2>The Core Tension</h2>
+<p>The fundamental problem: reading a message and recording "I've read it" are two separate operations. A crash between them creates ambiguity. You can resolve this ambiguity in favor of "never lose a message" (risking duplicates) or "never duplicate a message" (risking loss). Exactly-once semantics eliminate the trade-off via transactions — at a performance cost.</p>
+
+<div class="gcards">
+<div class="gc gc-atm">
+  <div class="gc-icon">📤</div>
+  <div class="gc-t" style="color:var(--amber)">At Most Once</div>
+  <div class="gc-sub">Commit the offset <strong style="color:var(--text)">before</strong> processing. If crash happens after commit but before processing completes: the message is never retried. Silently lost.</div>
+  <ul class="gc-list">
+    <li>No duplicate processing, ever</li>
+    <li>Messages can be permanently lost</li>
+    <li>Fastest — no retry overhead</li>
+    <li>Best for: metrics, logs, analytics where approximation is acceptable</li>
+    <li>FoodFlash: chat.typing (loss = nobody sees "typing" — fine)</li>
+  </ul>
+</div>
+<div class="gc gc-al">
+  <div class="gc-icon">🔄</div>
+  <div class="gc-t" style="color:var(--acc)">At Least Once</div>
+  <div class="gc-sub">Commit the offset <strong style="color:var(--text)">after</strong> processing. If crash after processing but before commit: message is reprocessed. Duplicates are possible but no message is lost.</div>
+  <ul class="gc-list">
+    <li>No message loss — everything eventually processed</li>
+    <li>Duplicates possible — handle in your code</li>
+    <li>Requires idempotent processing logic</li>
+    <li>Industry default — most production systems use this</li>
+    <li>FoodFlash: order.status, chat.message (dedup by message_id)</li>
+  </ul>
+</div>
+<div class="gc gc-ex">
+  <div class="gc-icon">🎯</div>
+  <div class="gc-t" style="color:var(--green)">Exactly Once</div>
+  <div class="gc-sub">Kafka transactions make read, process, and offset-commit <strong style="color:var(--text)">atomic</strong>. Either all happen or none do. No loss, no duplicates, ever.</div>
+  <ul class="gc-list">
+    <li>Perfect semantics — no loss, no duplicate</li>
+    <li>~30% throughput reduction vs at-least-once</li>
+    <li>Significant configuration complexity</li>
+    <li>Only for high-stakes financial operations</li>
+    <li>FoodFlash: order.created (duplicate order = charged twice)</li>
+  </ul>
+</div>
+</div>
+
+<h2>At Least Once — The Crash Scenario Step by Step</h2>
+<div class="tl">
+<div class="tl-item"><div class="tl-dot" style="background:rgba(79,127,255,.15);border:2px solid var(--acc);color:var(--acc)">1</div><div class="tl-body"><div class="tl-t">Consumer reads offset 1001 from partition-0</div><div class="tl-d">Spring Boot @KafkaListener method receives the message. The offset has NOT been committed yet — <span class="ic">__consumer_offsets</span> still says the group's last position is 1000. Kafka will deliver 1001 again if the consumer restarts now.</div></div></div>
+<div class="tl-item"><div class="tl-dot" style="background:rgba(79,127,255,.15);border:2px solid var(--acc);color:var(--acc)">2</div><div class="tl-body"><div class="tl-t">Consumer processes — INSERT INTO orders...</div><div class="tl-d">The order is successfully written to PostgreSQL. The database row exists.</div></div></div>
+<div class="tl-item"><div class="tl-dot" style="background:rgba(232,85,85,.2);border:2px solid var(--red);color:var(--red)">💥</div><div class="tl-body"><div class="tl-t" style="color:var(--red)">JVM crash — before commitSync() is called</div><div class="tl-d">The process dies. <span class="ic">__consumer_offsets</span> was never updated. The group's committed position is still 1000 — meaning "I've processed everything through offset 1000. Give me 1001 next."</div></div></div>
+<div class="tl-item"><div class="tl-dot" style="background:rgba(240,160,21,.2);border:2px solid var(--amber);color:var(--amber)">!</div><div class="tl-body"><div class="tl-t" style="color:var(--amber)">Consumer restarts — reads offset 1001 AGAIN</div><div class="tl-d">The restarted consumer reads <span class="ic">__consumer_offsets</span> and sees: "last committed = 1000." It requests offset 1001 from Kafka. Kafka delivers offset 1001 — the same message the previous instance already processed and wrote to PostgreSQL.</div></div></div>
+<div class="tl-item"><div class="tl-dot" style="background:rgba(51,201,122,.15);border:2px solid var(--green);color:var(--green)">✓</div><div class="tl-body"><div class="tl-t" style="color:var(--green)">Fix: idempotent insert with ON CONFLICT DO NOTHING</div><div class="tl-d">Use the orderId as the database primary key. The second INSERT hits the UNIQUE constraint and is silently ignored. No duplicate order. This is "idempotent processing" — processing the same message twice produces the same result as processing it once. Design every consumer with this property.</div></div></div>
+</div>
+<pre><code><span class="cm">// Bad — duplicates silently created on retry:</span>
+jdbcTemplate.update(<span class="str">"INSERT INTO orders (id, user_id, ...) VALUES (?, ?, ...)"</span>, ...);
+
+<span class="cm">// Good — idempotent, safe for at-least-once:</span>
+jdbcTemplate.update(
+    <span class="str">"INSERT INTO orders (id, user_id, ...) VALUES (?, ?, ...) ON CONFLICT (id) DO NOTHING"</span>, ...
+);</code></pre>
+
+<div class="sec-nav"><button class="nxt" onclick="show('threadsafety')">Thread safety — why it's guaranteed →</button></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--  SECTION 13 — THREAD SAFETY                              -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="threadsafety" class="sec">
+<div class="eyebrow">Chapter 13 — Advanced L5</div>
+<h1>Thread Safety — Why It's Architecturally Guaranteed</h1>
+<p class="lead">You might wonder: "If my Spring Boot service has 6 threads all consuming from order.created, can two threads race on the same partition's offset?" The answer is no — and it's guaranteed by architecture, not by your code. Partition ownership is the mutex.</p>
+
+<h2>The Question</h2>
+<p>Spring Boot with <span class="ic">spring.kafka.listener.concurrency=6</span> creates 6 consumer threads. All 6 are in the same consumer group. If partition-0 has message at offset 1001 ready, don't multiple threads try to grab it simultaneously? Wouldn't they race on the offset commit?</p>
+
+<h2>Why It Cannot Happen — Partition Ownership</h2>
+<p>Kafka assigns each partition to exactly one consumer instance (thread) within the group. With 6 threads and 6 partitions, the assignment is:</p>
+<pre><code>Thread-1 → partition-0  (exclusive ownership: only thread-1 reads P0)
+Thread-2 → partition-1  (exclusive ownership: only thread-2 reads P1)
+Thread-3 → partition-2  (exclusive ownership)
+Thread-4 → partition-3  (exclusive ownership)
+Thread-5 → partition-4  (exclusive ownership)
+Thread-6 → partition-5  (exclusive ownership)
+
+<span class="cm">Thread-1 reads P0's offset 1001, processes it, commits offset 1002.
+NOBODY ELSE touches P0's offset entry in __consumer_offsets.
+Thread-2 is doing the same thing for P1, independently, simultaneously.
+There is NO shared mutable state between threads.
+The offset commit from Thread-1 and Thread-2 go to DIFFERENT partitions
+  of __consumer_offsets — they don't even contend on the same internal partition.</span></code></pre>
+
+<p>The partition assignment itself is the mutex. This is an architectural guarantee from Kafka's protocol — not something you implement or configure. Your listener code is called by one thread at a time per partition, sequentially. You write plain sequential code with no locks needed.</p>
+
+<h2>The Implication for Your Code</h2>
+<pre><code><span class="kw">@KafkaListener</span>(topics = <span class="str">"order.created"</span>, groupId = <span class="str">"order-service-group"</span>)
+<span class="kw">public void</span> <span class="fn">handleOrder</span>(ConsumerRecord&lt;String, String&gt; record) {
+    <span class="cm">// This method is called by Thread-1 for partition-0 messages,
+    // Thread-2 for partition-1 messages, etc.
+    // Thread-1 and Thread-2 call this method simultaneously
+    // but for DIFFERENT records from DIFFERENT partitions.
+    // They never share offset state.
+    //
+    // You do NOT need: synchronized blocks, ReentrantLock,
+    //   AtomicReference, ConcurrentHashMap (for the Kafka position itself).
+    //
+    // You DO still need thread-safety for: any shared application state
+    //   you maintain (e.g., a shared in-memory counter across all partitions).
+    //   But that's your application's problem, not Kafka's.</span>
+    
+    Order order = objectMapper.readValue(record.value(), Order.class);
+    orderRepository.save(order); <span class="cm">// plain code, no synchronization needed</span>
+}</code></pre>
+
+<div class="interview">
+<p>"Kafka guarantees thread safety through partition ownership — within a consumer group, each partition is exclusively owned by exactly one consumer thread at any time. With concurrency=6 and 6 partitions, each thread has exclusive ownership of one partition. Thread-1 reads P0's messages and commits P0's offset. Thread-2 does the same for P1. They never share partition assignments, so there's no race condition on offset commits. The offset commit from Thread-1 writes to a specific partition of __consumer_offsets keyed by (group, topic, partition=0) — a completely different key than Thread-2's commit for partition=1. No lock needed. Write plain sequential code in your listener and Kafka's protocol handles the rest."</p>
+</div>
+
+<div class="sec-nav"><button class="nxt" onclick="show('foodflash')">FoodFlash — every decision explained →</button></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--  SECTION 14 — FOODFLASH DESIGN                           -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="foodflash" class="sec">
+<div class="eyebrow">Chapter 14 — System Design L6</div>
+<h1>FoodFlash — Every Design Decision Explained</h1>
+<p class="lead">This chapter documents the complete reasoning behind every architectural choice in FoodFlash's Kafka design. This is what you'd explain in a Google or Uber system design interview — not just what you built, but why you built it that way, what you considered, and what trade-offs you accepted.</p>
+
+<h2>The Full Event Flow — Order to Delivery</h2>
+<div class="diagram">CUSTOMER places order on mobile app
+  ↓ HTTP POST /orders (to Go API Gateway)
+  ↓ API Gateway → Order Service (Spring Boot) via gRPC
+
+ORDER SERVICE:
+  1. Redis INCR restaurant:{id}:active_orders
+     → if over capacity: return 503 immediately (fail fast)
+  2. Payment gateway: authorize ₹380 (hold, not charge)
+  3. PostgreSQL INSERT orders (status=PENDING, payment=AUTHORIZED)
+  4. Kafka PRODUCE: order.created
+     key=orderId (UUID), acks=all, exactly-once transaction
+  5. Return 200 to customer immediately. Does not wait for downstream.
+  ↓
+KAFKA: order.created topic
+  ↙            ↓           ↓             ↘
+[Flink]   [Restaurant]  [Notification]  [Analytics]
+  ↓            ↓              ↓
+ETA calc   Chef tablet    Push SMS +      Dashboard
+Agent pick WebSocket      Email           counter++
+  ↓
+Kafka PRODUCE: order.status (CONFIRMED)
+  ↓ (consumer: customer app via WebSocket)
+
+DELIVERY PHASE:
+Agent accepts → location pings begin
+  ↓
+Go Location Service receives ping (every 3 seconds)
+  → Redis GEOADD (primary — &lt;1ms read for live map)
+  → Kafka PRODUCE: location.update (key=agentId, acks=1)
+  ↓
+  ↙                  ↘
+[Flink ETA job]    [Cassandra writer consumer]
+Recalc ETA          Permanent location history
+PRODUCE order.status  INSERT location_events table
+"ETA updated to 12min"
+  ↓
+Customer tracking screen refreshes via WebSocket</div>
+
+<h2>Why Each Technology Choice Was Made</h2>
+<table>
+<thead><tr><th>Scenario</th><th>Choice</th><th>What we considered and rejected</th></tr></thead>
+<tbody>
+<tr><td>Order event delivery to 5 services</td><td class="yes">Kafka (fan-out via consumer groups)</td><td>REST callbacks from Order Service to each: 5 HTTP calls in critical path, tight coupling, adding new service requires deploying Order Service. Rejected.</td></tr>
+<tr><td>Real-time chat routing (customer↔driver on different servers)</td><td class="yes">Redis Pub/Sub for real-time + Kafka for persistence</td><td>Kafka alone: 5-15ms latency for each message, plus Kafka isn't designed for request-response real-time messaging. Redis Pub/Sub alone: sub-millisecond delivery but volatile (messages lost on Redis restart). We use both: Redis for live delivery, Kafka as the durability pipeline to Cassandra. Best of both.</td></tr>
+<tr><td>Live agent location on customer map</td><td class="yes">Redis GEO as primary, Kafka for history pipeline</td><td>PostgreSQL: too slow for 28k writes/min + every customer map read hitting DB. Kafka alone: no O(1) radius search by coordinates. Redis GEO handles "find all agents within 5km" in O(N+M) time and is already in memory.</td></tr>
+<tr><td>Chat message storage</td><td class="yes">Cassandra (partition key = orderId)</td><td>PostgreSQL: poor write throughput for concurrent chat across thousands of active deliveries. Redis: volatile, not for permanent messages. Cassandra: partition key = orderId → all messages for one conversation co-located, append-only writes, fast reads by orderId.</td></tr>
+</tbody>
+</table>
+
+<h2>The Key Architectural Principle</h2>
+<div class="callout ci"><strong>Match database to access pattern, not to familiarity.</strong> Location needs sub-millisecond geo-spatial queries with high write load → Redis GEO. Chat needs ordered, partitioned, append-only writes with fast key-based reads → Cassandra. Orders need ACID guarantees and complex joins → PostgreSQL. Events need fan-out to multiple independent consumers with replay → Kafka. Using one database for everything is a common failure mode in distributed systems design interviews. Each database in FoodFlash does what it was designed to do.</div>
+
+<div class="sec-nav"><button class="nxt" onclick="show('simulator')">Live simulator — all scenarios →</button></div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!--  SECTION 15 — SIMULATOR                                  -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<section id="simulator" class="sec">
+<div class="eyebrow">Interactive Simulator</div>
+<h1>Live Simulator — All Scenarios</h1>
+<p class="lead">Produce messages, kill brokers, watch leader election happen in real time, simulate consumer lag and replay. Every action is logged with a detailed explanation of what Kafka is actually doing internally at that moment.</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0;">
+  <div>
+    <h3 style="margin-top:0">Produce Events</h3>
+    <select id="sim-topic" style="width:100%;background:var(--card2);border:1px solid var(--b);color:var(--text);padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:8px;font-family:inherit;">
+      <option value="order.created">order.created (acks=all, exactly-once)</option>
+      <option value="location.update">location.update (acks=1, at-least-once)</option>
+      <option value="chat.message">chat.message (acks=all, at-least-once)</option>
+      <option value="chat.typing">chat.typing (acks=0, at-most-once)</option>
+      <option value="order.status">order.status (acks=all, at-least-once)</option>
+    </select>
+    <button class="btn" onclick="simProduce()" style="width:100%;justify-content:center;">Produce single message</button>
+    <button class="btn" onclick="simBurst()" style="width:100%;justify-content:center;margin-top:6px">Burst produce (×30 rapid)</button>
+  </div>
+  <div>
+    <h3 style="margin-top:0">Broker &amp; Consumer Control</h3>
+    <button class="btn rd" onclick="simKill()" style="width:100%;justify-content:center;margin-bottom:8px">Kill kafka1 (simulate crash)</button>
+    <button class="btn gr" onclick="simRevive()" style="width:100%;justify-content:center;margin-bottom:8px">Revive kafka1 (rejoin cluster)</button>
+    <button class="btn am" onclick="simSlowConsumer()" style="width:100%;justify-content:center;margin-bottom:8px">Simulate slow consumer (lag builds)</button>
+    <button class="btn" onclick="simReplayOffset()" style="width:100%;justify-content:center">Reset fraud-group → offset 0 (replay)</button>
+  </div>
+</div>
+
+<div id="simlog"></div>
+
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0;">
+  <div class="stat"><div class="sv" id="sp">0</div><div class="sl">total produced</div></div>
+  <div class="stat"><div class="sv" id="sc" style="color:var(--green)">0</div><div class="sl">consumed (order-svc)</div></div>
+  <div class="stat"><div class="sv" id="sl-v" style="color:var(--amber)">0</div><div class="sl">consumer lag</div></div>
+  <div class="stat"><div class="sv" id="sbr" style="color:var(--green)">3/3</div><div class="sl">brokers alive</div></div>
+</div>
+
+<h3>Current Partition → Leader Mapping</h3>
+<div id="sim-pstate" style="background:#060810;border:1px solid var(--b);border-radius:8px;padding:18px;font-family:var(--mono);font-size:12px;color:var(--muted);line-height:2;"></div>
+
+<div class="callout co" style="margin-top:36px">
+<strong>You've completed all 15 chapters.</strong> Every concept here — the log vs queue distinction, replication, what actually happens when a broker dies and why P0 data isn't lost, offset tracking, thread safety, delivery guarantees — all came from real questions you asked while building FoodFlash. Ten years from now, read this and you'll remember not just what Kafka does, but why it was designed that way.
+</div>
+</section>
+
+</main><!-- end #main -->
+
+<script>
+// ─── NAVIGATION ─────────────────────────────────────────────
+function show(id) {
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
+  const s = document.getElementById(id);
+  if (s) s.classList.add('active');
+  document.querySelectorAll('.ni').forEach(n => {
+    if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + id + "'"))
+      n.classList.add('active');
+  });
+  document.getElementById('main').scrollTop = 0;
+}
+
+// ─── TOPIC PARTITION VISUAL ──────────────────────────────────
+let pCounts = [3,3,2,3,2,3], totalMsgs = 16;
+const orderNames = ['order-SSS','order-TTT','order-UUU','order-VVV','order-WWW','order-XXX','order-YYY','order-ZZZ','order-AAB','order-BBB','order-CCB'];
+function addMsg() {
+  const p = Math.floor(Math.random() * 6);
+  const c = document.getElementById('pm' + p);
+  if (!c) return;
+  const b = document.createElement('div');
+  b.className = 'msg new';
+  const name = orderNames[totalMsgs % orderNames.length] || ('ord-' + totalMsgs);
+  b.innerHTML = name + '<span class="off">off:' + pCounts[p] + '</span>';
+  c.appendChild(b);
+  pCounts[p]++; totalMsgs++;
+  setTimeout(() => b.classList.remove('new'), 500);
+}
+
+// ─── OFFSET TRACKER ──────────────────────────────────────────
+let offs = [1001, 995, 998, 980, 0], oMax = 1200;
+function advOff() {
+  offs[0] = Math.min(offs[0] + Math.floor(Math.random()*5)+1, oMax);
+  offs[1] = Math.min(offs[1] + Math.floor(Math.random()*4)+1, oMax);
+  offs[2] = Math.min(offs[2] + Math.floor(Math.random()*4)+1, oMax);
+  offs[3] = Math.min(offs[3] + Math.floor(Math.random()*2)+1, oMax);
+  offs[4] = Math.min(offs[4] + Math.floor(Math.random()*30)+15, oMax);
+  const colors = ['var(--acc)','var(--teal)','var(--purple)','var(--amber)','var(--pink)'];
+  for (let i = 0; i < 5; i++) {
+    const el = document.getElementById('ov' + (i+1));
+    const bar = document.getElementById('ob' + (i+1));
+    const lagEl = document.getElementById('lag' + (i+1));
+    if (el) el.textContent = offs[i];
+    if (bar) bar.style.width = (offs[i] / oMax * 100).toFixed(0) + '%';
+    if (lagEl) lagEl.textContent = 'lag: ' + (oMax - offs[i]);
+  }
+}
+function resetFraud() {
+  offs[4] = 0;
+  const el = document.getElementById('ov5');
+  const bar = document.getElementById('ob5');
+  const lagEl = document.getElementById('lag5');
+  if (el) el.textContent = 0;
+  if (bar) bar.style.width = '0%';
+  if (lagEl) lagEl.textContent = 'lag: 1200 — reading history';
+}
+
+// ─── BROKER DEATH ─────────────────────────────────────────────
+let bdDead = false;
+function bdKill() {
+  if (bdDead) return; bdDead = true;
+  const b1 = document.getElementById('bdb1');
+  b1.classList.remove('alive'); b1.classList.add('dead');
+  document.getElementById('bdb1-badge').textContent = 'DEAD';
+  document.getElementById('bdb1-badge').style.background = 'var(--red)';
+  document.getElementById('bdb1-sub').textContent = 'OFFLINE — Zookeeper session expiring...';
+  document.getElementById('bd-status').innerHTML = '<span style="color:var(--amber)">T=0s: kafka1 crashed — Zookeeper detecting silence — 5 second heartbeat timeout...</span>';
+
+  setTimeout(() => {
+    document.getElementById('bd-status').innerHTML = '<span style="color:var(--amber)">T=5s: Zookeeper declares kafka1 dead — Kafka Controller checking ISR for P0 and P3 — kafka2 and kafka3 both have complete replica copies...</span>';
+  }, 1200);
+
+  setTimeout(() => {
+    // P0 → kafka2 promoted
+    const p0k2 = document.getElementById('p0r-k2');
+    if (p0k2) { p0k2.className = 'bp promo'; p0k2.textContent = 'P0'; }
+    // P3 → kafka3 promoted
+    const p3k3 = document.getElementById('p3r-k3');
+    if (p3k3) { p3k3.className = 'bp promo'; p3k3.textContent = 'P3'; }
+    document.getElementById('bdb2-badge').textContent = 'LEADER P0,P1,P4';
+    document.getElementById('bdb2-sub').textContent = 'NOW leads P0 (promoted from replica, data was already here), P1, P4';
+    document.getElementById('bdb3-badge').textContent = 'LEADER P2,P3,P5';
+    document.getElementById('bdb3-sub').textContent = 'NOW leads P3 (promoted from replica, data was already here), P2, P5';
+    document.getElementById('bd-status').innerHTML =
+      '<span style="color:var(--green)">✅ T=8s: Election complete — kafka2 now leads P0 (had full replica copy, zero data loss) — kafka3 now leads P3 (same) — producers automatically rerouted — cluster healthy with 2 brokers — ALL 6 partitions active</span>';
+  }, 2800);
+}
+
+function bdRevive() {
+  if (!bdDead) return; bdDead = false;
+  document.getElementById('bd-status').innerHTML = '<span style="color:var(--amber)">kafka1 restarting — will rejoin as FOLLOWER (must sync missed messages from kafka2 and kafka3 before it can lead again)...</span>';
+  setTimeout(() => {
+    const b1 = document.getElementById('bdb1');
+    b1.classList.remove('dead'); b1.classList.add('alive');
+    document.getElementById('bdb1-badge').textContent = 'FOLLOWER (syncing)';
+    document.getElementById('bdb1-badge').style.background = 'var(--teal)';
+    document.getElementById('bdb1-sub').textContent = 'Rejoined — replicating missed messages — NOT yet in ISR for P0,P3';
+  }, 800);
+  setTimeout(() => {
+    // restore
+    const p0k2 = document.getElementById('p0r-k2');
+    if (p0k2) { p0k2.className = 'bp r'; p0k2.textContent = 'R0'; }
+    const p3k3 = document.getElementById('p3r-k3');
+    if (p3k3) { p3k3.className = 'bp r'; p3k3.textContent = 'R3'; }
+    document.getElementById('bdb1-badge').textContent = 'LEADER P0,P3 (restored)';
+    document.getElementById('bdb1-badge').style.background = 'var(--acc2)';
+    document.getElementById('bdb1-sub').textContent = 'Caught up — back in ISR — preferred leader election returned P0,P3 leadership';
+    document.getElementById('bdb2-badge').textContent = 'LEADER P1,P4';
+    document.getElementById('bdb2-sub').textContent = 'Leads P1,P4 — Replica P0,2,3,5';
+    document.getElementById('bdb3-badge').textContent = 'LEADER P2,P5';
+    document.getElementById('bdb3-sub').textContent = 'Leads P2,P5 — Replica P0,1,3,4';
+    document.getElementById('bd-status').innerHTML = '<span style="color:var(--green)">✅ kafka1 fully restored — synced all missed messages — re-entered ISR — preferred leader election returned P0 and P3 leadership to kafka1 — cluster back to normal 3-broker health</span>';
+  }, 3200);
+}
+
+// ─── REBALANCE ────────────────────────────────────────────────
+let rbState = 'normal';
+function rbKill() {
+  if (rbState !== 'normal') return; rbState = 'killed';
+  document.getElementById('rbb2').classList.add('dead');
+  document.getElementById('rbs2').innerHTML = '<span style="color:var(--red)">✗ dead — waiting session timeout</span>';
+  document.getElementById('rb-status').innerHTML = '<span style="color:var(--amber)">instance-2 crashed — heartbeat missed — consumer coordinator waiting 10s session timeout...</span>';
+  setTimeout(() => {
+    document.getElementById('rb-status').innerHTML = '<span style="color:var(--amber)">10s elapsed — coordinator declares instance-2 dead — rebalance triggered — ALL consumers pause momentarily (stop-the-world with EagerRebalance)</span>';
+  }, 1500);
+  setTimeout(() => {
+    document.getElementById('rbp1').textContent = 'P0, P1, P2, P3';
+    document.getElementById('rbs1').innerHTML = '<span style="color:var(--green)">● +P2,P3 absorbed</span>';
+    document.getElementById('rbb1').classList.add('gained');
+    document.getElementById('rb-status').innerHTML = '<span style="color:var(--green)">✅ Rebalance complete — instance-1 absorbed P2,P3 (instance-2\'s old partitions) — instance-3 unchanged — note: instance-1 now handles 4 partitions vs instance-3\'s 2 (uneven, but functional) — with CooperativeStickyAssignor, only P2,P3 pause, not P4,P5</span>';
+  }, 3000);
+}
+function rbScale() {
+  if (rbState !== 'normal') { rbReset(); return; }
+  rbState = 'scaled';
+  const grid = document.getElementById('rb-vis');
+  const nb = document.createElement('div');
+  nb.className = 'rb-box'; nb.id = 'rbb4';
+  nb.innerHTML = '<div class="rb-name">instance-4</div><div class="rb-parts" id="rbp4">joining group...</div><div class="rb-st" id="rbs4" style="color:var(--amber)">● connecting</div>';
+  grid.appendChild(nb);
+  document.getElementById('rb-status').innerHTML = '<span style="color:var(--acc)">New pod started — announcing to consumer group coordinator — rebalance triggered to include new member...</span>';
+  setTimeout(() => {
+    document.getElementById('rbp1').textContent = 'P0, P1';
+    document.getElementById('rbp2').textContent = 'P2, P3';
+    document.getElementById('rbp3').textContent = 'P4';
+    document.getElementById('rbp4').textContent = 'P5';
+    document.getElementById('rbs4').innerHTML = '<span style="color:var(--green)">● active — owns P5</span>';
+    document.getElementById('rb-status').innerHTML = '<span style="color:var(--green)">✅ Rebalance complete — P5 moved from instance-3 to instance-4 — 4 consumers, 6 partitions — instances 1,2 have 2 partitions each, instances 3,4 have 1 each (slight imbalance — with StickyAssignor this would be more even)</span>';
+  }, 2000);
+}
+function rbReset() {
+  rbState = 'normal';
+  const nb4 = document.getElementById('rbb4'); if (nb4) nb4.remove();
+  ['rbb1','rbb2','rbb3'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) { b.classList.remove('dead','gained'); }
+  });
+  document.getElementById('rbp1').textContent = 'P0, P1';
+  document.getElementById('rbp2').textContent = 'P2, P3';
+  document.getElementById('rbp3').textContent = 'P4, P5';
+  document.getElementById('rbs1').innerHTML = '<span style="color:var(--green)">● healthy</span>';
+  document.getElementById('rbs2').innerHTML = '<span style="color:var(--green)">● healthy</span>';
+  document.getElementById('rbs3').innerHTML = '<span style="color:var(--green)">● healthy</span>';
+  document.getElementById('rb-status').textContent = '3 instances healthy. 2 partitions each. No rebalance in progress.';
+}
+
+// ─── LIVE SIMULATOR ──────────────────────────────────────────
+let sProd = 0, sCons = 0, sBrokerDead = false, sSlowing = false;
+const partLeaders = ['kafka1','kafka2','kafka3','kafka1','kafka2','kafka3'];
+const simPData = {0:[],1:[],2:[],3:[],4:[],5:[]};
+const topicInfo = {
+  'order.created': {acks:'all', g:'exactly-once', color:'var(--acc)'},
+  'location.update': {acks:'1', g:'at-least-once', color:'var(--teal)'},
+  'chat.message': {acks:'all', g:'at-least-once', color:'var(--green)'},
+  'chat.typing': {acks:'0', g:'at-most-once', color:'var(--amber)'},
+  'order.status': {acks:'all', g:'at-least-once', color:'var(--purple)'}
+};
+
+function slog(msg, type='mu') {
+  const el = document.getElementById('simlog');
+  if (!el) return;
+  const line = document.createElement('div');
+  line.className = 'll ' + type;
+  const ts = new Date().toLocaleTimeString('en',{hour12:false});
+  line.textContent = '[' + ts + '] ' + msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+  if (el.children.length > 80) el.removeChild(el.firstChild);
+}
+
+function updateSimState() {
+  const el = document.getElementById('sim-pstate');
+  if (!el) return;
+  let html = '';
+  for (let p = 0; p < 6; p++) {
+    const leader = (sBrokerDead && (p===0||p===3)) ? 'kafka2(new-leader)' : partLeaders[p];
+    const msgs = simPData[p].slice(-3).join(', ') || '(empty)';
+    html += `P${p} → leader: ${leader.padEnd(18)} messages: [${msgs}]\n`;
+  }
+  el.textContent = html;
+}
+
+function simProduce() {
+  const topicName = (document.getElementById('sim-topic') || {}).value || 'order.created';
+  const t = topicInfo[topicName] || topicInfo['order.created'];
+  const p = Math.floor(Math.random() * 6);
+  const off = simPData[p].length;
+  sProd++;
+  document.getElementById('sp').textContent = sProd;
+  const leader = (sBrokerDead && (p===0||p===3)) ? 'kafka2(new-leader)' : partLeaders[p];
+  const extra = (sBrokerDead && (p===0||p===3)) ? ' [REROUTED — kafka1 dead, kafka2 promoted]' : '';
+  slog(`PRODUCE → ${topicName} [P${p}] off:${off} → ${leader} | acks=${t.acks} | ${t.g}${extra}`, 'inf');
+  simPData[p].push('off' + off);
+  updateSimState();
+  const delay = sSlowing ? 2000 + Math.random()*3000 : 200 + Math.random()*500;
+  setTimeout(() => {
+    sCons++;
+    document.getElementById('sc').textContent = sCons;
+    document.getElementById('sl-v').textContent = Math.max(0, sProd - sCons);
+    slog(`CONSUME ← ${topicName} [P${p}] off:${off} committed by order-service-group | idempotent write to PostgreSQL`, 'ok');
+  }, delay);
+}
+
+function simBurst() {
+  slog('Burst mode: producing 30 messages in rapid succession...', 'wn');
+  let i = 0;
+  const iv = setInterval(() => {
+    simProduce(); i++;
+    if (i >= 30) clearInterval(iv);
+  }, 80);
+}
+
+function simKill() {
+  sBrokerDead = true;
+  document.getElementById('sbr').textContent = '2/3';
+  document.getElementById('sbr').style.color = 'var(--amber)';
+  slog('kafka1 CRASHED — P0 and P3 partitions entering election...', 'er');
+  setTimeout(() => slog('Zookeeper: heartbeat timeout — broker 1 declared dead — Controller checking ISR for P0, P3', 'wn'), 700);
+  setTimeout(() => slog('kafka2 elected leader for P0 (had complete replica copy — zero data loss) — producers auto-rerouting', 'wn'), 1400);
+  setTimeout(() => slog('kafka3 elected leader for P3 (had complete replica copy — zero data loss) — cluster fully operational', 'ok'), 2000);
+  setTimeout(() => { slog('All 6 partitions now have active leaders — kafka2 leads P0,P1,P4 — kafka3 leads P2,P3,P5', 'ok'); updateSimState(); }, 2400);
+}
+
+function simRevive() {
+  sBrokerDead = false;
+  document.getElementById('sbr').textContent = '3/3';
+  document.getElementById('sbr').style.color = 'var(--green)';
+  slog('kafka1 restarting — joining as FOLLOWER for P0 and P3 (must sync missed messages first)...', 'wn');
+  setTimeout(() => slog('kafka1 fetching missed messages from kafka2 (P0 leader) and kafka3 (P3 leader)...', 'mu'), 600);
+  setTimeout(() => slog('kafka1 back in ISR for P0, P3 — preferred leader election will restore original assignments', 'ok'), 1500);
+  setTimeout(() => { slog('kafka1 now leads P0, P3 again — cluster back to 3-broker health — all replicas in sync', 'ok'); updateSimState(); }, 2200);
+}
+
+function simSlowConsumer() {
+  sSlowing = !sSlowing;
+  if (sSlowing) {
+    slog('Slow consumer mode ON — processing delay 2-5 seconds per message — consumer lag will build — if lag exceeds max.poll.interval.ms, Kafka will trigger rebalance', 'wn');
+  } else {
+    slog('Slow consumer mode OFF — normal processing speed restored', 'ok');
+  }
+}
+
+function simReplayOffset() {
+  slog('Stopping fraud-detection-service (kubectl scale --replicas=0)...', 'mu');
+  setTimeout(() => slog('Resetting: kafka-consumer-groups --reset-offsets --to-earliest fraud-detection-group', 'inf'), 600);
+  setTimeout(() => slog('fraud-detection-group offsets reset to 0 across all 6 partitions — no running consumers to overwrite this', 'ok'), 1200);
+  setTimeout(() => slog('Restarting fraud-detection-service (kubectl scale --replicas=3)...', 'mu'), 1800);
+  setTimeout(() => slog('fraud-detection-group reading from offset 0 — replaying ' + sProd + ' historical messages through updated fraud detection logic', 'ok'), 2400);
+}
+
+updateSimState();
+</script>
+</body>
+</html>

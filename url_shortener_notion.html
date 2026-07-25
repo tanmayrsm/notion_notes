@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>URL Shortener — Senior System Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg2: #f7f7f5;
+    --bg3: #efefed;
+    --border: #e3e2e0;
+    --border2: #d3d2d0;
+    --text: #191919;
+    --text2: #6b6b6b;
+    --text3: #9b9b9b;
+    --accent: #2563eb;
+    --accent-bg: #eff6ff;
+    --green: #16a34a;
+    --green-bg: #f0fdf4;
+    --green-border: #bbf7d0;
+    --amber: #d97706;
+    --amber-bg: #fffbeb;
+    --amber-border: #fde68a;
+    --red: #dc2626;
+    --red-bg: #fef2f2;
+    --red-border: #fecaca;
+    --purple: #7c3aed;
+    --purple-bg: #f5f3ff;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 240px; height: 100vh;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    padding: 20px 0;
+  }
+  .sidebar-logo {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 16px 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .sidebar-logo-icon {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: var(--text); display: flex; align-items: center; justify-content: center;
+  }
+  .sidebar-logo-icon svg { fill: white; }
+  .sidebar-logo-text { font-size: 13px; font-weight: 600; color: var(--text); }
+  .sidebar-section { padding: 4px 8px; margin-top: 4px; }
+  .sidebar-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text3); padding: 4px 8px 2px;
+  }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 8px; border-radius: 4px;
+    font-size: 13px; color: var(--text2);
+    text-decoration: none; cursor: pointer;
+    transition: background 0.1s;
+  }
+  .sidebar-item:hover { background: var(--bg3); color: var(--text); }
+  .sidebar-item.active { background: var(--bg3); color: var(--text); font-weight: 500; }
+  .sidebar-item-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ─── MAIN ─── */
+  .main {
+    margin-left: 240px;
+    max-width: 900px;
+    padding: 60px 80px 120px;
+    min-height: 100vh;
+  }
+
+  /* ─── PAGE HEADER ─── */
+  .page-header { margin-bottom: 48px; }
+  .page-emoji { font-size: 56px; margin-bottom: 12px; line-height: 1; }
+  .page-title {
+    font-size: 36px; font-weight: 700; color: var(--text);
+    letter-spacing: -0.02em; line-height: 1.15;
+    margin-bottom: 8px;
+  }
+  .page-subtitle { font-size: 15px; color: var(--text2); }
+  .page-meta {
+    display: flex; gap: 20px; margin-top: 20px;
+    padding-top: 16px; border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .page-meta-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text2); }
+  .page-meta-label { font-weight: 500; color: var(--text3); }
+  .tag {
+    display: inline-flex; align-items: center;
+    font-size: 11px; font-weight: 500; padding: 2px 8px;
+    border-radius: 4px; letter-spacing: 0.02em;
+  }
+  .tag-blue { background: var(--accent-bg); color: var(--accent); }
+  .tag-green { background: var(--green-bg); color: var(--green); }
+  .tag-amber { background: var(--amber-bg); color: var(--amber); }
+  .tag-red { background: var(--red-bg); color: var(--red); }
+  .tag-gray { background: var(--bg3); color: var(--text2); }
+  .tag-purple { background: var(--purple-bg); color: var(--purple); }
+
+  /* ─── NOTION BLOCKS ─── */
+  h2.block-h2 {
+    font-size: 22px; font-weight: 600; color: var(--text);
+    margin: 48px 0 16px; letter-spacing: -0.01em;
+    display: flex; align-items: center; gap: 10px;
+  }
+  h2.block-h2::before { content: ''; display: block; width: 3px; height: 22px; background: var(--accent); border-radius: 2px; flex-shrink: 0; }
+  h3.block-h3 { font-size: 16px; font-weight: 600; color: var(--text); margin: 28px 0 10px; }
+  p.block-p { font-size: 15px; color: var(--text2); line-height: 1.7; margin-bottom: 12px; }
+  p.block-p strong { color: var(--text); }
+
+  .callout {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 14px 16px; border-radius: 6px; margin: 16px 0;
+  }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-text { font-size: 14px; line-height: 1.65; }
+  .callout-blue { background: var(--accent-bg); }
+  .callout-blue .callout-text { color: #1e40af; }
+  .callout-green { background: var(--green-bg); }
+  .callout-green .callout-text { color: #166534; }
+  .callout-amber { background: var(--amber-bg); }
+  .callout-amber .callout-text { color: #92400e; }
+  .callout-red { background: var(--red-bg); }
+  .callout-red .callout-text { color: #991b1b; }
+  .callout-gray { background: var(--bg2); border: 1px solid var(--border); }
+  .callout-gray .callout-text { color: var(--text2); }
+
+  pre.code-block {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.8;
+    padding: 20px 24px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 12px 0;
+    white-space: pre;
+  }
+  pre.code-block .c-comment { color: #6c7086; }
+  pre.code-block .c-keyword { color: #cba6f7; }
+  pre.code-block .c-string { color: #a6e3a1; }
+  pre.code-block .c-num { color: #fab387; }
+  pre.code-block .c-fn { color: #89b4fa; }
+  pre.code-block .c-var { color: #f5c2e7; }
+  pre.code-block .c-ok { color: #a6e3a1; font-weight: 600; }
+  pre.code-block .c-err { color: #f38ba8; font-weight: 600; }
+  pre.code-block .c-warn { color: #f9e2af; }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+  /* ─── METRIC CARDS ─── */
+  .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; }
+  .metric-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .metric-val { font-size: 26px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+  .metric-label { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  /* ─── TABLE ─── */
+  .notion-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13.5px; }
+  .notion-table th { background: var(--bg2); font-weight: 600; color: var(--text); padding: 10px 14px; text-align: left; border: 1px solid var(--border); }
+  .notion-table td { padding: 9px 14px; border: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+  .notion-table tr:hover td { background: var(--bg2); }
+  code.inline { font-family: var(--mono); font-size: 12px; background: var(--bg3); padding: 1px 6px; border-radius: 4px; color: var(--text); }
+
+  /* ─── ARCHITECTURE DIAGRAM (SVG wrapper) ─── */
+  .diagram-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+
+  /* ─── STEP FLOW ─── */
+  .step-flow { margin: 16px 0; }
+  .step-item {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .step-item:last-child { border-bottom: none; }
+  .step-circle {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--bg3); border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0; color: var(--text);
+  }
+  .step-circle.ok { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+  .step-circle.err { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
+  .step-circle.warn { background: var(--amber-bg); border-color: var(--amber-border); color: var(--amber); }
+  .step-body-text { flex: 1; }
+  .step-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .step-desc { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+  /* ─── ACCORDION ─── */
+  .accordion { border: 1px solid var(--border); border-radius: 8px; margin: 8px 0; overflow: hidden; }
+  .accordion-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; cursor: pointer;
+    background: var(--bg2); user-select: none;
+    font-size: 14px; font-weight: 500; color: var(--text);
+  }
+  .accordion-header:hover { background: var(--bg3); }
+  .accordion-arrow { margin-left: auto; transition: transform 0.2s; color: var(--text3); font-size: 12px; }
+  .accordion.open .accordion-arrow { transform: rotate(90deg); }
+  .accordion-body { display: none; padding: 16px; border-top: 1px solid var(--border); background: var(--bg); }
+  .accordion.open .accordion-body { display: block; }
+
+  /* ─── EDGE CASE CARDS ─── */
+  .ec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+  .ec-card { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .ec-card.red { border-left: 3px solid var(--red); }
+  .ec-card.amber { border-left: 3px solid var(--amber); }
+  .ec-card.blue { border-left: 3px solid var(--accent); }
+  .ec-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .ec-desc { font-size: 12.5px; color: var(--text2); line-height: 1.6; }
+
+  /* ─── COMPARE GRID ─── */
+  .compare-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  .compare-cell { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .compare-cell-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .compare-cell-desc { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+  /* ─── TOC sticky on right? No — inline sidebar nav works ─── */
+
+  /* ─── BREADCRUMB ─── */
+  .breadcrumb { font-size: 12px; color: var(--text3); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .breadcrumb span { color: var(--text3); }
+
+  /* ─── INLINE URL PILL ─── */
+  .url-pill {
+    display: inline-block;
+    font-family: var(--mono); font-size: 12.5px;
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 6px; padding: 6px 12px; margin: 6px 0;
+    word-break: break-all; color: var(--text);
+  }
+
+  /* responsive */
+  @media (max-width: 960px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 32px 24px 80px; }
+    .metric-grid { grid-template-columns: repeat(2,1fr); }
+    .ec-grid { grid-template-columns: 1fr; }
+    .compare-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar" aria-label="Page navigation">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-icon">
+      <svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 2h5v5H2zM9 2h5v5H9zM2 9h5v5H2zM9 9h5v5H9z"/></svg>
+    </div>
+    <span class="sidebar-logo-text">System Design</span>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Contents</div>
+    <a class="sidebar-item active" href="#overview">
+      <span class="sidebar-item-dot" style="background:#2563eb"></span> Overview
+    </a>
+    <a class="sidebar-item" href="#scale">
+      <span class="sidebar-item-dot" style="background:#16a34a"></span> Scale &amp; Estimates
+    </a>
+    <a class="sidebar-item" href="#hash-collision">
+      <span class="sidebar-item-dot" style="background:#d97706"></span> Hash &amp; Collision
+    </a>
+    <a class="sidebar-item" href="#concrete-url1">
+      <span class="sidebar-item-dot" style="background:#7c3aed"></span> URL 1 Walkthrough
+    </a>
+    <a class="sidebar-item" href="#concrete-url2">
+      <span class="sidebar-item-dot" style="background:#dc2626"></span> URL 2 — Collision
+    </a>
+    <a class="sidebar-item" href="#id-pool">
+      <span class="sidebar-item-dot" style="background:#0891b2"></span> ID Pool Method
+    </a>
+    <a class="sidebar-item" href="#architecture">
+      <span class="sidebar-item-dot" style="background:#059669"></span> Architecture
+    </a>
+    <a class="sidebar-item" href="#write-path">
+      <span class="sidebar-item-dot" style="background:#6366f1"></span> Write Path
+    </a>
+    <a class="sidebar-item" href="#read-path">
+      <span class="sidebar-item-dot" style="background:#0284c7"></span> Read Path
+    </a>
+    <a class="sidebar-item" href="#301-vs-302">
+      <span class="sidebar-item-dot" style="background:#b45309"></span> 301 vs 302
+    </a>
+    <a class="sidebar-item" href="#edge-cases">
+      <span class="sidebar-item-dot" style="background:#dc2626"></span> Edge Cases
+    </a>
+    <a class="sidebar-item" href="#schema">
+      <span class="sidebar-item-dot" style="background:#475569"></span> DB Schema
+    </a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- BREADCRUMB -->
+  <div class="breadcrumb">
+    <span>Workspace</span>
+    <span>›</span>
+    <span>System Design</span>
+    <span>›</span>
+    <span style="color:var(--text)">URL Shortener HLD</span>
+  </div>
+
+  <!-- PAGE HEADER -->
+  <div class="page-header" id="overview">
+    <div class="page-emoji">🔗</div>
+    <h1 class="page-title">URL Shortener<br/>High-Level Design</h1>
+    <p class="page-subtitle">Senior engineer reference — Uber scale (~100B redirects / day)</p>
+    <div class="page-meta">
+      <div class="page-meta-item"><span class="page-meta-label">Level</span> <span class="tag tag-red">Senior / Staff</span></div>
+      <div class="page-meta-item"><span class="page-meta-label">Scale</span> <span class="tag tag-blue">Uber-scale</span></div>
+      <div class="page-meta-item"><span class="page-meta-label">Reads</span> <span class="tag tag-green">100B / day</span></div>
+      <div class="page-meta-item"><span class="page-meta-label">Writes</span> <span class="tag tag-amber">~1M / day</span></div>
+      <div class="page-meta-item"><span class="page-meta-label">SLA</span> <span class="tag tag-gray">p99 &lt; 10ms redirect</span></div>
+    </div>
+  </div>
+
+  <div class="callout callout-blue">
+    <span class="callout-icon">💡</span>
+    <div class="callout-text"><strong>Core idea:</strong> Take a long URL, map it to a short 7-character code, store that mapping, and redirect instantly when someone clicks. Everything else — collision handling, caching, analytics — exists to make this work reliably at 100 billion requests per day.</div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─── SCALE ─── -->
+  <h2 class="block-h2" id="scale">Scale &amp; Estimates</h2>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-val">100B</div>
+      <div class="metric-label">Redirects / day</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val">~1M</div>
+      <div class="metric-label">New URLs / day</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val">1.16M</div>
+      <div class="metric-label">Reads / second (peak)</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val">~12</div>
+      <div class="metric-label">Writes / second</div>
+    </div>
+  </div>
+
+  <table class="notion-table">
+    <thead>
+      <tr><th>Parameter</th><th>Value</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Read : Write ratio</td><td><strong>100,000 : 1</strong></td><td>Heavily read-dominant — optimise the read path first</td></tr>
+      <tr><td>Avg URL stored</td><td>~200 bytes</td><td>Including metadata</td></tr>
+      <tr><td>Storage / year</td><td>~73 GB</td><td>1M writes/day × 200 bytes × 365</td></tr>
+      <tr><td>Short code space</td><td>62⁷ = 3.5 trillion</td><td>base62, 7 characters</td></tr>
+      <tr><td>Cache hit target</td><td>&gt;99%</td><td>Top 20% URLs = 80% traffic (Pareto)</td></tr>
+      <tr><td>Redirect latency SLA</td><td>p99 &lt; 10ms</td><td>p50 &lt; 2ms from CDN edge</td></tr>
+      <tr><td>Availability</td><td>99.99%</td><td>52 min downtime / year</td></tr>
+    </tbody>
+  </table>
+
+  <hr class="divider"/>
+
+  <!-- ─── HASH & COLLISION ─── -->
+  <h2 class="block-h2" id="hash-collision">Hash &amp; Collision — Conceptual Deep Dive</h2>
+
+  <p class="block-p">This is the part most people get wrong in interviews. Let's be very precise.</p>
+
+  <h3 class="block-h3">Why MD5 / SHA-256 alone is not enough</h3>
+
+  <p class="block-p">MD5 produces a <strong>128-bit digest</strong> — 32 hex characters. We only need 7 base62 characters (~42 bits). So we <strong>truncate</strong>. Truncation is what introduces collision risk. You're projecting a near-infinite input space into a much smaller slot space.</p>
+
+  <!-- HASH VISUAL SVG -->
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:700px; display:block; margin:0 auto;">
+      <!-- Input box -->
+      <rect x="10" y="60" width="160" height="60" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="90" y="84" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#1e40af" font-weight="600">Long URL</text>
+      <text x="90" y="100" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="#3b82f6">https://example.com/</text>
+      <text x="90" y="113" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="#3b82f6">abc/daf?user=123...</text>
+
+      <!-- Arrow 1 -->
+      <line x1="170" y1="90" x2="210" y2="90" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="190" y="83" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#64748b">MD5</text>
+
+      <!-- MD5 box -->
+      <rect x="210" y="40" width="220" height="100" rx="8" fill="#1e1e2e" stroke="#6c7086" stroke-width="1"/>
+      <text x="320" y="62" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#6c7086">Full 128-bit digest (32 hex chars)</text>
+      <text x="320" y="82" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="#a6e3a1" letter-spacing="0.5">a3f8c2d1</text>
+      <text x="320" y="97" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="#585b70" letter-spacing="0.5">e94b76052f1830c7</text>
+      <text x="320" y="112" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="#585b70" letter-spacing="0.5">d6a49e81</text>
+      <text x="320" y="130" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" fill="#f9e2af">↑ take only first 8 chars</text>
+
+      <!-- Arrow 2 -->
+      <line x1="430" y1="90" x2="470" y2="90" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="450" y="80" text-anchor="middle" font-family="Inter,sans-serif" font-size="9.5" fill="#64748b">base62</text>
+      <text x="450" y="91" text-anchor="middle" font-family="Inter,sans-serif" font-size="9.5" fill="#64748b">encode</text>
+
+      <!-- Output box -->
+      <rect x="470" y="60" width="120" height="60" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+      <text x="530" y="84" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#166534" font-weight="600">Short Code</text>
+      <text x="530" y="104" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="15" fill="#16a34a" font-weight="700">3phs7Qb</text>
+
+      <!-- Collision warning -->
+      <rect x="210" y="152" width="220" height="22" rx="4" fill="#fef2f2" stroke="#fecaca"/>
+      <text x="320" y="167" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#dc2626">⚠ Two different URLs can share same first 8 chars → collision</text>
+
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#94a3b8"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+
+  <h3 class="block-h3">Birthday Paradox — why collisions happen sooner than you think</h3>
+  <p class="block-p">With n = 62⁷ ≈ 3.5 trillion slots, and after inserting k URLs, the collision probability is approximately:</p>
+
+  <div class="diagram-wrap" style="text-align:center; padding:20px;">
+    <svg viewBox="0 0 600 140" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:600px; display:block; margin:0 auto;">
+      <!-- Formula -->
+      <text x="300" y="36" text-anchor="middle" font-family="Inter,sans-serif" font-size="14" fill="#191919" font-weight="500">P(collision) ≈ 1 − e^(−k² / 2n)</text>
+      <line x1="80" y1="48" x2="520" y2="48" stroke="#e3e2e0" stroke-width="1"/>
+      <!-- k labels -->
+      <text x="100" y="68" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6b6b6b">k = 1K URLs</text>
+      <text x="250" y="68" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6b6b6b">k = 100K URLs</text>
+      <text x="420" y="68" text-anchor="middle" font-family="Inter,sans-serif" font-size="11" fill="#6b6b6b">k = 1M URLs</text>
+      <!-- Bars -->
+      <rect x="60" y="95" width="80" height="8" rx="4" fill="#bbf7d0"/>
+      <text x="100" y="118" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="#16a34a" font-weight="600">~0.00%</text>
+      <rect x="210" y="80" width="80" height="23" rx="4" fill="#fde68a"/>
+      <text x="250" y="118" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="#d97706" font-weight="600">~0.001%</text>
+      <rect x="380" y="62" width="80" height="41" rx="4" fill="#fecaca"/>
+      <text x="420" y="118" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="#dc2626" font-weight="600">~0.014%</text>
+      <text x="300" y="138" text-anchor="middle" font-family="Inter,sans-serif" font-size="10" fill="#9b9b9b">Small % but at Uber scale = hundreds of collisions/day. Must handle.</text>
+    </svg>
+  </div>
+
+  <h3 class="block-h3">Collision Resolution Strategies</h3>
+
+  <div class="accordion open" id="acc1">
+    <div class="accordion-header" onclick="toggleAcc('acc1')">
+      <span style="color:var(--amber)">①</span>&nbsp; Salt + Re-hash
+      <span class="accordion-arrow">▶</span>
+    </div>
+    <div class="accordion-body">
+      <p class="block-p">Append a version salt to the original URL and hash again. The tiniest change to the input produces a completely different MD5 output.</p>
+      <pre class="code-block"><span class="c-comment"># Attempt 1</span>
+new_input = url + <span class="c-string">"v1"</span>
+short_code = base62(md5(new_input)[:<span class="c-num">8</span>])  <span class="c-comment"># "mR4xK9z"</span>
+
+<span class="c-comment"># Check DB</span>
+<span class="c-keyword">SELECT</span> original_url <span class="c-keyword">FROM</span> urls <span class="c-keyword">WHERE</span> short_code = <span class="c-string">'mR4xK9z'</span>;
+<span class="c-ok">→ 0 rows — FREE. Save it.</span>
+
+<span class="c-comment"># If still collides, try v2, v3. Cap at 3 attempts.
+# After 3 failures → fall back to ID pool.</span></pre>
+      <div class="callout callout-amber">
+        <span class="callout-icon">⚠️</span>
+        <div class="callout-text"><strong>Gotcha:</strong> Same URL + different salts = different short codes. Breaks idempotency. Fix by maintaining a <code>url_hash → short_code</code> dedup index so the same long URL always returns the same short code, regardless of how many times it's submitted.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion" id="acc2">
+    <div class="accordion-header" onclick="toggleAcc('acc2')">
+      <span style="color:var(--accent)">②</span>&nbsp; Pre-generated ID Pool (Bitly / Twitter approach)
+      <span class="accordion-arrow">▶</span>
+    </div>
+    <div class="accordion-body">
+      <p class="block-p">A background worker pre-generates millions of verified-unique codes and stocks them in a Redis list. Write service just pops one — <strong>zero collision possible at write time</strong>.</p>
+      <pre class="code-block"><span class="c-comment"># Background worker (runs 24/7, stays ~10M codes ahead):</span>
+<span class="c-keyword">loop</span>:
+    code = random_base62(<span class="c-num">7</span>)
+    <span class="c-keyword">if not</span> bloom_filter.check(code):   <span class="c-comment"># O(1) — no DB hit</span>
+        <span class="c-fn">RPUSH</span> url_id_pool code
+
+<span class="c-comment"># Write service (on each incoming URL):</span>
+code = <span class="c-fn">LPOP</span> url_id_pool            <span class="c-comment"># atomic pop</span>
+<span class="c-ok">→ Guaranteed unique. No DB check. No retry loop.</span>
+<span class="c-fn">INSERT INTO</span> urls (code, original_url, ...)</pre>
+    </div>
+  </div>
+
+  <div class="accordion" id="acc3">
+    <div class="accordion-header" onclick="toggleAcc('acc3')">
+      <span style="color:var(--purple)">③</span>&nbsp; Snowflake ID + Base62 Encode
+      <span class="accordion-arrow">▶</span>
+    </div>
+    <div class="accordion-body">
+      <p class="block-p">Use a distributed globally-unique monotonic counter (Snowflake format), then base62-encode it into your short code.</p>
+      <pre class="code-block"><span class="c-comment"># Snowflake ID structure (64 bits):</span>
+<span class="c-keyword">bit</span> 63     : unused (sign)
+<span class="c-keyword">bits</span> 22-62 : timestamp_ms - epoch   <span class="c-comment">(41 bits = 69 years)</span>
+<span class="c-keyword">bits</span> 12-21 : machine_id              <span class="c-comment">(10 bits = 1024 nodes)</span>
+<span class="c-keyword">bits</span> 0-11  : sequence_per_ms         <span class="c-comment">(12 bits = 4096/ms)</span>
+
+id = (ts - epoch) << <span class="c-num">22</span> | machine_id << <span class="c-num">12</span> | sequence
+short_code = base62_encode(id)        <span class="c-ok"># "xK7mP2q"</span>
+
+<span class="c-comment"># Pros: no collision, sortable by time
+# Cons: sequential = enumerable. XOR-mask before encoding to obscure.</span></pre>
+    </div>
+  </div>
+
+  <div class="accordion" id="acc4">
+    <div class="accordion-header" onclick="toggleAcc('acc4')">
+      <span style="color:var(--green)">④</span>&nbsp; Bloom Filter Guard
+      <span class="accordion-arrow">▶</span>
+    </div>
+    <div class="accordion-body">
+      <p class="block-p">A Bloom filter is a probabilistic structure: <strong>false positives possible, false negatives impossible</strong>. Used as a fast pre-check before hitting the DB during pool generation.</p>
+      <pre class="code-block"><span class="c-comment"># Bloom filter properties at 1 billion entries, 0.1% FP rate:</span>
+Memory usage  : ~<span class="c-num">1.8</span> GB  <span class="c-comment">(fits in Redis)</span>
+Check latency : O(<span class="c-num">1</span>)
+False negative: <span class="c-ok">IMPOSSIBLE</span>  → if says "not exists", guaranteed safe
+False positive: <span class="c-warn">~0.1%</span>       → if says "exists", do a real DB lookup
+
+<span class="c-comment"># Result: 99.9% of uniqueness checks need ZERO DB reads.</span>
+<span class="c-comment"># Only 0.1% false positives trigger a real SELECT.</span></pre>
+    </div>
+  </div>
+
+  <div class="callout callout-green">
+    <span class="callout-icon">✅</span>
+    <div class="callout-text"><strong>Recommended at Uber scale:</strong> Pre-generated ID Pool + Bloom Filter guard. The pool eliminates collision at write time. The Bloom filter makes pool generation fast. Custom aliases bypass the pool and are validated via DB unique constraint.</div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─── CONCRETE: URL 1 ─── -->
+  <h2 class="block-h2" id="concrete-url1">Concrete Example — URL 1 (Happy Path)</h2>
+
+  <div class="callout callout-gray">
+    <span class="callout-icon">🔗</span>
+    <div class="callout-text"><strong>Input:</strong> <code class="inline">https://example.com/abc/daf?user=123&amp;session=xyz</code></div>
+  </div>
+
+  <div class="step-flow">
+    <div class="step-item">
+      <div class="step-circle">1</div>
+      <div class="step-body-text">
+        <div class="step-title">Run MD5 on the full URL string</div>
+        <div class="step-desc">MD5 always returns exactly 32 hex characters (128 bits). Two URLs differing by even one character give completely different digests.</div>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle ok">✓</div>
+      <div class="step-body-text">
+        <div class="step-title">Result</div>
+        <pre class="code-block" style="margin-top:6px;">MD5(<span class="c-string">"https://example.com/abc/daf?user=123&session=xyz"</span>)
+= <span class="c-ok">a3f8c2d1</span><span class="c-comment">e94b76052f1830c7d6a49e81</span>
+  ↑ first 8 chars → use these only</pre>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle">2</div>
+      <div class="step-body-text">
+        <div class="step-title">Convert first 8 hex chars → decimal → base62</div>
+        <div class="step-desc">Take the first 8 hex chars, interpret as a 32-bit unsigned integer, then encode in base62 (digits 0–9, a–z, A–Z).</div>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle ok">✓</div>
+      <div class="step-body-text">
+        <pre class="code-block">First 8 hex : <span class="c-ok">a3f8c2d1</span>
+Hex → dec   : 0xa3f8c2d1 = <span class="c-num">2,751,546,065</span>
+
+Base62 alphabet: <span class="c-string">0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ</span>
+
+2,751,546,065 mod 62 repeatedly:
+  remainder <span class="c-num">3</span>  → <span class="c-ok">'3'</span>
+  remainder <span class="c-num">25</span> → <span class="c-ok">'p'</span>
+  remainder <span class="c-num">17</span> → <span class="c-ok">'h'</span>
+  remainder <span class="c-num">28</span> → <span class="c-ok">'s'</span>
+  remainder <span class="c-num">7</span>  → <span class="c-ok">'7'</span>
+  remainder <span class="c-num">52</span> → <span class="c-ok">'Q'</span>
+  remainder <span class="c-num">11</span> → <span class="c-ok">'b'</span>
+
+Short code = <span class="c-ok" style="font-size:14px; font-weight:700;">3phs7Qb</span></pre>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle">3</div>
+      <div class="step-body-text">
+        <div class="step-title">Check DB — is this code already taken?</div>
+        <pre class="code-block"><span class="c-keyword">SELECT</span> original_url <span class="c-keyword">FROM</span> urls <span class="c-keyword">WHERE</span> short_code = <span class="c-string">'3phs7Qb'</span>;
+<span class="c-ok">→ 0 rows. Code is free. No collision.</span></pre>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle">4</div>
+      <div class="step-body-text">
+        <div class="step-title">Save to DB + warm Redis cache</div>
+        <pre class="code-block"><span class="c-keyword">INSERT INTO</span> urls (short_code, original_url, created_at)
+<span class="c-keyword">VALUES</span> (<span class="c-string">'3phs7Qb'</span>, <span class="c-string">'https://example.com/abc/daf?user=123&session=xyz'</span>, NOW());
+
+<span class="c-comment"># Redis cache warm-up</span>
+<span class="c-fn">SET</span> url:<span class="c-ok">3phs7Qb</span> <span class="c-string">"https://example.com/abc/daf?user=123&session=xyz"</span> EX <span class="c-num">86400</span></pre>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle ok">✓</div>
+      <div class="step-body-text">
+        <div class="step-title">Return short URL to user</div>
+        <div class="url-pill">https://short.ly/3phs7Qb</div>
+        <div class="step-desc">Total write time: ~30ms. Done.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─── CONCRETE: URL 2 COLLISION ─── -->
+  <h2 class="block-h2" id="concrete-url2">Concrete Example — URL 2 (Collision Scenario)</h2>
+
+  <div class="callout callout-red">
+    <span class="callout-icon">⚠️</span>
+    <div class="callout-text"><strong>Scenario:</strong> A completely different URL arrives. By bad luck, its MD5 digest starts with the same 8 hex characters as URL 1. Here is exactly what happens and how it is resolved.</div>
+  </div>
+
+  <div class="callout callout-gray">
+    <span class="callout-icon">🔗</span>
+    <div class="callout-text"><strong>Input:</strong> <code class="inline">https://uber.com/rides/booking?city=NYC&amp;promo=SAVE20</code></div>
+  </div>
+
+  <!-- Collision visual SVG -->
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 680 220" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:680px; display:block; margin:0 auto;">
+      <defs>
+        <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#94a3b8"/>
+        </marker>
+        <marker id="arr-red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#dc2626"/>
+        </marker>
+        <marker id="arr-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#16a34a"/>
+        </marker>
+      </defs>
+
+      <!-- URL 1 row -->
+      <rect x="8" y="10" width="140" height="44" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.2"/>
+      <text x="78" y="27" text-anchor="middle" font-size="9.5" font-family="Inter,sans-serif" fill="#1e40af" font-weight="600">URL 1</text>
+      <text x="78" y="42" text-anchor="middle" font-size="8.5" font-family="JetBrains Mono,monospace" fill="#3b82f6">example.com/abc/daf</text>
+
+      <line x1="148" y1="32" x2="188" y2="32" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arr2)"/>
+      <text x="168" y="26" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="#6b6b6b">MD5</text>
+
+      <rect x="188" y="10" width="160" height="44" rx="6" fill="#1e1e2e" stroke="#6c7086" stroke-width="1"/>
+      <text x="268" y="27" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="#6c7086">digest</text>
+      <text x="268" y="42" text-anchor="middle" font-size="10" font-family="JetBrains Mono,monospace" fill="#a6e3a1" letter-spacing="1">a3f8c2d1</text>
+
+      <line x1="348" y1="32" x2="388" y2="32" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arr2)"/>
+
+      <rect x="388" y="10" width="100" height="44" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.2"/>
+      <text x="438" y="27" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="#166534">code</text>
+      <text x="438" y="44" text-anchor="middle" font-size="13" font-family="JetBrains Mono,monospace" fill="#16a34a" font-weight="700">3phs7Qb</text>
+
+      <!-- URL 2 row -->
+      <rect x="8" y="78" width="140" height="44" rx="6" fill="#fef2f2" stroke="#dc2626" stroke-width="1.2"/>
+      <text x="78" y="95" text-anchor="middle" font-size="9.5" font-family="Inter,sans-serif" fill="#991b1b" font-weight="600">URL 2</text>
+      <text x="78" y="110" text-anchor="middle" font-size="8.5" font-family="JetBrains Mono,monospace" fill="#dc2626">uber.com/rides/book...</text>
+
+      <line x1="148" y1="100" x2="188" y2="100" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arr2)"/>
+      <text x="168" y="94" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="#6b6b6b">MD5</text>
+
+      <rect x="188" y="78" width="160" height="44" rx="6" fill="#1e1e2e" stroke="#6c7086" stroke-width="1"/>
+      <text x="268" y="95" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="#6c7086">digest (different full hash)</text>
+      <text x="268" y="110" text-anchor="middle" font-size="10" font-family="JetBrains Mono,monospace" fill="#f38ba8" letter-spacing="1">a3f8c2d1</text>
+
+      <line x1="348" y1="100" x2="388" y2="100" stroke="#dc2626" stroke-width="1.5" marker-end="url(#arr-red)"/>
+
+      <rect x="388" y="78" width="100" height="44" rx="6" fill="#fef2f2" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="4"/>
+      <text x="438" y="95" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="#991b1b">COLLISION!</text>
+      <text x="438" y="112" text-anchor="middle" font-size="13" font-family="JetBrains Mono,monospace" fill="#dc2626" font-weight="700">3phs7Qb</text>
+
+      <!-- Resolution row -->
+      <text x="148" y="156" text-anchor="middle" font-size="9.5" font-family="Inter,sans-serif" fill="#d97706" font-weight="600">add salt "v1"</text>
+      <rect x="8" y="162" width="140" height="40" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="1.2"/>
+      <text x="78" y="178" text-anchor="middle" font-size="8.5" font-family="JetBrains Mono,monospace" fill="#92400e">uber.com/...SAVE20<tspan font-weight="700" fill="#d97706">v1</tspan></text>
+      <text x="78" y="194" text-anchor="middle" font-size="8" font-family="Inter,sans-serif" fill="#92400e">re-hash with salt</text>
+
+      <line x1="148" y1="182" x2="188" y2="182" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arr2)"/>
+
+      <rect x="188" y="162" width="160" height="40" rx="6" fill="#1e1e2e" stroke="#6c7086" stroke-width="1"/>
+      <text x="268" y="178" text-anchor="middle" font-size="10" font-family="JetBrains Mono,monospace" fill="#a6e3a1" letter-spacing="1">9c4e2ab7</text>
+      <text x="268" y="194" text-anchor="middle" font-size="8.5" font-family="Inter,sans-serif" fill="#585b70">completely different prefix</text>
+
+      <line x1="348" y1="182" x2="388" y2="182" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arr-green)"/>
+
+      <rect x="388" y="162" width="100" height="40" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+      <text x="438" y="178" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="#166534">resolved ✓</text>
+      <text x="438" y="194" text-anchor="middle" font-size="13" font-family="JetBrains Mono,monospace" fill="#16a34a" font-weight="700">mR4xK9z</text>
+
+      <!-- same-box indicator -->
+      <line x1="488" y1="32" x2="540" y2="32" stroke="#dc2626" stroke-width="1" stroke-dasharray="3"/>
+      <line x1="488" y1="100" x2="540" y2="100" stroke="#dc2626" stroke-width="1" stroke-dasharray="3"/>
+      <line x1="540" y1="32" x2="540" y2="100" stroke="#dc2626" stroke-width="1" stroke-dasharray="3"/>
+      <text x="560" y="70" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="#dc2626" font-weight="600">SAME</text>
+      <text x="560" y="82" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="#dc2626" font-weight="600">CODE</text>
+    </svg>
+  </div>
+
+  <div class="step-flow">
+    <div class="step-item">
+      <div class="step-circle">1</div>
+      <div class="step-body-text">
+        <div class="step-title">MD5 — different URL, same first 8 hex chars (collision)</div>
+        <pre class="code-block">MD5(<span class="c-string">"https://uber.com/rides/booking?city=NYC&promo=SAVE20"</span>)
+= <span class="c-err">a3f8c2d1</span><span class="c-comment">77f2a904bcd31e60...  ← full hash differs</span>
+  ↑ but first 8 chars are IDENTICAL to URL 1!</pre>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle err">✗</div>
+      <div class="step-body-text">
+        <div class="step-title">Base62 encode → same code 3phs7Qb</div>
+        <pre class="code-block">First 8 hex : <span class="c-err">a3f8c2d1</span>   ← same as URL 1
+Decimal     : 2,751,546,065
+Base62      : <span class="c-err">"3phs7Qb"</span>   ← COLLISION
+
+<span class="c-keyword">SELECT</span> original_url <span class="c-keyword">FROM</span> urls <span class="c-keyword">WHERE</span> short_code = <span class="c-string">'3phs7Qb'</span>;
+<span class="c-err">→ Returns: "https://example.com/abc/daf..." (that is URL 1!)</span>
+<span class="c-err">→ COLLISION CONFIRMED. Slot is taken by a different URL.</span></pre>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle warn">!</div>
+      <div class="step-body-text">
+        <div class="step-title">Append salt "v1", re-hash</div>
+        <pre class="code-block">new_input = url + <span class="c-string">"v1"</span>
+<span class="c-comment"># = "https://uber.com/rides/booking?city=NYC&promo=SAVE20v1"</span>
+
+MD5(new_input) = <span class="c-ok">9c4e2ab7</span>f03d1c88e55...
+First 8 hex  : <span class="c-ok">9c4e2ab7</span>
+Decimal      : 2,621,506,231
+Base62       : <span class="c-ok">"mR4xK9z"</span>
+
+<span class="c-keyword">SELECT</span> original_url <span class="c-keyword">FROM</span> urls <span class="c-keyword">WHERE</span> short_code = <span class="c-string">'mR4xK9z'</span>;
+<span class="c-ok">→ 0 rows. FREE! Save URL 2 as "mR4xK9z". Done.</span></pre>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle ok">✓</div>
+      <div class="step-body-text">
+        <div class="step-title">URL 2 gets its own unique short code</div>
+        <div class="url-pill">https://short.ly/mR4xK9z</div>
+        <div class="step-desc">If salt v1 also collided, try v2, then v3. Cap at 3 attempts. After 3 failures, fall back to the ID pool.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─── ID POOL ─── -->
+  <h2 class="block-h2" id="id-pool">ID Pool Method (Industrial Standard)</h2>
+
+  <p class="block-p">The hash+salt approach works but has non-deterministic latency under load. The ID pool eliminates collision entirely at write time. Used by Bitly and Twitter.</p>
+
+  <!-- Pool diagram SVG -->
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 680 200" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:680px; display:block; margin:0 auto;">
+      <defs>
+        <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#94a3b8"/>
+        </marker>
+        <marker id="arr3b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#2563eb"/>
+        </marker>
+      </defs>
+
+      <!-- BG worker -->
+      <rect x="8" y="20" width="120" height="56" rx="8" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="68" y="42" text-anchor="middle" font-size="10" font-family="Inter,sans-serif" fill="#5b21b6" font-weight="600">Background</text>
+      <text x="68" y="56" text-anchor="middle" font-size="10" font-family="Inter,sans-serif" fill="#5b21b6" font-weight="600">Worker</text>
+      <text x="68" y="70" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="#7c3aed">runs 24/7</text>
+
+      <line x1="128" y1="48" x2="168" y2="48" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arr3)"/>
+      <text x="148" y="42" text-anchor="middle" font-size="8.5" font-family="Inter,sans-serif" fill="#6b6b6b">RPUSH</text>
+
+      <!-- Pool / Redis list -->
+      <rect x="168" y="10" width="280" height="76" rx="8" fill="#1e1e2e" stroke="#6c7086" stroke-width="1"/>
+      <text x="308" y="30" text-anchor="middle" font-size="10" font-family="Inter,sans-serif" fill="#6c7086">Redis List — url_id_pool (10M codes pre-stocked)</text>
+      <!-- code pills -->
+      <rect x="178" y="38" width="52" height="22" rx="4" fill="#a6e3a1" opacity="0.9"/>
+      <text x="204" y="53" text-anchor="middle" font-size="10" font-family="JetBrains Mono,monospace" fill="#1e1e2e" font-weight="600">xK7mP2q</text>
+      <rect x="234" y="38" width="52" height="22" rx="4" fill="#a6e3a1" opacity="0.85"/>
+      <text x="260" y="53" text-anchor="middle" font-size="10" font-family="JetBrains Mono,monospace" fill="#1e1e2e" font-weight="600">3phs7Qb</text>
+      <rect x="290" y="38" width="52" height="22" rx="4" fill="#a6e3a1" opacity="0.8"/>
+      <text x="316" y="53" text-anchor="middle" font-size="10" font-family="JetBrains Mono,monospace" fill="#1e1e2e" font-weight="600">mR4xK9z</text>
+      <rect x="346" y="38" width="52" height="22" rx="4" fill="#a6e3a1" opacity="0.75"/>
+      <text x="372" y="53" text-anchor="middle" font-size="10" font-family="JetBrains Mono,monospace" fill="#1e1e2e" font-weight="600">T8vLn5W</text>
+      <text x="420" y="53" text-anchor="middle" font-size="12" font-family="Inter,sans-serif" fill="#585b70">···</text>
+      <text x="308" y="75" text-anchor="middle" font-size="8.5" font-family="Inter,sans-serif" fill="#45475a">← LPOP pops from left (oldest first)    RPUSH adds to right →</text>
+
+      <!-- LPOP arrow -->
+      <line x1="168" y1="48" x2="130" y2="130" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="4" marker-end="url(#arr3b)"/>
+      <text x="138" y="105" text-anchor="middle" font-size="8.5" font-family="Inter,sans-serif" fill="#2563eb" transform="rotate(-50, 138, 105)">LPOP (atomic)</text>
+
+      <!-- Write service -->
+      <rect x="8" y="120" width="120" height="60" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="68" y="142" text-anchor="middle" font-size="10" font-family="Inter,sans-serif" fill="#1e40af" font-weight="600">Write Service</text>
+      <text x="68" y="158" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="#3b82f6">URL arrives →</text>
+      <text x="68" y="171" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="#3b82f6">pop code → save</text>
+
+      <!-- DB -->
+      <line x1="128" y1="150" x2="450" y2="150" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arr3)"/>
+      <text x="280" y="142" text-anchor="middle" font-size="8.5" font-family="Inter,sans-serif" fill="#6b6b6b">INSERT — no collision check needed</text>
+
+      <rect x="450" y="120" width="100" height="60" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"/>
+      <text x="500" y="145" text-anchor="middle" font-size="10" font-family="Inter,sans-serif" fill="#166534" font-weight="600">Database</text>
+      <text x="500" y="160" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="#16a34a">zero collision</text>
+      <text x="500" y="173" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="#16a34a">guaranteed ✓</text>
+
+      <!-- Bloom filter -->
+      <rect x="560" y="20" width="110" height="56" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="1.2"/>
+      <text x="615" y="40" text-anchor="middle" font-size="10" font-family="Inter,sans-serif" fill="#92400e" font-weight="600">Bloom Filter</text>
+      <text x="615" y="55" text-anchor="middle" font-size="8.5" font-family="Inter,sans-serif" fill="#d97706">guards worker</text>
+      <text x="615" y="68" text-anchor="middle" font-size="8.5" font-family="Inter,sans-serif" fill="#d97706">O(1), ~1.8GB RAM</text>
+      <line x1="560" y1="48" x2="448" y2="48" stroke="#d97706" stroke-width="1" stroke-dasharray="3" marker-end="url(#arr3)"/>
+      <text x="510" y="42" text-anchor="middle" font-size="8" font-family="Inter,sans-serif" fill="#d97706">check before RPUSH</text>
+    </svg>
+  </div>
+
+  <pre class="code-block"><span class="c-comment"># Background worker — fills the pool continuously:</span>
+<span class="c-keyword">while</span> True:
+    code = random_base62(<span class="c-num">7</span>)
+    <span class="c-keyword">if</span> bloom_filter.check(code) == <span class="c-string">"definitely_not_exist"</span>:
+        <span class="c-fn">RPUSH</span> url_id_pool code         <span class="c-comment"># safe — no DB lookup needed</span>
+    <span class="c-keyword">elif</span> bloom_filter.check(code) == <span class="c-string">"might_exist"</span>:
+        <span class="c-fn">SELECT</span> <span class="c-num">1</span> <span class="c-keyword">FROM</span> urls <span class="c-keyword">WHERE</span> short_code = code
+        <span class="c-keyword">if</span> not_found:
+            <span class="c-fn">RPUSH</span> url_id_pool code      <span class="c-comment"># bloom was a false positive, still safe</span>
+
+<span class="c-comment"># Write service — on each incoming URL:
+# ─────────────────────────────────────</span>
+code = <span class="c-fn">LPOP</span> url_id_pool           <span class="c-comment"># atomic, O(1)</span>
+<span class="c-ok">→ Guaranteed unique. No hash. No collision check. No retry.</span>
+<span class="c-fn">INSERT INTO</span> urls (code, original_url, NOW())
+
+<span class="c-comment"># Pool monitoring:</span>
+pool_size = <span class="c-fn">LLEN</span> url_id_pool
+<span class="c-keyword">if</span> pool_size &lt; <span class="c-num">1_000_000</span>:  alert(<span class="c-string">"Pool low!"</span>)
+<span class="c-keyword">if</span> pool_size &lt; <span class="c-num">100_000</span>:   switch_to_inline_hash_fallback()
+<span class="c-keyword">if</span> pool_size == <span class="c-num">0</span>:        <span class="c-keyword">return</span> HTTP <span class="c-num">503</span>, Retry-After: <span class="c-num">30</span></pre>
+
+  <hr class="divider"/>
+
+  <!-- ─── ARCHITECTURE ─── -->
+  <h2 class="block-h2" id="architecture">System Architecture</h2>
+
+  <!-- Full architecture SVG -->
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 700 440" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:700px; display:block; margin:0 auto;">
+      <defs>
+        <marker id="a4" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L7,3 z" fill="#94a3b8"/>
+        </marker>
+        <marker id="a4b" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L7,3 z" fill="#6366f1"/>
+        </marker>
+        <marker id="a4c" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L7,3 z" fill="#16a34a"/>
+        </marker>
+      </defs>
+
+      <!-- Row labels -->
+      <text x="8" y="42" font-family="Inter,sans-serif" font-size="9" fill="#9b9b9b" font-weight="600" text-transform="uppercase">CLIENT</text>
+      <text x="8" y="108" font-family="Inter,sans-serif" font-size="9" fill="#9b9b9b" font-weight="600">CDN</text>
+      <text x="8" y="178" font-family="Inter,sans-serif" font-size="9" fill="#9b9b9b" font-weight="600">GATEWAY</text>
+      <text x="8" y="248" font-family="Inter,sans-serif" font-size="9" fill="#9b9b9b" font-weight="600">SERVICES</text>
+      <text x="8" y="318" font-family="Inter,sans-serif" font-size="9" fill="#9b9b9b" font-weight="600">CACHE</text>
+      <text x="8" y="388" font-family="Inter,sans-serif" font-size="9" fill="#9b9b9b" font-weight="600">DB</text>
+
+      <!-- Horizontal dividers -->
+      <line x1="60" y1="54" x2="695" y2="54" stroke="#e3e2e0" stroke-width="0.5" stroke-dasharray="3"/>
+      <line x1="60" y1="124" x2="695" y2="124" stroke="#e3e2e0" stroke-width="0.5" stroke-dasharray="3"/>
+      <line x1="60" y1="194" x2="695" y2="194" stroke="#e3e2e0" stroke-width="0.5" stroke-dasharray="3"/>
+      <line x1="60" y1="264" x2="695" y2="264" stroke="#e3e2e0" stroke-width="0.5" stroke-dasharray="3"/>
+      <line x1="60" y1="334" x2="695" y2="334" stroke="#e3e2e0" stroke-width="0.5" stroke-dasharray="3"/>
+
+      <!-- Client -->
+      <rect x="270" y="14" width="160" height="34" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.2"/>
+      <text x="350" y="35" text-anchor="middle" font-size="11" font-family="Inter,sans-serif" fill="#1e40af" font-weight="600">Browser / Mobile / API</text>
+
+      <line x1="350" y1="48" x2="350" y2="68" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a4)"/>
+
+      <!-- CDN -->
+      <rect x="170" y="68" width="360" height="48" rx="6" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.2"/>
+      <text x="350" y="87" text-anchor="middle" font-size="11" font-family="Inter,sans-serif" fill="#5b21b6" font-weight="600">CDN (Cloudflare / Akamai)</text>
+      <text x="350" y="103" text-anchor="middle" font-size="9.5" font-family="Inter,sans-serif" fill="#7c3aed">Edge cache — serves top 20% URLs in ~2ms. 301 or 302 response.</text>
+
+      <line x1="350" y1="116" x2="350" y2="136" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a4)"/>
+      <text x="370" y="128" font-size="8.5" font-family="Inter,sans-serif" fill="#9b9b9b">cache miss only</text>
+
+      <!-- Gateway -->
+      <rect x="170" y="136" width="360" height="48" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="1.2"/>
+      <text x="350" y="155" text-anchor="middle" font-size="11" font-family="Inter,sans-serif" fill="#92400e" font-weight="600">API Gateway + Load Balancer</text>
+      <text x="350" y="171" text-anchor="middle" font-size="9.5" font-family="Inter,sans-serif" fill="#d97706">Rate limiting · Auth (JWT) · Route: /s/{code} → Read  |  /api/shorten → Write</text>
+
+      <!-- Fork to Read / Write -->
+      <line x1="280" y1="184" x2="230" y2="214" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a4)"/>
+      <line x1="420" y1="184" x2="470" y2="214" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a4)"/>
+
+      <!-- Read Service -->
+      <rect x="100" y="214" width="200" height="44" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.2"/>
+      <text x="200" y="232" text-anchor="middle" font-size="11" font-family="Inter,sans-serif" fill="#166534" font-weight="600">Read Service</text>
+      <text x="200" y="248" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="#16a34a">Stateless · horizontally scaled</text>
+
+      <!-- Write Service -->
+      <rect x="400" y="214" width="200" height="44" rx="6" fill="#fef2f2" stroke="#dc2626" stroke-width="1.2"/>
+      <text x="500" y="232" text-anchor="middle" font-size="11" font-family="Inter,sans-serif" fill="#991b1b" font-weight="600">Write Service</text>
+      <text x="500" y="248" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="#dc2626">Pops ID pool · dedup · DB write</text>
+
+      <!-- Redis -->
+      <line x1="200" y1="258" x2="270" y2="288" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a4)"/>
+      <line x1="500" y1="258" x2="430" y2="288" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a4)"/>
+
+      <rect x="230" y="288" width="240" height="40" rx="6" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.2"/>
+      <text x="350" y="306" text-anchor="middle" font-size="11" font-family="Inter,sans-serif" fill="#5b21b6" font-weight="600">Redis Cluster (L1 Cache)</text>
+      <text x="350" y="320" text-anchor="middle" font-size="9" font-family="Inter,sans-serif" fill="#7c3aed">LRU eviction · TTL = URL expiry · 3 replicas/shard</text>
+
+      <!-- DB -->
+      <line x1="350" y1="328" x2="350" y2="358" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a4)"/>
+      <text x="370" y="346" font-size="8.5" font-family="Inter,sans-serif" fill="#9b9b9b">cache miss</text>
+
+      <rect x="170" y="358" width="360" height="48" rx="6" fill="#f0fdf4" stroke="#059669" stroke-width="1.2"/>
+      <text x="350" y="377" text-anchor="middle" font-size="11" font-family="Inter,sans-serif" fill="#065f46" font-weight="600">Cassandra / DynamoDB (Primary + Replicas)</text>
+      <text x="350" y="393" text-anchor="middle" font-size="9.5" font-family="Inter,sans-serif" fill="#059669">Partition key: short_code · 3 AZ replicas · Active-active multi-region</text>
+
+      <!-- Kafka async -->
+      <line x1="200" y1="236" x2="100" y2="370" stroke="#6366f1" stroke-width="1" stroke-dasharray="4" marker-end="url(#a4b)"/>
+      <rect x="8" y="358" width="82" height="48" rx="6" fill="#eff6ff" stroke="#6366f1" stroke-width="1"/>
+      <text x="49" y="378" text-anchor="middle" font-size="9.5" font-family="Inter,sans-serif" fill="#3730a3" font-weight="600">Kafka</text>
+      <text x="49" y="392" text-anchor="middle" font-size="8.5" font-family="Inter,sans-serif" fill="#6366f1">Analytics</text>
+      <text x="49" y="402" text-anchor="middle" font-size="8" font-family="Inter,sans-serif" fill="#9b9b9b">(async)</text>
+    </svg>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─── WRITE PATH ─── -->
+  <h2 class="block-h2" id="write-path">Write Path — Step by Step</h2>
+
+  <div class="step-flow">
+    <div class="step-item">
+      <div class="step-circle">1</div>
+      <div class="step-body-text">
+        <div class="step-title">POST /api/shorten { url, custom_alias?, ttl? }</div>
+        <div class="step-desc">API Gateway validates JWT, enforces rate limit (e.g. 100 req/min/user), rejects URLs > 8192 bytes with 414.</div>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle">2</div>
+      <div class="step-body-text">
+        <div class="step-title">Deduplication check</div>
+        <div class="step-desc">Compute <code class="inline">SHA256(url)</code>, look up <code class="inline">url_hash → short_code</code> in dedup index (cached in Redis). If found → return existing code immediately. <strong>Idempotent.</strong></div>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle">3</div>
+      <div class="step-body-text">
+        <div class="step-title">Acquire short code</div>
+        <div class="step-desc">Custom alias → validate uniqueness in DB (unique constraint). Auto-generate → <code class="inline">LPOP url_id_pool</code> from Redis (atomic). If pool empty → inline hash+salt fallback.</div>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle">4</div>
+      <div class="step-body-text">
+        <div class="step-title">Write to primary DB</div>
+        <div class="step-desc">Insert into <code class="inline">urls</code> table and <code class="inline">url_hash_index</code> dedup table. DB enforces unique constraint on short_code as final safety net.</div>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle ok">✓</div>
+      <div class="step-body-text">
+        <div class="step-title">Warm Redis cache + return 201</div>
+        <div class="step-desc">Write <code class="inline">url:{code} → original_url</code> into Redis with TTL. Return short URL to client. p99 target: &lt;50ms.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─── READ PATH ─── -->
+  <h2 class="block-h2" id="read-path">Read Path — Redirect Flow</h2>
+
+  <div class="step-flow">
+    <div class="step-item">
+      <div class="step-circle">1</div>
+      <div class="step-body-text">
+        <div class="step-title">GET /s/3phs7Qb hits CDN edge</div>
+        <div class="step-desc">CDN checks edge cache. Hot URLs (top 20%) respond in ~2ms — no origin hit. Returns 302 with Location header.</div>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle">2</div>
+      <div class="step-body-text">
+        <div class="step-title">CDN miss → Redis lookup</div>
+        <div class="step-desc"><code class="inline">GET url:3phs7Qb</code> from Redis. Hit rate target >99%. Response in microseconds.</div>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle">3</div>
+      <div class="step-body-text">
+        <div class="step-title">Redis miss → Cassandra read</div>
+        <div class="step-desc">Primary key lookup on <code class="inline">short_code</code>. Check <code class="inline">expires_at</code> — if expired return <strong>410 Gone</strong>, if not found return <strong>404</strong>. Repopulate Redis on hit.</div>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle ok">✓</div>
+      <div class="step-body-text">
+        <div class="step-title">HTTP 302 redirect returned</div>
+        <pre class="code-block">HTTP/1.1 302 Found
+Location: https://example.com/abc/daf?user=123&session=xyz
+Cache-Control: no-store</pre>
+      </div>
+    </div>
+    <div class="step-item">
+      <div class="step-circle">⚡</div>
+      <div class="step-body-text">
+        <div class="step-title">Async: publish click event to Kafka</div>
+        <div class="step-desc">Fire-and-forget. Does not block redirect response. Analytics pipeline consumes separately.</div>
+        <pre class="code-block" style="margin-top:6px;">{ code: <span class="c-string">"3phs7Qb"</span>, ip: <span class="c-string">"..."</span>, ua: <span class="c-string">"..."</span>, referrer: <span class="c-string">"..."</span>, ts: <span class="c-num">1719000000</span> }</pre>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─── 301 vs 302 ─── -->
+  <h2 class="block-h2" id="301-vs-302">301 vs 302 — The Decision That Matters at Scale</h2>
+
+  <div class="compare-2">
+    <div class="compare-cell">
+      <div class="compare-cell-title">🔒 301 Permanent Redirect</div>
+      <div class="compare-cell-desc">Browser caches it permanently. Second click from same browser never hits your servers. Massively reduces origin traffic. <strong>Cost:</strong> you lose analytics after the first click — browser doesn't re-request, so you can't count impressions. Use for internal tools where analytics don't matter.</div>
+    </div>
+    <div class="compare-cell">
+      <div class="compare-cell-title">🔄 302 Temporary Redirect</div>
+      <div class="compare-cell-desc">Every single click goes to your servers. Full click-by-click analytics — required if you're billing advertisers. <strong>Cost:</strong> At 100B redirects/day this is why the CDN layer is non-negotiable. Without CDN you'd need hundreds of thousands of servers just for redirects.</div>
+    </div>
+  </div>
+
+  <div class="callout callout-blue">
+    <span class="callout-icon">💡</span>
+    <div class="callout-text"><strong>Interviewer signal:</strong> Choosing 301 vs 302 is a product decision disguised as a technical one. The "right" answer depends on the business model. Advertising-driven → 302. Cost-optimisation-first → 301 + CDN-level analytics.</div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─── EDGE CASES ─── -->
+  <h2 class="block-h2" id="edge-cases">Edge Cases — Every One Must Be Handled</h2>
+
+  <div class="ec-grid">
+    <div class="ec-card red">
+      <div class="ec-title">🚫 Malicious / Phishing URLs</div>
+      <div class="ec-desc">Validate URL format on write. Integrate Google Safe Browsing API asynchronously. Store <code class="inline">is_malicious</code> flag. On redirect, if flagged → <strong>451 Unavailable For Legal Reasons</strong> + warning page. Periodic re-scan via background worker.</div>
+    </div>
+    <div class="ec-card red">
+      <div class="ec-title">⏰ URL Expiry — Soft vs Hard Delete</div>
+      <div class="ec-desc">Soft delete: set <code class="inline">is_active = false</code>. Hard delete: background cron sweeps expired rows after grace period. Expired URL returns <strong>410 Gone</strong> (not 404 — tells crawlers it was intentional). Purge from Redis immediately on expiry detection.</div>
+    </div>
+    <div class="ec-card amber">
+      <div class="ec-title">📉 ID Pool Exhaustion</div>
+      <div class="ec-desc">Three-level degradation: (1) Alert fires at &lt;1M codes, (2) fallback to inline hash+salt at &lt;100K codes, (3) HTTP 503 + Retry-After at 0. Worker runs with leader election (ZooKeeper/etcd) — if it dies, follower takes over in 30s.</div>
+    </div>
+    <div class="ec-card amber">
+      <div class="ec-title">🌊 Cache Stampede on Viral URL</div>
+      <div class="ec-desc">When a viral URL's cache entry expires, thousands of requests simultaneously miss and hammer the DB. Fix: <strong>probabilistic early expiration</strong> (XFetch algorithm) + <strong>request coalescing</strong> (Redis SETNX mutex — only one request fetches from DB, others wait on pub/sub).</div>
+    </div>
+    <div class="ec-card amber">
+      <div class="ec-title">🔀 Custom Alias Conflicts</div>
+      <div class="ec-desc">Custom aliases share the same table as generated codes. DB unique constraint enforced at write time. If user's chosen alias collides with an existing code → immediate <strong>409 Conflict</strong>. No namespace separation needed — uniqueness constraint handles it.</div>
+    </div>
+    <div class="ec-card blue">
+      <div class="ec-title">♻️ Same URL Submitted Twice</div>
+      <div class="ec-desc">Store <code class="inline">SHA256(original_url) → short_code</code> in a dedup index table. Before generating a new code, check this index. If found → return existing code. Makes the write API fully idempotent. Cache this lookup in Redis.</div>
+    </div>
+    <div class="ec-card blue">
+      <div class="ec-title">🌍 Cross-Region Consistency</div>
+      <div class="ec-desc">Writes go to primary region (strong consistency). Reads from local replica (eventual, ~100ms lag). Acceptable — a newly created URL may 404 for a few seconds in distant regions. Mitigate with synchronous replication to 2 regions for critical writes.</div>
+    </div>
+    <div class="ec-card red">
+      <div class="ec-title">💥 DDoS on Redirect Endpoint</div>
+      <div class="ec-desc">Per-IP rate limiting at CDN layer (token bucket). If a specific short code gets hammered (&gt;10K req/sec): circuit breaker — rate limit at code level, serve cached response only, throttle Kafka analytics writes. DB writes stop; CDN absorbs the flood.</div>
+    </div>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- ─── SCHEMA ─── -->
+  <h2 class="block-h2" id="schema">DB Schema</h2>
+
+  <pre class="code-block"><span class="c-comment">-- Primary table (Cassandra / DynamoDB)
+-- Partition key is short_code → O(1) point lookup</span>
+urls (
+  short_code    TEXT    <span class="c-keyword">PRIMARY KEY</span>,     <span class="c-comment">-- e.g. "3phs7Qb"</span>
+  original_url  TEXT    <span class="c-keyword">NOT NULL</span>,
+  user_id       UUID,
+  created_at    TIMESTAMP,
+  expires_at    TIMESTAMP,                <span class="c-comment">-- NULL = never expires</span>
+  is_active     BOOLEAN <span class="c-keyword">DEFAULT</span> <span class="c-ok">TRUE</span>,   <span class="c-comment">-- soft delete flag</span>
+  click_count   COUNTER                   <span class="c-comment">-- CRDT, no race condition</span>
+);
+
+<span class="c-comment">-- Dedup index (Redis hash or separate Cassandra table)</span>
+url_hash_index (
+  url_sha256    TEXT    <span class="c-keyword">PRIMARY KEY</span>,     <span class="c-comment">-- SHA256(original_url)</span>
+  short_code    TEXT                      <span class="c-comment">-- maps back to urls table</span>
+);
+
+<span class="c-comment">-- Pre-generated ID pool (Redis list)
+-- Background worker: RPUSH url_id_pool "xK7mP2q"
+-- Write service:     LPOP  url_id_pool  (atomic pop)</span>
+
+<span class="c-comment">-- Why Cassandra over MySQL?
+-- • Workload = pure point lookups by PK (short_code). No JOINs.
+-- • Hash-partitioned ring → O(1) reads, linear write scaling.
+-- • Native active-active multi-region replication.
+-- • COUNTER type for click_count → no lock contention.
+-- • At >99% cache hit rate, DB sees ~1M reads/day — Cassandra handles trivially.</span></pre>
+
+  <table class="notion-table" style="margin-top:20px;">
+    <thead>
+      <tr><th>Design Choice</th><th>Why</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>No auto-increment PK</td><td>Prevents sequential ID enumeration attack — attacker can't scrape all URLs by incrementing</td></tr>
+      <tr><td>COUNTER for clicks</td><td>Cassandra's native CRDT counter — concurrent increments without race conditions</td></tr>
+      <tr><td><code class="inline">expires_at</code> indexed</td><td>Background TTL worker uses this for batch expiry sweeps</td></tr>
+      <tr><td>Separate dedup table</td><td>Keeps primary table's partition key clean — no secondary index overhead on hot path</td></tr>
+      <tr><td><code class="inline">is_active</code> flag</td><td>Soft delete preserves audit trail; hard delete happens offline in batch, never on the read path</td></tr>
+      <tr><td>3 AZ replicas</td><td>Survive full AZ outage with zero data loss. Reads from nearest replica reduce cross-AZ latency costs</td></tr>
+    </tbody>
+  </table>
+
+  <hr class="divider"/>
+
+  <!-- SUMMARY CALLOUT -->
+  <div class="callout callout-green" style="margin-top:32px;">
+    <span class="callout-icon">🧠</span>
+    <div class="callout-text">
+      <strong>The mental model in one paragraph:</strong><br/><br/>
+      A URL shortener is a <strong>glorified key-value store</strong> with a globally unique ID generation problem. The hard parts are: (1) generating short codes without collision at massive scale — solved by pre-generated ID pool + Bloom filter, (2) making reads sub-10ms at 100B/day — solved by CDN → Redis → DB layering with >99% cache hit, and (3) keeping the write path idempotent — solved by SHA256-based dedup index. Every other complexity (analytics, expiry, malicious URL detection) lives off the hot path so it never touches redirect latency.
+    </div>
+  </div>
+
+  <div style="height:80px;"></div>
+</main>
+
+<script>
+  function toggleAcc(id) {
+    var el = document.getElementById(id);
+    el.classList.toggle('open');
+  }
+  // Sidebar active highlight on scroll
+  var sections = document.querySelectorAll('[id]');
+  var links = document.querySelectorAll('.sidebar-item');
+  window.addEventListener('scroll', function() {
+    var scrollY = window.scrollY + 100;
+    var current = '';
+    sections.forEach(function(s) {
+      if (s.offsetTop <= scrollY) current = s.id;
+    });
+    links.forEach(function(l) {
+      l.classList.remove('active');
+      if (l.getAttribute('href') === '#' + current) l.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
