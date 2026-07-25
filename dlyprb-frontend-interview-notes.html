@@ -9418,10 +9418,26 @@ Prepare 2–3 stories (STAR: Situation, Task, Action, Result) about:
     }
 
     function highlightCodePart(raw) {
+      const tokens = [];
+      const markerName = (index) => {
+        let name = '';
+        do {
+          name = String.fromCharCode(97 + (index % 26)) + name;
+          index = Math.floor(index / 26) - 1;
+        } while (index >= 0);
+        return '\uE000' + name + '\uE001';
+      };
+      const protect = (html) => {
+        const marker = markerName(tokens.length);
+        tokens.push([marker, html]);
+        return marker;
+      };
+
       return escapeHtml(raw)
-        .replace(/("[^"]*"|'[^']*?'|`[^`]*?`)/g, '<span class="code-string">$1</span>')
+        .replace(/("[^"]*"|'[^']*?'|`[^`]*?`)/g, (match) => protect('<span class="code-string">' + match + '</span>'))
         .replace(/\b(const|let|var|function|return|class|new|if|else|for|while|try|catch|finally|async|await|import|export|from|extends)\b/g, '<span class="code-keyword">$1</span>')
-        .replace(/\b(\d+)\b/g, '<span class="code-number">$1</span>');
+        .replace(/\b(\d+)\b/g, '<span class="code-number">$1</span>')
+        .replace(/\uE000[a-z]+\uE001/g, (marker) => tokens.find(([key]) => key === marker)[1]);
     }
 
     function commentTitle(comment) {
