@@ -496,6 +496,11 @@
       border: 1px solid #202b36;
       padding: 13px;
     }
+    .source-code.source-code-enhanced {
+      padding: 0;
+      white-space: normal;
+      counter-reset: line;
+    }
     .source-output {
       background: #f7fafc;
       color: #24323d;
@@ -9695,6 +9700,7 @@ Prepare 2–3 stories (STAR: Situation, Task, Action, Result) about:
       let textLines = [];
       let codeLines = null;
       let lang = '';
+      let fenceIndent = '';
 
       const flushText = () => {
         if (!textLines.length) return;
@@ -9703,22 +9709,24 @@ Prepare 2–3 stories (STAR: Situation, Task, Action, Result) about:
       };
 
       lines.forEach((line) => {
-        const fence = line.match(/^```([A-Za-z0-9_-]+)?\s*$/);
+        const fence = line.match(/^(\s*)```([A-Za-z0-9_-]+)?\s*$/);
         if (fence) {
           if (codeLines) {
             chunks.push({ type: 'code', lang: lang, text: codeLines.join('\n') });
             codeLines = null;
             lang = '';
+            fenceIndent = '';
           } else {
             flushText();
             codeLines = [];
-            lang = (fence[1] || '').toLowerCase();
+            fenceIndent = fence[1] || '';
+            lang = (fence[2] || '').toLowerCase();
           }
           return;
         }
 
         if (codeLines) {
-          codeLines.push(line);
+          codeLines.push(fenceIndent && line.startsWith(fenceIndent) ? line.slice(fenceIndent.length) : line);
         } else {
           textLines.push(line);
         }
@@ -9729,18 +9737,63 @@ Prepare 2–3 stories (STAR: Situation, Task, Action, Result) about:
       return chunks;
     }
 
+    function sourceSnippetLabel(lang) {
+      const normalized = (lang || '').toLowerCase();
+      const labels = {
+        js: 'JS snippet',
+        javascript: 'JS snippet',
+        jsx: 'JSX snippet',
+        ts: 'TS snippet',
+        tsx: 'TSX snippet',
+        html: 'HTML snippet',
+        css: 'CSS snippet',
+        json: 'JSON snippet',
+        bash: 'Shell snippet',
+        sh: 'Shell snippet',
+        mermaid: 'Diagram source',
+        md: 'Markdown snippet',
+        markdown: 'Markdown snippet',
+        text: 'Expected output'
+      };
+      return labels[normalized] || (normalized ? normalized.toUpperCase() + ' snippet' : 'Code snippet');
+    }
+
+    function findSourceCommentIndex(line, lang) {
+      const normalized = (lang || '').toLowerCase();
+      if (['html', 'xml', 'svg', 'markdown', 'md'].includes(normalized)) return line.indexOf('<!--');
+      if (['css', 'scss', 'sass'].includes(normalized)) return line.indexOf('/*');
+      if (['bash', 'sh', 'shell'].includes(normalized)) return line.indexOf('#');
+      return findLineCommentIndex(line);
+    }
+
+    function renderSourceCodeLine(line, index, lang) {
+      const commentIndex = findSourceCommentIndex(line, lang);
+      const hasComment = commentIndex !== -1;
+      const codePart = hasComment ? line.slice(0, commentIndex) : line;
+      const commentPart = hasComment ? line.slice(commentIndex) : '';
+      const codeHtml = highlightCodePart(codePart);
+      const commentHtml = hasComment
+        ? '<span class="code-comment">' + escapeHtml(commentPart) + '</span>'
+        : '';
+      const attrs = hasComment
+        ? ' class="code-line has-comment" data-line="' + (index + 1) + '"'
+        : ' class="code-line" data-line="' + (index + 1) + '"';
+      return '<span' + attrs + '><code>' + codeHtml + commentHtml + '</code></span>';
+    }
+
     function renderSourceSnippet(lang, code, label) {
       const normalized = (lang || '').toLowerCase();
-      const isJs = ['js', 'javascript', 'jsx', 'ts', 'tsx'].includes(normalized);
-      const className = isJs ? 'source-code' : 'source-output';
-      const wrapClass = isJs ? 'source-code-wrap' : 'source-output-wrap';
-      const defaultLabel = isJs ? 'JS snippet' : (normalized === 'text' ? 'Expected output' : 'Example');
-      const body = isJs ? highlightCodePart(code) : escapeHtml(code);
+      const isOutput = normalized === 'text';
+      const className = isOutput ? 'source-output' : 'source-code source-code-enhanced';
+      const wrapClass = isOutput ? 'source-output-wrap' : 'source-code-wrap';
+      const body = isOutput
+        ? '<code>' + escapeHtml(code) + '</code>'
+        : code.split('\n').map((line, index) => renderSourceCodeLine(line, index, normalized)).join('');
 
       return [
         '<div class="' + wrapClass + '">',
-        '<span class="source-block-label">' + escapeHtml(label || defaultLabel) + '</span>',
-        '<pre class="' + className + '"><code>' + body + '</code></pre>',
+        '<span class="source-block-label">' + escapeHtml(label || sourceSnippetLabel(normalized)) + '</span>',
+        '<pre class="' + className + '">' + body + '</pre>',
         '</div>'
       ].join('');
     }
