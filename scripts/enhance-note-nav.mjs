@@ -279,8 +279,8 @@ function gitTrackedHtmlFiles() {
 }
 
 function hasExistingLeftNav(html) {
-  return /<nav[^>]+(?:class="[^"]*\bsidebar\b|id="sidebar"|id="sb")/i.test(html) ||
-    /<aside[^>]+(?:class="[^"]*\bsb\b|id="sb")/i.test(html);
+  return /<nav[^>]+(?:class="[^"]*\b(?:sidebar|side-nav|sidenav)\b|id="(?:sidebar|side-nav|sidenav|sb)")/i.test(html) ||
+    /<aside[^>]+(?:class="[^"]*\b(?:sidebar|side-nav|sidenav|sb)\b|id="(?:sidebar|side-nav|sidenav|sb)")/i.test(html);
 }
 
 function hasEnoughHeadings(html) {
@@ -327,12 +327,29 @@ function enhance(html) {
   return next;
 }
 
+function stripGeneratedNav(html) {
+  let next = replaceBetween(html, CSS_START, CSS_END, "");
+  if (!next) next = html;
+
+  const withoutScript = replaceBetween(next, SCRIPT_START, SCRIPT_END, "");
+  return withoutScript ?? next;
+}
+
 const changed = [];
 
 for (const file of gitTrackedHtmlFiles()) {
   const html = readFileSync(file, "utf8");
+  if (hasExistingLeftNav(html)) {
+    const next = stripGeneratedNav(html);
+    if (next !== html) {
+      changed.push(file);
+      if (!checkOnly) writeFileSync(file, next);
+    }
+    continue;
+  }
+
   const alreadyManaged = html.includes(SCRIPT_START);
-  if (!alreadyManaged && (hasExistingLeftNav(html) || !hasEnoughHeadings(html))) continue;
+  if (!alreadyManaged && !hasEnoughHeadings(html)) continue;
 
   const next = enhance(html);
   if (next !== html) {
